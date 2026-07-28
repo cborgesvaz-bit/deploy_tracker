@@ -336,12 +336,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .user-dropdown-item:hover{background:var(--surface2)}
 .user-dropdown-logout{color:var(--red)}
 .user-dropdown-logout:hover{background:var(--red-bg)}
-.code-block{background:var(--surface3);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;font:13px var(--mono);color:var(--text);white-space:pre;overflow-x:auto;margin:6px 0 14px}
-.code-block .comment{color:var(--dim)}
-.code-section{margin-bottom:16px}
-.code-section h4{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:4px}
-.btn-copy-code{float:right;font-size:10px;padding:2px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-family:var(--sans);color:var(--muted);margin-left:8px;transition:all .15s}
-.btn-copy-code:hover{border-color:var(--accent);color:var(--accent)}
 .dg-date-edit{display:inline-flex;align-items:center;cursor:pointer;border-radius:var(--r);transition:background .15s;padding:1px 2px}
 .dg-date-edit:hover .dg-date-tag{border-color:var(--accent);color:var(--accent)}
 .dg-date-empty{color:var(--dim)!important;border-style:dashed!important}
@@ -432,68 +426,6 @@ input[list].einput::-webkit-calendar-picker-indicator { opacity: 0.5; cursor: po
 </div>
 
 <!-- ── GITHUB/VSCODE COMMANDS MODAL ── -->
-<div class="modal-overlay" id="github-overlay" onclick="if(event.target===this)closeGithubModal()">
-  <div class="modal" style="width:580px;max-height:85vh">
-    <div class="modal-hd">
-      <span class="modal-hd-icon">🚀</span>
-      <span class="modal-hd-title">Publicar no GitHub / Abrir no VSCode</span>
-      <button class="modal-close" onclick="closeGithubModal()">✕</button>
-    </div>
-    <div class="modal-body" style="display:flex;flex-direction:column;gap:6px">
-      <div class="code-section">
-        <h4>1 — Pré-requisitos</h4>
-        <div class="code-block"><span class="comment"># Instalar Git (se não tiver)</span>
-# Windows: https://git-scm.com
-# Mac:
-brew install git
-# Linux:
-sudo apt install git</div>
-      </div>
-      <div class="code-section">
-        <h4>2 — Inicializar repositório local</h4>
-        <div class="code-block" id="code-init"><span class="comment"># Abra o terminal na pasta do arquivo HTML</span>
-git init
-git add mr-deploy-tracker.html
-git commit -m "feat: sesamo deploy tracker v1"</div>
-        <button class="btn-copy-code" onclick="copyCode('code-init')">📋 Copiar</button>
-      </div>
-      <div class="code-section">
-        <h4>3 — Criar repositório no GitHub e fazer push</h4>
-        <div class="code-block" id="code-push"><span class="comment"># Crie o repositório em: https://github.com/new
-# Depois execute:</span>
-git remote add origin https://github.com/SEU_USUARIO/sesamo-deploy-tracker.git
-git branch -M main
-git push -u origin main</div>
-        <button class="btn-copy-code" onclick="copyCode('code-push')">📋 Copiar</button>
-      </div>
-      <div class="code-section">
-        <h4>4 — Publicar como GitHub Pages (acesso via URL)</h4>
-        <div class="code-block" id="code-pages"><span class="comment"># No GitHub:
-# Settings → Pages → Source: Deploy from branch
-# Branch: main / (root) → Save
-# URL: https://SEU_USUARIO.github.io/sesamo-deploy-tracker/mr-deploy-tracker.html</span></div>
-      </div>
-      <div class="code-section">
-        <h4>5 — Abrir no VSCode</h4>
-        <div class="code-block" id="code-vscode"><span class="comment"># Na pasta do arquivo:</span>
-code .
-
-<span class="comment"># Extensão recomendada para preview ao vivo:</span>
-<span class="comment"># "Live Server" by Ritwick Dey
-# Clique com botão direito no .html → "Open with Live Server"</span></div>
-        <button class="btn-copy-code" onclick="copyCode('code-vscode')">📋 Copiar</button>
-      </div>
-      <div class="code-section">
-        <h4>6 — Atualizar após mudanças</h4>
-        <div class="code-block" id="code-update">git add mr-deploy-tracker.html
-git commit -m "update: [descreva a mudança]"
-git push</div>
-        <button class="btn-copy-code" onclick="copyCode('code-update')">📋 Copiar</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- ── USER MANAGEMENT MODAL ── -->
 <div class="modal-overlay" id="users-overlay" onclick="if(event.target===this)closeUsersModal()">
   <div class="modal" style="width:480px">
@@ -532,7 +464,6 @@ git push</div>
       <button class="btn-reset-sm" onclick="restoreDefaults()" title="Restaurar dados originais">↩ Restaurar</button>
     </div>
     <div class="topbar-divider-v"></div>
-    <button class="btn-topbar-action" onclick="openGithubModal()" title="GitHub / VSCode">🚀 GitHub</button>
     <div class="topbar-divider-v"></div>
     <div class="topbar-user" id="topbar-user" onclick="toggleUserMenu()" title="Opções do usuário" style="cursor:pointer;position:relative">
       <span class="topbar-user-av" id="topbar-user-av">?</span>
@@ -2690,17 +2621,6 @@ function removeUser(email) {
   saveUsers(users);
   renderUsersList();
   showToast('🗑 Usuário removido');
-}
-
-// ── GitHub Modal ──
-function openGithubModal()  { document.getElementById('github-overlay').classList.add('open'); }
-function closeGithubModal() { document.getElementById('github-overlay').classList.remove('open'); }
-
-function copyCode(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const text = el.innerText.replace(/^#.*\n?/gm,'').trim(); // strip comments
-  navigator.clipboard?.writeText(text).then(() => showToast('📋 Copiado!')).catch(() => {});
 }
 
 // ══════════════════════════════════════════════ INIT ══
