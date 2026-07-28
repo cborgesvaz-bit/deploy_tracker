@@ -329,7 +329,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .btn-topbar-action{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);font:500 11px var(--sans);color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap}
 .btn-topbar-action:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-d)}
 
-/* ── GITHUB COMMANDS MODAL ── */
+/* ── USER DROPDOWN ── */
+.user-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);box-shadow:0 4px 16px rgba(31,35,40,.12);padding:6px;min-width:180px;z-index:200;display:none;flex-direction:column;gap:2px}
+.user-dropdown.open{display:flex}
+.user-dropdown-item{background:none;border:none;text-align:left;padding:8px 12px;border-radius:var(--r);font:500 13px var(--sans);color:var(--text);cursor:pointer;transition:background .1s;white-space:nowrap}
+.user-dropdown-item:hover{background:var(--surface2)}
+.user-dropdown-logout{color:var(--red)}
+.user-dropdown-logout:hover{background:var(--red-bg)}
 .code-block{background:var(--surface3);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;font:13px var(--mono);color:var(--text);white-space:pre;overflow-x:auto;margin:6px 0 14px}
 .code-block .comment{color:var(--dim)}
 .code-section{margin-bottom:16px}
@@ -527,12 +533,15 @@ git push</div>
     </div>
     <div class="topbar-divider-v"></div>
     <button class="btn-topbar-action" onclick="openGithubModal()" title="GitHub / VSCode">🚀 GitHub</button>
-    <button class="btn-topbar-action" onclick="openUsersModal()" title="Gerenciar usuários">👥 Usuários</button>
     <div class="topbar-divider-v"></div>
-    <div class="topbar-user" id="topbar-user">
+    <div class="topbar-user" id="topbar-user" onclick="toggleUserMenu()" title="Opções do usuário" style="cursor:pointer;position:relative">
       <span class="topbar-user-av" id="topbar-user-av">?</span>
       <span class="topbar-user-name" id="topbar-user-name">–</span>
-      <button class="btn-logout" onclick="logout()" title="Sair">⏻</button>
+      <div class="user-dropdown" id="user-dropdown">
+        <button class="user-dropdown-item" onclick="event.stopPropagation();openUsersModal();closeUserMenu()">👥 Gerenciar usuários</button>
+        <div style="height:1px;background:var(--border);margin:4px 0"></div>
+        <button class="user-dropdown-item user-dropdown-logout" onclick="event.stopPropagation();logout()">⏻ Sair</button>
+      </div>
     </div>
     <div class="topbar-divider-v"></div>
     <input class="search" id="globalSearch" type="text" placeholder="Buscar MR, card, dev…">
@@ -2616,6 +2625,21 @@ function logout() {
   clearSession();
   showLogin();
 }
+
+function toggleUserMenu() {
+  const dd = document.getElementById('user-dropdown');
+  if (!dd) return;
+  dd.classList.toggle('open');
+}
+function closeUserMenu() {
+  const dd = document.getElementById('user-dropdown');
+  if (dd) dd.classList.remove('open');
+}
+// Close dropdown when clicking elsewhere
+document.addEventListener('click', e => {
+  const user = document.getElementById('topbar-user');
+  if (user && !user.contains(e.target)) closeUserMenu();
+});
 
 // ── User Management ──
 function openUsersModal() {
