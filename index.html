@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Squad Sésamo · Deploy Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
   --bg:#F6F8FA;--surface:#FFFFFF;--surface2:#F6F8FA;--surface3:#EFF1F3;--surface4:#E2E5E9;
@@ -2310,36 +2311,48 @@ function updateStorageBar(source) {
   }
 }
 
-function saveToStorage() {
-  try {
-    localStorage.setItem(LS_KEY, JSON.stringify({
-      DEPLOYS, PENDING, INITIATIVES, DEVS, REPOS, VERSIONS_DATA, VERSIONS_LIST,
-      pendingIdCtr, versionIdCtr, manageIdCtr, deployIdCtr, rowIdCtr,
-    }));
-    showToast('💾 Dados salvos');
-  } catch(e) { console.warn('localStorage save failed', e); }
+const SUPABASE_URL = 'https://avpvkiafowfaemkgmqkh.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_L7R8MR-tN4i8sUimTs_TQw_cWaUcKtc';
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Salvar estado completo no Supabase
+async function saveToStorage() {
+  const payload = {
+    DEPLOYS, PENDING, INITIATIVES, DEVS, REPOS, VERSIONS_DATA, VERSIONS_LIST,
+    pendingIdCtr, versionIdCtr, manageIdCtr, deployIdCtr, rowIdCtr
+  };
+
+  const { error } = await _supabase
+    .from('tracker_state')
+    .upsert({ id: 'current_state', data: payload });
+
+  if (!error) showToast('☁️ Salvo no Supabase!');
+  else console.warn('Supabase save failed', error);
 }
 
-function loadFromStorage() {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (!raw) { updateStorageBar('default'); return false; }
-    const data = JSON.parse(raw);
-    if (data.DEPLOYS)       DEPLOYS       = data.DEPLOYS;
-    if (data.PENDING)       PENDING       = data.PENDING;
-    if (data.INITIATIVES)   INITIATIVES   = data.INITIATIVES;
-    if (data.DEVS)          DEVS          = data.DEVS;
-    if (data.REPOS)         REPOS         = data.REPOS;
-    if (data.VERSIONS_DATA) VERSIONS_DATA = data.VERSIONS_DATA;
-    if (data.VERSIONS_LIST) VERSIONS_LIST = data.VERSIONS_LIST;
-    if (data.pendingIdCtr)  pendingIdCtr  = data.pendingIdCtr;
-    if (data.versionIdCtr)  versionIdCtr  = data.versionIdCtr;
-    if (data.manageIdCtr)   manageIdCtr   = data.manageIdCtr;
-    if (data.deployIdCtr)   deployIdCtr   = data.deployIdCtr;
-    if (data.rowIdCtr)      rowIdCtr      = data.rowIdCtr;
+// Carregar estado do Supabase
+async function loadFromStorage() {
+  const { data, error } = await _supabase
+    .from('tracker_state')
+    .select('data')
+    .eq('id', 'current_state')
+    .single();
+
+  if (data && data.data) {
+    const state = data.data;
+    DEPLOYS = state.DEPLOYS;
+    PENDING = state.PENDING;
+    INITIATIVES = state.INITIATIVES;
+    DEVS = state.DEVS;
+    REPOS = state.REPOS;
+    VERSIONS_DATA = state.VERSIONS_DATA;
+    VERSIONS_LIST = state.VERSIONS_LIST;
     updateStorageBar('storage');
     return true;
-  } catch(e) { console.warn('localStorage load failed', e); updateStorageBar('default'); return false; }
+  }
+  if (error) console.warn('Supabase load failed', error);
+  updateStorageBar('default');
+  return false;
 }
 
 function restoreDefaults() {
@@ -2385,15 +2398,13 @@ function switchTab(id,btn){
 document.getElementById('globalSearch').addEventListener('input',function(){ searchQuery=this.value.trim(); renderDeploys(); });
 
 // INIT
-(function(){
+(async function(){
   updateStorageBar('loading');
-  setTimeout(() => {
-    loadFromStorage();
-    renderDeploys();
-    renderPending();
-    renderNextDeploy();
-    renderVersions();
-  }, 400);
+  await loadFromStorage();
+  renderDeploys();
+  renderPending();
+  renderNextDeploy();
+  renderVersions();
 })();
 </script>
 </body>
