@@ -2317,47 +2317,59 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Salvar estado completo no Supabase
 async function saveToStorage() {
-  const payload = {
-    DEPLOYS, PENDING, INITIATIVES, DEVS, REPOS, VERSIONS_DATA, VERSIONS_LIST,
-    pendingIdCtr, versionIdCtr, manageIdCtr, deployIdCtr, rowIdCtr
-  };
+  try {
+    const payload = {
+      DEPLOYS, PENDING, INITIATIVES, DEVS, REPOS, VERSIONS_DATA, VERSIONS_LIST,
+      pendingIdCtr, versionIdCtr, manageIdCtr, deployIdCtr, rowIdCtr
+    };
 
-  const { error } = await _supabase
-    .from('tracker_state')
-    .upsert({ id: 'current_state', data: payload });
+    const { error } = await _supabase
+      .from('tracker_state')
+      .upsert({ id: 'current_state', data: payload, updated_at: new Date() });
 
-  if (!error) showToast('☁️ Salvo no Supabase!');
-  else console.warn('Supabase save failed', error);
+    if (!error) showToast('☁️ Salvo no Supabase!');
+    else console.warn('Supabase save failed', error);
+  } catch (e) {
+    console.warn('Erro ao salvar no Supabase', e);
+  }
 }
 
 // Carregar estado do Supabase
 async function loadFromStorage() {
-  const { data, error } = await _supabase
-    .from('tracker_state')
-    .select('data')
-    .eq('id', 'current_state')
-    .single();
+  try {
+    const { data, error } = await _supabase
+      .from('tracker_state')
+      .select('data')
+      .eq('id', 'current_state')
+      .single();
 
-  if (data && data.data) {
-    const state = data.data;
-    DEPLOYS = state.DEPLOYS;
-    PENDING = state.PENDING;
-    INITIATIVES = state.INITIATIVES;
-    DEVS = state.DEVS;
-    REPOS = state.REPOS;
-    VERSIONS_DATA = state.VERSIONS_DATA;
-    VERSIONS_LIST = state.VERSIONS_LIST;
-    updateStorageBar('storage');
-    return true;
+    if (data && data.data) {
+      const state = data.data;
+      if (state.DEPLOYS) DEPLOYS = state.DEPLOYS;
+      if (state.PENDING) PENDING = state.PENDING;
+      if (state.INITIATIVES) INITIATIVES = state.INITIATIVES;
+      if (state.DEVS) DEVS = state.DEVS;
+      if (state.REPOS) REPOS = state.REPOS;
+      if (state.VERSIONS_DATA) VERSIONS_DATA = state.VERSIONS_DATA;
+      if (state.VERSIONS_LIST) VERSIONS_LIST = state.VERSIONS_LIST;
+      if (state.pendingIdCtr) pendingIdCtr = state.pendingIdCtr;
+      if (state.versionIdCtr) versionIdCtr = state.versionIdCtr;
+      if (state.manageIdCtr) manageIdCtr = state.manageIdCtr;
+      if (state.deployIdCtr) deployIdCtr = state.deployIdCtr;
+      if (state.rowIdCtr) rowIdCtr = state.rowIdCtr;
+      updateStorageBar('storage');
+      return true;
+    }
+    if (error) console.warn('Supabase load failed', error);
+  } catch (e) {
+    console.warn('Erro ao carregar do Supabase', e);
   }
-  if (error) console.warn('Supabase load failed', error);
   updateStorageBar('default');
   return false;
 }
 
 function restoreDefaults() {
   if (!confirm('Restaurar todos os dados para o estado original da planilha?\n\nIsso apagará todas as alterações salvas.')) return;
-  localStorage.removeItem(LS_KEY);
   DEPLOYS       = JSON.parse(JSON.stringify(DEFAULTS.DEPLOYS));
   PENDING       = JSON.parse(JSON.stringify(DEFAULTS.PENDING));
   INITIATIVES   = JSON.parse(JSON.stringify(DEFAULTS.INITIATIVES));
