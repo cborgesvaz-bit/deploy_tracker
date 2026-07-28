@@ -1,0 +1,2400 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Squad Sésamo · Deploy Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F6F8FA;--surface:#FFFFFF;--surface2:#F6F8FA;--surface3:#EFF1F3;--surface4:#E2E5E9;
+  --border:#D0D7DE;--border2:#C6CDD4;
+  --text:#1F2328;--muted:#656D76;--dim:#8C959F;
+  --accent:#FC6D26;--accent-d:rgba(252,109,38,.1);--accent-hover:#E85D1A;
+  --green:#1A7F37;--green-d:rgba(26,127,55,.1);--green-bg:#DAFBE1;
+  --yellow:#9A6700;--yellow-d:rgba(154,103,0,.1);--yellow-bg:#FFF8C5;
+  --red:#CF222E;--red-d:rgba(207,34,46,.1);--red-bg:#FFEBE9;
+  --blue:#0969DA;--blue-d:rgba(9,105,218,.1);--blue-bg:#DDF4FF;
+  --purple:#8250DF;--purple-d:rgba(130,80,223,.1);--purple-bg:#FBEFFF;
+  --orange-bg:#FFF1E5;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;
+  --r:6px;--rl:8px;
+  --shadow:0 1px 3px rgba(31,35,40,.08),0 0 0 1px rgba(31,35,40,.04);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:14px;height:56px;position:sticky;top:0;z-index:100;box-shadow:0 1px 0 var(--border)}
+.logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px;letter-spacing:-.3px;color:var(--text)}
+.logo-icon{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.topbar-div{width:1px;height:20px;background:var(--border)}
+.topbar-sub{color:var(--muted);font-size:13px}
+.topbar-r{margin-left:auto;display:flex;align-items:center;gap:10px}
+.search{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:6px 12px;color:var(--text);font:13px var(--sans);width:230px;outline:none;transition:border .15s,box-shadow .15s}
+.search:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-d)}
+.search::placeholder{color:var(--dim)}
+
+/* ── TABS BAR ── */
+.tabs-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;overflow-x:auto}
+.tab-btn{padding:12px 16px;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font:500 13px var(--sans);cursor:pointer;transition:color .15s,border-color .15s;white-space:nowrap}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-badge{display:inline-flex;align-items:center;justify-content:center;background:var(--surface3);color:var(--muted);font-size:10px;font-weight:600;border-radius:10px;padding:1px 6px;margin-left:5px}
+
+/* ── LAYOUT ── */
+.page{display:flex;flex:1}
+.sidebar{width:196px;min-width:196px;background:var(--surface);border-right:1px solid var(--border);padding:18px 14px;display:flex;flex-direction:column;gap:18px;height:calc(100vh - 106px);overflow-y:auto;position:sticky;top:106px}
+.sb-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--dim);margin-bottom:7px}
+.flist{display:flex;flex-direction:column;gap:2px}
+.fi{display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:var(--r);cursor:pointer;font-size:12px;color:var(--muted);transition:background .1s,color .1s;user-select:none}
+.fi:hover{background:var(--surface2);color:var(--text)}
+.fi.active{background:var(--accent-d);color:var(--accent);font-weight:600}
+.fdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.fcount{margin-left:auto;font-size:10px;color:var(--dim);background:var(--surface3);padding:1px 5px;border-radius:8px}
+
+/* ── MAIN ── */
+.main{flex:1;padding:24px;overflow-x:auto;min-width:0}
+.tab-pane{display:none}.tab-pane.active{display:block}
+
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:14px 16px;box-shadow:var(--shadow)}
+.stat-val{font-size:26px;font-weight:700;line-height:1;margin-bottom:3px}
+.stat-lbl{font-size:11px;color:var(--muted);font-weight:500}
+.c-orange{color:var(--accent)}.c-green{color:var(--green)}.c-red{color:var(--red)}.c-yellow{color:var(--yellow)}.c-blue{color:var(--blue)}
+
+/* ── VERSION PILLS ── */
+.ver-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;align-items:center}
+.ver-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font:500 12px var(--sans);cursor:pointer;transition:all .15s;white-space:nowrap;box-shadow:var(--shadow)}
+.ver-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-d)}
+.ver-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 2px 6px rgba(252,109,38,.25)}
+.ver-btn.active .ver-date{color:rgba(255,255,255,.75)}
+.ver-date{font-family:var(--mono);font-size:10px;color:var(--dim)}
+.ver-cnt{font-size:10px;background:rgba(0,0,0,.1);padding:1px 5px;border-radius:8px;font-weight:600}
+.ver-btn.active .ver-cnt{background:rgba(255,255,255,.25);color:#fff}
+
+.ver-pane{display:none}.ver-pane.active{display:block}
+
+/* ── DEPLOY GROUP ── */
+.dg{margin-bottom:14px;border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;box-shadow:var(--shadow)}
+.dg-header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2);cursor:pointer;user-select:none;transition:background .1s}
+.dg-header:hover{background:var(--surface3)}
+.dg-ver-tag{font-family:var(--mono);font-size:11px;font-weight:600;color:#fff;padding:3px 9px;border-radius:4px;white-space:nowrap;flex-shrink:0}
+.dg-date-tag{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface3);border:1px solid var(--border);padding:2px 7px;border-radius:4px;white-space:nowrap;flex-shrink:0}
+.dg-title{font-size:13px;font-weight:600;color:var(--text);flex:1}
+.dg-meta{font-size:11px;color:var(--muted);white-space:nowrap}
+.dg-actions{display:flex;gap:4px;flex-shrink:0}
+.dg-arr{color:var(--muted);font-size:9px;transition:transform .2s;margin-left:2px}
+.dg.collapsed .dg-arr{transform:rotate(-90deg)}
+.dg.collapsed .dg-body{display:none}
+.dg-body{border-top:1px solid var(--border)}
+
+/* ── TABLE ── */
+.mrt{width:100%;border-collapse:collapse;font-size:12px}
+.mrt th{padding:7px 12px;background:var(--surface3);color:var(--dim);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+.mrt td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.mrt tr:last-child td{border-bottom:none}
+.mrt tbody tr:hover td{background:rgba(9,105,218,.03)}
+.rollback-row td{background:rgba(207,34,46,.04)!important}
+
+.mr-link{font-family:var(--mono);font-size:11px;color:var(--blue);text-decoration:none;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.mr-link:hover{color:var(--accent);text-decoration:underline}
+.mr-num{background:var(--blue-bg);color:var(--blue);padding:2px 6px;border-radius:4px;font:600 11px var(--mono)}
+.repo-tag{font-size:9px;color:var(--dim);background:var(--surface3);padding:1px 4px;border-radius:3px}
+
+.cb{font-family:var(--mono);font-size:10px;padding:2px 6px;border-radius:4px;display:inline-block;white-space:nowrap;font-weight:500}
+.cb-stk{background:var(--purple-bg);color:var(--purple)}
+.cb-bug{background:var(--red-bg);color:var(--red)}
+.cb-imp{background:var(--yellow-bg);color:var(--yellow)}
+.cb-ops{background:var(--blue-bg);color:var(--blue)}
+.cb-oth{background:var(--surface3);color:var(--muted)}
+
+.sb{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
+.sb-sim{background:var(--green-bg);color:var(--green)}
+.sb-nao{background:var(--red-bg);color:var(--red)}
+.sb-and{background:var(--yellow-bg);color:var(--yellow)}
+.sb-true{background:var(--green-bg);color:var(--green)}
+.sb-false{background:var(--red-bg);color:var(--red)}
+
+.ib{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:500;white-space:nowrap}
+.pip-ok{display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--green);font-weight:500}
+.pip-br{display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--red);font-weight:500}
+.cc{color:var(--muted);font-size:11px;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.cc.imp{color:var(--red);font-weight:500}
+.dev-p{display:inline-flex;align-items:center;gap:5px;font-size:11px;white-space:nowrap}
+.dev-av{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;flex-shrink:0}
+
+/* ── ROW ACTIONS ── */
+.row-actions{display:flex;gap:3px;opacity:0;transition:opacity .15s}
+.mrt tbody tr:hover .row-actions{opacity:1}
+.btn-row{border:none;background:none;cursor:pointer;padding:3px 5px;border-radius:4px;font-size:12px;color:var(--muted);transition:background .1s,color .1s}
+.btn-row:hover{background:var(--surface3);color:var(--text)}
+.btn-row-del:hover{background:var(--red-bg);color:var(--red)}
+
+/* ── GROUP HEADER BUTTONS ── */
+.btn-dg{border:1px solid var(--border);background:var(--surface);cursor:pointer;padding:3px 9px;border-radius:var(--r);font:500 11px var(--sans);color:var(--muted);transition:all .15s;white-space:nowrap}
+.btn-dg:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-d)}
+.btn-dg-del{border-color:var(--border)}
+.btn-dg-del:hover{border-color:var(--red);color:var(--red);background:var(--red-bg)}
+.btn-dg-add{border-color:var(--green);color:var(--green);background:var(--green-bg)}
+.btn-dg-add:hover{background:var(--green-bg);border-color:var(--green);color:var(--green)}
+
+/* ── EDIT ROW ── */
+.edit-row td{background:rgba(252,109,38,.04)!important;padding:6px 8px}
+.einput{background:var(--surface);border:1px solid var(--border);border-radius:4px;color:var(--text);font:12px var(--sans);padding:4px 7px;width:100%;outline:none;transition:border .15s}
+.einput:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-d)}
+.eselect{background:var(--surface);border:1px solid var(--border);border-radius:4px;color:var(--text);font:12px var(--sans);padding:4px 6px;outline:none;cursor:pointer;width:100%}
+.eselect:focus{border-color:var(--accent)}
+.btn-sv{background:var(--green);border:none;color:#fff;border-radius:var(--r);padding:4px 10px;font:600 11px var(--sans);cursor:pointer;white-space:nowrap}
+.btn-sv:hover{opacity:.88}
+.btn-cn{background:var(--surface3);border:1px solid var(--border);color:var(--muted);border-radius:var(--r);padding:4px 10px;font:500 11px var(--sans);cursor:pointer}
+.btn-cn:hover{border-color:var(--border2);color:var(--text)}
+
+/* ── ADD NEW GROUP ROW ── */
+.add-row-wrapper{border-top:2px dashed var(--accent-d);background:rgba(252,109,38,.02)}
+.add-row-tr td{padding:8px 12px;background:transparent}
+.add-trigger{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--accent);cursor:pointer;font-weight:500;padding:6px 0}
+.add-trigger:hover{opacity:.75}
+
+/* ── TABLE CARD ── */
+.tcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:24px;box-shadow:var(--shadow)}
+.tcard-hd{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--surface2)}
+.tcard-title{font-size:13px;font-weight:600;flex:1;color:var(--text)}
+
+/* ── PENDING TOOLBAR ── */
+.pending-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.btn-add{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font:600 13px var(--sans);cursor:pointer;box-shadow:0 1px 3px rgba(252,109,38,.3);transition:opacity .15s}
+.btn-add:hover{opacity:.88}
+.new-row-form{background:var(--surface);border:1.5px dashed var(--accent);border-radius:var(--rl);padding:16px;margin-bottom:20px;display:none}
+.new-row-form.visible{display:block}
+.form-title{font-size:13px;font-weight:600;margin-bottom:14px;color:var(--accent)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+.form-col{display:flex;flex-direction:column;gap:4px}
+.form-full{grid-column:1/-1}
+.form-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+
+/* ── VERSION TABLE ── */
+.vtbl{width:100%;border-collapse:collapse;font-size:13px}
+.vtbl th{padding:10px 14px;background:var(--surface2);color:var(--muted);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;text-align:left;border-bottom:1px solid var(--border)}
+.vtbl td{padding:11px 14px;border-bottom:1px solid var(--border)}
+.vtbl tr:hover td{background:var(--surface2)}
+.vnum{font-family:var(--mono);font-weight:700;color:var(--accent);font-size:14px}
+
+/* ── EMPTY ── */
+.empty-state{text-align:center;padding:48px 24px;color:var(--muted)}
+.empty-state .icon{font-size:36px;margin-bottom:12px}
+
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--surface4);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--dim)}
+
+@media(max-width:900px){.sidebar{display:none}}
+
+/* ── NEXT DEPLOY TAB SPECIAL STYLE ── */
+.tab-btn-next{color:var(--accent)!important;font-weight:600}
+.tab-btn-next.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-badge-next{background:var(--accent-d);color:var(--accent)!important}
+
+/* ── BULK ACTION BAR ── */
+.bulk-bar{background:var(--surface2);border:1px solid var(--border);border-bottom:2px solid var(--accent);border-radius:var(--rl) var(--rl) 0 0;padding:10px 16px;margin-bottom:0;display:none;align-items:center;gap:10px;flex-wrap:wrap}
+.bulk-bar.visible{display:flex}
+.bulk-bar-count{font-size:13px;font-weight:700;color:var(--accent);white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:6px}
+.bulk-bar-sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
+.bulk-sel-all{font-size:11px;color:var(--accent);cursor:pointer;text-decoration:underline;white-space:nowrap;font-weight:500}
+.bulk-sel-all:hover{opacity:.7}
+.bulk-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center;flex:1}
+.bulk-inline-field{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font:12px var(--sans);padding:5px 8px;outline:none;cursor:pointer;transition:border .15s;max-width:160px}
+.bulk-inline-field:focus,.bulk-inline-field:hover{border-color:var(--accent)}
+.btn-bulk{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--r);font:500 12px var(--sans);cursor:pointer;white-space:nowrap;transition:all .15s}
+.btn-bulk:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-d)}
+.btn-bulk-apply{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-bulk-apply:hover{opacity:.88;color:#fff}
+.btn-bulk-nd{border-color:rgba(252,109,38,.4);color:var(--accent)}
+.btn-bulk-nd:hover{background:var(--accent-d);border-color:var(--accent)}
+.btn-bulk-del:hover{border-color:var(--red);color:var(--red);background:var(--red-bg)}
+.btn-bulk-cancel{color:var(--muted);margin-left:auto}
+.btn-bulk-cancel:hover{background:var(--surface3);color:var(--text)}
+.pending-row-cb{width:16px;height:16px;cursor:pointer;accent-color:var(--accent);flex-shrink:0}
+.mrt tbody tr.pending-selected td{background:rgba(252,109,38,.05)!important}
+.promote-bar{background:var(--surface);border:1.5px solid rgba(252,109,38,.35);border-radius:var(--rl);padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;box-shadow:0 2px 8px rgba(252,109,38,.1)}
+.promote-bar-label{font-size:13px;font-weight:600;color:var(--accent);white-space:nowrap}
+.promote-bar-fields{display:flex;align-items:center;gap:10px;flex:1;flex-wrap:wrap}
+.promote-bar .einput{width:160px}
+.btn-promote{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font:700 13px var(--sans);cursor:pointer;white-space:nowrap;box-shadow:0 2px 6px rgba(252,109,38,.3);transition:opacity .15s}
+.btn-promote:hover{opacity:.88}
+.btn-promote:disabled{opacity:.45;cursor:not-allowed}
+.nd-checkbox{width:18px;height:18px;cursor:pointer;accent-color:var(--accent);flex-shrink:0}
+.nd-card.checked{border-color:var(--accent);background:var(--orange-bg)}
+.promote-sel-count{font-size:12px;color:var(--muted);white-space:nowrap}
+.promote-sel-all{font-size:12px;color:var(--accent);cursor:pointer;text-decoration:underline;white-space:nowrap}
+.promote-sel-all:hover{opacity:.75}
+.nd-banner{background:linear-gradient(135deg,var(--orange-bg) 0%,#FFF1E5 100%);border:1.5px solid rgba(252,109,38,.3);border-radius:var(--rl);padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px}
+.nd-banner-icon{font-size:28px;flex-shrink:0}
+.nd-banner-text h3{font-size:15px;font-weight:700;color:var(--accent);margin-bottom:2px}
+.nd-banner-text p{font-size:12px;color:var(--muted)}
+.nd-banner-actions{margin-left:auto;display:flex;gap:8px}
+.btn-nd-clear{border:1px solid rgba(252,109,38,.4);background:transparent;color:var(--accent);border-radius:var(--r);padding:6px 14px;font:600 12px var(--sans);cursor:pointer;transition:all .15s}
+.btn-nd-clear:hover{background:var(--accent);color:#fff}
+
+/* ── NEXT DEPLOY CARD ROW ── */
+.nd-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:14px 16px;display:flex;align-items:center;gap:14px;margin-bottom:8px;box-shadow:var(--shadow);transition:border-color .15s}
+.nd-card:hover{border-color:var(--accent)}
+.nd-card-left{flex:1;min-width:0;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.nd-card-right{display:flex;gap:6px;flex-shrink:0}
+.nd-num{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent);background:var(--accent-d);padding:4px 10px;border-radius:6px;white-space:nowrap}
+.nd-repo-tag{font-size:10px;font-family:var(--mono);background:var(--surface3);color:var(--muted);padding:2px 6px;border-radius:4px}
+.nd-divider{width:1px;height:20px;background:var(--border);flex-shrink:0}
+.nd-info{display:flex;flex-direction:column;gap:3px;min-width:0}
+.nd-card-title{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nd-card-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.btn-nd-remove{border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:var(--r);padding:4px 10px;font:500 11px var(--sans);cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-nd-remove:hover{border-color:var(--red);color:var(--red);background:var(--red-bg)}
+.nd-order-grip{color:var(--dim);font-size:14px;cursor:grab;padding:0 4px;user-select:none}
+
+/* ── TOGGLE SWITCH ── */
+.toggle-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--accent-d);border:1.5px solid rgba(252,109,38,.25);border-radius:var(--r);margin-top:4px}
+.toggle-label{font-size:13px;font-weight:600;color:var(--accent);flex:1}
+.toggle-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.toggle-switch{position:relative;width:40px;height:22px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-track{position:absolute;inset:0;background:var(--surface4);border-radius:11px;cursor:pointer;transition:background .2s}
+.toggle-switch input:checked+.toggle-track{background:var(--accent)}
+.toggle-track::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.toggle-switch input:checked+.toggle-track::before{transform:translateX(18px)}
+.nd-row-badge{display:inline-flex;align-items:center;gap:3px;background:var(--accent-d);color:var(--accent);border:1px solid rgba(252,109,38,.3);border-radius:20px;font-size:9px;font-weight:700;padding:1px 6px;white-space:nowrap}
+
+/* ── EMPTY NEXT DEPLOY ── */
+.nd-empty{text-align:center;padding:56px 24px}
+.nd-empty-icon{font-size:48px;margin-bottom:12px}
+.nd-empty-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px}
+.nd-empty-sub{font-size:13px;color:var(--muted)}
+/* ── EDIT PENDING BUTTON ── */
+.btn-edit-pending{display:inline-flex;align-items:center;gap:3px;border:1px solid var(--border);background:var(--surface2);color:var(--text);border-radius:var(--r);padding:3px 8px;font:500 11px var(--sans);cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-edit-pending:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-d)}
+
+/* ── VERSION TABLE ENHANCED ── */
+.ver-row-tag{font-family:var(--mono);font-weight:700;font-size:13px;color:var(--accent);background:var(--accent-d);padding:4px 10px;border-radius:6px;display:inline-flex;align-items:center;gap:5px}
+.ver-date-cell{font-family:var(--mono);font-size:12px;color:var(--text);display:flex;align-items:center;gap:5px}
+.ver-date-cell.empty{color:var(--dim);font-style:italic}
+.ver-status-deployed{display:inline-flex;align-items:center;gap:4px;background:var(--green-bg);color:var(--green);border-radius:20px;font-size:10px;font-weight:600;padding:2px 8px}
+.ver-status-pending{display:inline-flex;align-items:center;gap:4px;background:var(--yellow-bg);color:var(--yellow);border-radius:20px;font-size:10px;font-weight:600;padding:2px 8px}
+.ver-note{font-size:11px;color:var(--muted);font-style:italic;display:block;margin-top:2px}
+.vtbl .mrt-actions{opacity:0;transition:opacity .15s;display:flex;gap:4px}
+.vtbl tr:hover .mrt-actions{opacity:1}
+
+/* ── TOPBAR STORAGE INDICATOR ── */
+.topbar-divider-v{width:1px;height:22px;background:var(--border)}
+.topbar-storage{display:flex;align-items:center;gap:8px;padding:5px 10px;border:1px solid var(--border);border-radius:20px;background:var(--surface2);transition:border-color .2s}
+.topbar-storage:has(.topbar-storage-dot.loaded){border-color:rgba(26,127,55,.3);background:var(--green-bg)}
+.topbar-storage:has(.topbar-storage-dot.default){border-color:var(--border)}
+.topbar-storage-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:background .3s}
+.topbar-storage-dot.pulsing{background:var(--accent);animation:pulse-dot 1.5s ease-in-out infinite}
+.topbar-storage-dot.loaded{background:var(--green)}
+.topbar-storage-dot.default{background:var(--muted)}
+.topbar-storage-dot.reset{background:var(--blue)}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.25}}
+.topbar-storage-text{font-size:11px;font-weight:500;color:var(--muted);white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis}
+.topbar-storage:has(.topbar-storage-dot.loaded) .topbar-storage-text{color:var(--green)}
+.btn-reset-sm{background:none;border:none;cursor:pointer;font-size:11px;font-weight:600;color:var(--muted);padding:2px 6px;border-radius:4px;white-space:nowrap;transition:all .15s}
+.btn-reset-sm:hover{background:var(--red-bg);color:var(--red)}
+
+/* ── DEPLOY GROUP DATE EDIT ── */
+.dg-date-edit{display:inline-flex;align-items:center;cursor:pointer;border-radius:var(--r);transition:background .15s;padding:1px 2px}
+.dg-date-edit:hover .dg-date-tag{border-color:var(--accent);color:var(--accent)}
+.dg-date-empty{color:var(--dim)!important;border-style:dashed!important}
+.dg-date-edit:hover .dg-date-empty{color:var(--accent)!important;border-color:var(--accent)!important}
+.dg-date-inline{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--accent);border-radius:var(--r);padding:3px 8px;box-shadow:0 2px 8px rgba(252,109,38,.15)}
+.dg-date-inline input{background:none;border:none;outline:none;font:500 12px var(--mono);color:var(--text);width:100px}
+.dg-date-inline .btn-sv{padding:2px 8px;font-size:11px}
+.dg-date-inline .btn-cn{padding:2px 7px;font-size:11px}
+.deploy-date-row{
+  display:none;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  background:var(--orange-bg);
+  border:1px solid rgba(252,109,38,.25);
+  border-radius:var(--r);
+  padding:12px 14px;
+  margin-top:6px;
+}
+.deploy-date-row.visible{ display:grid; }
+input[list].einput::-webkit-calendar-picker-indicator { opacity: 0.5; cursor: pointer; }
+
+/* ── STORAGE TOAST ── */
+.storage-toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:#fff;padding:8px 14px;border-radius:var(--r);font-size:12px;font-weight:500;z-index:600;opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s;pointer-events:none;display:flex;align-items:center;gap:6px;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.storage-toast.show{opacity:1;transform:translateY(0)}
+
+.combo-wrap{display:flex;align-items:center;gap:4px}
+.combo-wrap .eselect{flex:1}
+.btn-manage{width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);background:var(--surface2);border-radius:var(--r);cursor:pointer;font-size:12px;color:var(--muted);flex-shrink:0;transition:all .15s}
+.btn-manage:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-d)}
+
+/* ── MANAGE MODAL OVERLAY ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(31,35,40,.45);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;width:480px;max-width:calc(100vw - 32px);max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(31,35,40,.18);transform:translateY(8px);transition:transform .2s}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-hd{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.modal-hd-icon{font-size:16px}
+.modal-hd-title{font-size:15px;font-weight:700;flex:1;color:var(--text)}
+.modal-close{border:none;background:none;cursor:pointer;font-size:18px;color:var(--muted);padding:2px 6px;border-radius:4px;line-height:1}
+.modal-close:hover{background:var(--surface3);color:var(--text)}
+.modal-body{padding:16px 20px;overflow-y:auto;flex:1}
+.modal-add-row{display:flex;gap:8px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.modal-add-row input{flex:1}
+.modal-add-row .btn-sv{white-space:nowrap}
+.manage-list{display:flex;flex-direction:column;gap:4px}
+.manage-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);transition:border-color .1s}
+.manage-item:hover{border-color:var(--border2)}
+.manage-item-editing{border-color:var(--accent)!important;background:rgba(252,109,38,.03)}
+.mi-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.mi-label{flex:1;font-size:13px;font-weight:500;color:var(--text)}
+.mi-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:3px 7px;font:13px var(--sans);color:var(--text);outline:none}
+.mi-input:focus{border-color:var(--accent)}
+.mi-color{width:28px;height:28px;border:1px solid var(--border);border-radius:4px;cursor:pointer;padding:1px}
+.mi-actions{display:flex;gap:3px}
+.mi-btn{border:none;background:none;cursor:pointer;padding:3px 6px;border-radius:4px;font-size:12px;color:var(--muted);transition:background .1s,color .1s}
+.mi-btn:hover{background:var(--surface3);color:var(--text)}
+.mi-btn-del:hover{background:var(--red-bg);color:var(--red)}
+.mi-btn-save{color:var(--green)}
+.mi-btn-save:hover{background:var(--green-bg);color:var(--green)}
+.empty-manage{text-align:center;padding:24px;color:var(--dim);font-size:13px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-icon">🦑</div>
+    <span>Sésamo</span>
+  </div>
+  <div class="topbar-div"></div>
+  <span class="topbar-sub">Deploy Tracker</span>
+  <div class="topbar-r">
+    <div class="topbar-storage" id="topbar-storage">
+      <span class="topbar-storage-dot" id="storage-bar-dot"></span>
+      <span class="topbar-storage-text" id="storage-bar-text">Carregando…</span>
+      <button class="btn-reset-sm" onclick="restoreDefaults()" title="Restaurar dados originais">↩ Restaurar</button>
+    </div>
+    <div class="topbar-divider-v"></div>
+    <input class="search" id="globalSearch" type="text" placeholder="Buscar MR, card, dev…">
+  </div>
+</div>
+
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="switchTab('deploys',this)">Histórico de Deploys <span class="tab-badge" id="bd-deploys">-</span></button>
+  <button class="tab-btn" onclick="switchTab('pending',this)">MRs em Aberto <span class="tab-badge" id="bd-pending">-</span></button>
+  <button class="tab-btn tab-btn-next" onclick="switchTab('nextdeploy',this)">🚀 Próximo Deploy <span class="tab-badge tab-badge-next" id="bd-nextdeploy">0</span></button>
+  <button class="tab-btn" onclick="switchTab('versions',this)">Versões</button>
+</div>
+
+<div class="page">
+  <aside class="sidebar">
+    <div>
+      <div class="sb-title">👤 DEV Responsável</div>
+      <div class="flist" id="filter-dev">
+        <div class="fi active" data-f="dev" data-v="all" onclick="applyFilter('dev','all',this)"><div class="fdot" style="background:var(--dim)"></div>Todos</div>
+      </div>
+    </div>
+    <div>
+      <div class="sb-title">✅ Aprovação</div>
+      <div class="flist">
+        <div class="fi active" data-f="ap" data-v="all" onclick="applyFilter('ap','all',this)"><div class="fdot" style="background:var(--dim)"></div>Todos</div>
+        <div class="fi" data-f="ap" data-v="true" onclick="applyFilter('ap','true',this)"><div class="fdot" style="background:var(--green)"></div>Aprovado</div>
+        <div class="fi" data-f="ap" data-v="false" onclick="applyFilter('ap','false',this)"><div class="fdot" style="background:var(--red)"></div>Não aprovado</div>
+      </div>
+    </div>
+    <div>
+      <div class="sb-title">⚙️ Pipeline</div>
+      <div class="flist">
+        <div class="fi active" data-f="pip" data-v="all" onclick="applyFilter('pip','all',this)"><div class="fdot" style="background:var(--dim)"></div>Todos</div>
+        <div class="fi" data-f="pip" data-v="ok" onclick="applyFilter('pip','ok',this)"><div class="fdot" style="background:var(--green)"></div>OK</div>
+        <div class="fi" data-f="pip" data-v="broken" onclick="applyFilter('pip','broken',this)"><div class="fdot" style="background:var(--red)"></div>Quebrada</div>
+      </div>
+    </div>
+    <div>
+      <div class="sb-title">📦 Repositório</div>
+      <div class="flist">
+        <div class="fi active" data-f="repo" data-v="all" onclick="applyFilter('repo','all',this)"><div class="fdot" style="background:var(--dim)"></div>Todos</div>
+        <div class="fi" data-f="repo" data-v="sesamo" onclick="applyFilter('repo','sesamo',this)"><div class="fdot" style="background:var(--accent)"></div>sesamo</div>
+        <div class="fi" data-f="repo" data-v="wallu" onclick="applyFilter('repo','wallu',this)"><div class="fdot" style="background:var(--purple)"></div>wallu</div>
+        <div class="fi" data-f="repo" data-v="billy" onclick="applyFilter('repo','billy',this)"><div class="fdot" style="background:var(--blue)"></div>billy</div>
+        <div class="fi" data-f="repo" data-v="cicd" onclick="applyFilter('repo','cicd',this)"><div class="fdot" style="background:var(--yellow)"></div>ci/cd</div>
+      </div>
+    </div>
+    <div>
+      <div class="sb-title">🏷️ Versão</div>
+      <div class="flist" id="filter-version">
+        <div class="fi active" data-f="ver" data-v="all" onclick="selectVersion('all',this)"><div class="fdot" style="background:var(--dim)"></div>Todas</div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- DEPLOYS TAB -->
+    <div class="tab-pane active" id="tab-deploys">
+      <div class="stats-row">
+        <div class="stat-card"><div style="font-size:20px;margin-bottom:4px">📋</div><div class="stat-val c-orange" id="s-total">-</div><div class="stat-lbl">Total MRs</div></div>
+        <div class="stat-card"><div style="font-size:20px;margin-bottom:4px">✅</div><div class="stat-val c-green" id="s-aprov">-</div><div class="stat-lbl">Aprovados</div></div>
+        <div class="stat-card"><div style="font-size:20px;margin-bottom:4px">❌</div><div class="stat-val c-red" id="s-reject">-</div><div class="stat-lbl">Não aprovados</div></div>
+        <div class="stat-card"><div style="font-size:20px;margin-bottom:4px">🏷️</div><div class="stat-val c-blue" id="s-vcount">-</div><div class="stat-lbl">Versões</div></div>
+      </div>
+      <div class="ver-nav" id="ver-nav"></div>
+      <div id="ver-panes"></div>
+    </div>
+
+    <!-- PENDING TAB -->
+    <div class="tab-pane" id="tab-pending">
+      <div class="pending-toolbar">
+        <button class="btn-add" onclick="toggleNewForm()">＋ Novo MR</button>
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+          <button class="btn-dg" onclick="openManage('initiative')" title="Gerenciar iniciativas">🏷 Iniciativas</button>
+          <button class="btn-dg" onclick="openManage('dev')" title="Gerenciar devs">👤 Devs</button>
+          <button class="btn-dg" onclick="openManage('repo')" title="Gerenciar repositórios">📦 Repositórios</button>
+          <span style="font-size:12px;color:var(--muted)" id="pending-count-lbl"></span>
+        </div>
+      </div>
+
+      <div class="new-row-form" id="new-row-form">
+        <div class="form-title">➕ Adicionar novo MR</div>
+        <div class="form-grid">
+          <div class="form-col form-full">
+            <div class="form-label">Link do MR *</div>
+            <input class="einput" id="nf-mr" placeholder="https://gitlab.luizalabs.com/…/merge_requests/0000">
+          </div>
+          <div class="form-col">
+            <div class="form-label">Card Vinculado</div>
+            <input class="einput" id="nf-card" placeholder="STK-XXXX">
+          </div>
+          <div class="form-col">
+            <div class="form-label">Aprovado</div>
+            <select class="eselect" id="nf-ap">
+              <option value="">—</option>
+              <option value="Sim">Sim</option>
+              <option value="Não">Não</option>
+              <option value="Em andamento">Em andamento</option>
+            </select>
+          </div>
+          <div class="form-col">
+            <div class="form-label">Pipeline</div>
+            <select class="eselect" id="nf-pip">
+              <option value="">—</option>
+              <option value="Não">OK (não quebrada)</option>
+              <option value="Sim">Quebrada</option>
+            </select>
+          </div>
+          <div class="form-col">
+            <div class="form-label">Iniciativa <button class="btn-manage" onclick="openManage('initiative')" title="Gerenciar iniciativas">⚙</button></div>
+            <div class="combo-wrap"><select class="eselect" id="nf-ini"></select></div>
+          </div>
+          <div class="form-col">
+            <div class="form-label" style="display:flex;align-items:center;gap:4px">DEV Responsável <button class="btn-manage" onclick="openManage('dev')" title="Gerenciar devs">⚙</button></div>
+            <div class="combo-wrap"><select class="eselect" id="nf-dev"></select></div>
+          </div>
+          <div class="form-col">
+            <div class="form-label" style="display:flex;align-items:center;gap:4px">Repositório <button class="btn-manage" onclick="openManage('repo')" title="Gerenciar repositórios">⚙</button></div>
+            <div class="combo-wrap"><select class="eselect" id="nf-repo"></select></div>
+          </div>
+          <div class="form-col">
+            <div class="form-label">🏷️ Versão Alvo</div>
+            <input class="einput" id="nf-version" list="version-datalist"
+              placeholder="ex: 0.11.0 ou digitar nova…" autocomplete="off">
+          </div>
+          <div class="form-col">
+            <div class="form-label">📅 Data de Deploy</div>
+            <input class="einput" id="nf-deploy-date" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskDate(this)">
+          </div>
+          <div class="form-col form-full">
+            <div class="form-label">Comentários</div>
+            <input class="einput" id="nf-comment" placeholder="Observação opcional">
+          </div>
+          <div class="form-col form-full">
+            <div class="toggle-row">
+              <div>
+                <div class="toggle-label">🚀 Incluir no Próximo Deploy</div>
+                <div class="toggle-sub">Este MR será exibido na aba "Próximo Deploy"</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="nf-nextdeploy">
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-sv" onclick="saveNewPending()">✓ Salvar</button>
+          <button class="btn-cn" onclick="toggleNewForm()">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="tcard">
+        <div class="tcard-hd"><span>🔄</span><span class="tcard-title">MRs sem Data de Deploy</span></div>
+        <!-- Bulk action bar -->
+        <div class="bulk-bar" id="bulk-bar">
+          <span class="bulk-bar-count">
+            ☑️ <span id="bulk-count">0 selecionados</span>
+          </span>
+          <span class="bulk-sel-all" onclick="toggleSelectAllPending()">Selecionar todos</span>
+          <div class="bulk-bar-sep"></div>
+          <div class="bulk-actions">
+            <select class="bulk-inline-field" id="bulk-version" title="Versão Alvo">
+              <option value="">🏷️ Versão…</option>
+            </select>
+            <select class="bulk-inline-field" id="bulk-ini" title="Iniciativa">
+              <option value="">🏷 Iniciativa…</option>
+            </select>
+            <select class="bulk-inline-field" id="bulk-dev" title="DEV Responsável">
+              <option value="">👤 DEV…</option>
+            </select>
+            <select class="bulk-inline-field" id="bulk-ap" title="Aprovado">
+              <option value="">✅ Aprovação…</option>
+              <option value="Sim">✓ Sim</option>
+              <option value="Não">✗ Não</option>
+              <option value="Em andamento">⟳ Em andamento</option>
+            </select>
+            <button class="btn-bulk btn-bulk-apply" onclick="bulkApply()">✓ Aplicar</button>
+            <div class="bulk-bar-sep"></div>
+            <button class="btn-bulk btn-bulk-nd" onclick="bulkMarkNextDeploy()">🚀 Próximo Deploy</button>
+            <button class="btn-bulk btn-bulk-del" onclick="bulkDelete()">🗑 Excluir</button>
+          </div>
+          <button class="btn-bulk btn-bulk-cancel" onclick="clearPendingSelection()">✕ Cancelar seleção</button>
+        </div>
+        <table class="mrt">
+          <thead><tr>
+            <th style="width:32px"><input type="checkbox" class="pending-row-cb" id="pending-cb-all" onchange="toggleSelectAllPending()" title="Selecionar todos"></th>
+            <th>MR</th><th>Card</th><th>Repositório</th><th>Versão</th><th>Aprovado</th><th>Iniciativa</th><th>DEV Responsável</th><th>Pipeline</th><th>Comentários</th><th style="width:130px">Ações</th>
+          </tr></thead>
+          <tbody id="pending-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PRÓXIMO DEPLOY TAB -->
+    <div class="tab-pane" id="tab-nextdeploy">
+      <!-- Banner info -->
+      <div class="nd-banner">
+        <div class="nd-banner-icon">🚀</div>
+        <div class="nd-banner-text">
+          <h3>Próximo Deploy</h3>
+          <p>Selecione os MRs, informe versão e data, e clique em <strong>Realizar Deploy</strong> para mover ao histórico.</p>
+        </div>
+        <div class="nd-banner-actions">
+          <button class="btn-nd-clear" onclick="clearNextDeploy()">Limpar fila</button>
+        </div>
+      </div>
+      <!-- Promote bar -->
+      <div class="promote-bar" id="promote-bar">
+        <span class="promote-bar-label">✅ Realizar Deploy</span>
+        <div class="promote-bar-fields">
+          <input class="einput" id="promote-version" list="version-datalist" placeholder="🏷️ Versão (ex: 0.11.1)" autocomplete="off">
+          <input class="einput" id="promote-date" placeholder="📅 Data (DD/MM/AAAA)" maxlength="10" oninput="maskDate(this)">
+        </div>
+        <span class="promote-sel-count" id="promote-sel-count">0 MRs selecionados</span>
+        <span class="promote-sel-all" onclick="toggleSelectAllNd()">Selecionar todos</span>
+        <button class="btn-promote" id="btn-promote" onclick="promoteToHistory()" disabled>🚀 Realizar Deploy</button>
+      </div>
+      <div id="nextdeploy-list"></div>
+    </div>
+
+    <!-- VERSIONS TAB -->
+    <div class="tab-pane" id="tab-versions">
+      <div class="tcard">
+        <div class="tcard-hd">
+          <span style="font-size:18px">🏷️</span>
+          <span class="tcard-title">Histórico de Versões</span>
+          <button class="btn-add" style="margin-left:auto;padding:6px 14px;font-size:12px" onclick="openVersionModal()">➕ Nova Versão</button>
+        </div>
+        <table class="vtbl">
+          <thead>
+            <tr>
+              <th>🏷️ Versão</th>
+              <th>📅 Data Deploy</th>
+              <th>👤 Orquestrador</th>
+              <th>📊 Status</th>
+              <th style="width:100px">⚡ Ações</th>
+            </tr>
+          </thead>
+          <tbody id="versions-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<datalist id="version-datalist"></datalist>
+<div class="storage-toast" id="storage-toast">💾 Dados salvos</div>
+
+<!-- ── VERSION MODAL ── -->
+<div class="modal-overlay" id="version-overlay" onclick="closeVersionModalIfOutside(event)">
+  <div class="modal" style="width:440px">
+    <div class="modal-hd">
+      <span class="modal-hd-icon" id="vm-icon">🏷️</span>
+      <span class="modal-hd-title" id="vm-title">Nova Versão</span>
+      <button class="modal-close" onclick="closeVersionModal()">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label class="form-label">🏷️ Versão *</label>
+        <input class="einput" id="vm-version" placeholder="ex: 0.11.0 ou v1.2.3">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label class="form-label">📅 Data de Deploy</label>
+        <input class="einput" id="vm-date" placeholder="DD/MM/AAAA" maxlength="10">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label class="form-label" style="display:flex;align-items:center;gap:4px">
+          👤 Orquestrador
+          <button class="btn-manage" onclick="openManage('dev')" title="Gerenciar devs">⚙</button>
+        </label>
+        <select class="eselect" id="vm-orchestrator" style="width:100%"></select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label class="form-label">📝 Observação</label>
+        <input class="einput" id="vm-note" placeholder="Observação opcional">
+      </div>
+      <div style="display:flex;gap:8px;padding-top:4px;border-top:1px solid var(--border)">
+        <button class="btn-sv" id="vm-save-btn" onclick="saveVersionModal()" style="padding:8px 20px">✓ Salvar</button>
+        <button class="btn-cn" onclick="closeVersionModal()" style="padding:8px 16px">Cancelar</button>
+        <button class="btn-dg btn-dg-del" id="vm-del-btn" onclick="deleteVersionFromModal()" style="margin-left:auto;display:none">🗑 Excluir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── EDIT PENDING MODAL ── -->
+<div class="modal-overlay" id="edit-pending-overlay" onclick="closeEditPendingIfOutside(event)">
+  <div class="modal" style="width:560px">
+    <div class="modal-hd">
+      <span class="modal-hd-icon">✏️</span>
+      <span class="modal-hd-title">Editar MR</span>
+      <button class="modal-close" onclick="closeEditPending()">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label class="form-label">Link do MR *</label>
+        <input class="einput" id="epm-mr" placeholder="https://gitlab.luizalabs.com/…/merge_requests/0000">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label class="form-label">Card Vinculado</label>
+          <input class="einput" id="epm-card" placeholder="STK-XXXX">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label class="form-label" style="display:flex;align-items:center;gap:4px">
+            Repositório <button class="btn-manage" onclick="openManage('repo')" title="Gerenciar">⚙</button>
+          </label>
+          <select class="eselect" id="epm-repo" style="width:100%"></select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label class="form-label">Aprovado</label>
+          <select class="eselect" id="epm-ap" style="width:100%">
+            <option value="">—</option>
+            <option value="Sim">Sim</option>
+            <option value="Não">Não</option>
+            <option value="Em andamento">Em andamento</option>
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label class="form-label">Pipeline</label>
+          <select class="eselect" id="epm-pip" style="width:100%">
+            <option value="">—</option>
+            <option value="Não">OK (não quebrada)</option>
+            <option value="Sim">Quebrada</option>
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label class="form-label" style="display:flex;align-items:center;gap:4px">
+            Iniciativa <button class="btn-manage" onclick="openManage('initiative')" title="Gerenciar">⚙</button>
+          </label>
+          <select class="eselect" id="epm-ini" style="width:100%"></select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label class="form-label" style="display:flex;align-items:center;gap:4px">
+            DEV Responsável <button class="btn-manage" onclick="openManage('dev')" title="Gerenciar">⚙</button>
+          </label>
+          <select class="eselect" id="epm-dev" style="width:100%"></select>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label class="form-label">💬 Comentários</label>
+        <input class="einput" id="epm-comment" placeholder="Observação opcional">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label class="form-label">🏷️ Versão Alvo</label>
+          <input class="einput" id="epm-version" list="version-datalist"
+            placeholder="ex: 0.11.0 ou digitar nova…" autocomplete="off" style="width:100%">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label class="form-label">📅 Data de Deploy</label>
+          <input class="einput" id="epm-deploy-date" placeholder="DD/MM/AAAA" maxlength="10"
+            oninput="maskDate(this)" style="width:100%">
+        </div>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">🚀 Incluir no Próximo Deploy</div>
+          <div class="toggle-sub">Exibe este MR na aba "Próximo Deploy"</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="epm-nd">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div style="display:flex;gap:8px;padding-top:4px;border-top:1px solid var(--border)">
+        <button class="btn-sv" onclick="saveEditPendingModal()" style="padding:8px 20px">✓ Salvar alterações</button>
+        <button class="btn-cn" onclick="closeEditPending()" style="padding:8px 16px">Cancelar</button>
+        <button class="btn-dg btn-dg-del" onclick="deleteFromEditModal()" style="margin-left:auto">🗑 Excluir MR</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MANAGE MODAL ── -->
+<div class="modal-overlay" id="manage-overlay" onclick="closeManageIfOutside(event)">
+  <div class="modal" id="manage-modal">
+    <div class="modal-hd">
+      <span class="modal-hd-icon" id="manage-icon">🏷</span>
+      <span class="modal-hd-title" id="manage-title">Gerenciar Iniciativas</span>
+      <button class="modal-close" onclick="closeManage()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-add-row">
+        <input class="einput" id="manage-new-name" placeholder="Nome do novo item…" onkeydown="if(event.key==='Enter')addManageItem()">
+        <input type="color" id="manage-new-color" class="mi-color" value="#0969DA" title="Cor">
+        <button class="btn-sv" onclick="addManageItem()">＋ Adicionar</button>
+      </div>
+      <div class="manage-list" id="manage-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// VERSIONS MAP
+// ══════════════════════════════════════════════
+let VERSIONS_LIST = [
+  { id:'2025-q1-q2', label:'2025 Q1–Q2', date:'', color:'#8250DF' },
+  { id:'2025-q3-q4', label:'2025 Q3–Q4', date:'', color:'#0969DA' },
+  { id:'v0.7.46',   label:'v0.7.46',  date:'19/01/2026', color:'#0969DA' },
+  { id:'v0.7.48',   label:'v0.7.48',  date:'29/01/2026', color:'#0969DA' },
+  { id:'v0.8.1',    label:'v0.8.1',   date:'23/02/2026', color:'#1A7F37' },
+  { id:'v0.8.3',    label:'v0.8.3',   date:'02/03/2026', color:'#1A7F37' },
+  { id:'v0.8.4',    label:'v0.8.4',   date:'05/03/2026', color:'#1A7F37' },
+  { id:'v0.8.5',    label:'v0.8.5',   date:'18/03/2026', color:'#9A6700' },
+  { id:'v0.8.7',    label:'v0.8.7',   date:'25/03/2026', color:'#9A6700' },
+  { id:'v0.8.8',    label:'v0.8.8',   date:'01/04/2026', color:'#CF222E' },
+  { id:'v0.9.0',    label:'v0.9.0',   date:'29/04/2026', color:'#CF222E' },
+  { id:'v0.10.0',   label:'v0.10.0',  date:'12/05/2026', color:'#FC6D26' },
+  { id:'v0.10.2',   label:'v0.10.2',  date:'27/05/2026', color:'#FC6D26' },
+  { id:'v0.10.3',   label:'v0.10.3',  date:'01/06/2026', color:'#FC6D26' },
+  { id:'wallu-v0.2.3', label:'Wallu v0.2.3', date:'16/04/2026', color:'#8250DF' },
+];
+
+// ══════════════════════════════════════════════
+// MANAGED LISTS (Initiatives / Devs / Repos)
+// ══════════════════════════════════════════════
+let INITIATIVES = [
+  { id:'i1',  name:'BUG',                color:'#CF222E' },
+  { id:'i2',  name:'VULNERABILIDADE',    color:'#CF222E' },
+  { id:'i3',  name:'Engenharia',         color:'#0969DA' },
+  { id:'i4',  name:'Retentativa',        color:'#8250DF' },
+  { id:'i5',  name:'Melhoria',           color:'#1A7F37' },
+  { id:'i6',  name:'Vale MPAY',          color:'#9A6700' },
+  { id:'i7',  name:'Multiplas Formas',   color:'#0969DA' },
+  { id:'i8',  name:'Processamento Lista',color:'#1A7F37' },
+  { id:'i9',  name:'Plataforma de Risco',color:'#CF222E' },
+  { id:'i10', name:'Destrava - OUT',     color:'#9A6700' },
+  { id:'i11', name:'Destrava - IN',      color:'#9A6700' },
+  { id:'i12', name:'Controle Bins',      color:'#0969DA' },
+  { id:'i13', name:'V2',                 color:'#8250DF' },
+  { id:'i14', name:'VIP',                color:'#9A6700' },
+  { id:'i15', name:'Bradesco V2',        color:'#656D76' },
+  { id:'i16', name:'PPL - V2',           color:'#0969DA' },
+  { id:'i17', name:'Débito Técnico',     color:'#656D76' },
+  { id:'i18', name:'Integração Uncle',   color:'#1A7F37' },
+  { id:'i19', name:'GOOR',               color:'#1A7F37' },
+  { id:'i20', name:'Velocity',           color:'#8250DF' },
+  { id:'i21', name:'Demais Tarefas',     color:'#656D76' },
+  { id:'i22', name:'Migração Notify',    color:'#8250DF' },
+];
+let DEVS = [
+  { id:'dv1', name:'Aleson',    color:'#FC6D26' },
+  { id:'dv2', name:'Matheus',   color:'#1A7F37' },
+  { id:'dv3', name:'Islan',     color:'#8250DF' },
+  { id:'dv4', name:'Lourene',   color:'#0969DA' },
+  { id:'dv5', name:'Diguinho',  color:'#CF222E' },
+  { id:'dv6', name:'Terceiros', color:'#656D76' },
+];
+let REPOS = [
+  { id:'rp1', name:'sesamo',       color:'#FC6D26' },
+  { id:'rp2', name:'wallu',        color:'#8250DF' },
+  { id:'rp3', name:'billy',        color:'#0969DA' },
+  { id:'rp4', name:'billy-worker', color:'#0969DA' },
+  { id:'rp5', name:'jaiminho',     color:'#1A7F37' },
+  { id:'rp6', name:'ci/cd',        color:'#9A6700' },
+];
+let manageIdCtr = 1000;
+let currentManageType = 'initiative';
+let editingManageId = null;
+// mr, card, approved (Sim/Não/Em andamento/TRUE/FALSE),
+// initiative, dev, pipeline (Sim=quebrada/Não=ok/''),
+// comment
+// ══════════════════════════════════════════════
+let DEPLOYS = [
+  // ── 2025 Q1–Q2 ──
+  { id:'d1', ver:'2025-q1-q2', date:'10/03/2025', label:'Sésamo – V2 / BUG / VIP / Uncle', repo:'sesamo', rows:[
+    { id:'r1', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2039', card:'STK-1F68', approved:'Sim', initiative:'V2', dev:'', pipeline:'', comment:'' },
+    { id:'r2', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2058', card:'BUG-E235', approved:'Sim', initiative:'BUG', dev:'', pipeline:'', comment:'' },
+    { id:'r3', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2076', card:'BUG-D84B', approved:'Sim', initiative:'BUG', dev:'', pipeline:'', comment:'' },
+    { id:'r4', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2077', card:'STK-BB04', approved:'Sim', initiative:'VIP', dev:'', pipeline:'', comment:'' },
+    { id:'r5', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2080', card:'STK-B56F', approved:'Sim', initiative:'Integração Uncle', dev:'', pipeline:'', comment:'' },
+  ]},
+  { id:'d2', ver:'2025-q1-q2', date:'11/03/2025', label:'Sésamo – BUG', repo:'sesamo', rows:[
+    { id:'r6', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2122', card:'bug6c44', approved:'Sim', initiative:'BUG', dev:'', pipeline:'', comment:'' },
+  ]},
+  { id:'d3', ver:'2025-q1-q2', date:'20/03/2025', label:'Sésamo – Uncle / Velocity', repo:'sesamo', rows:[
+    { id:'r7', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2064', card:'STK-73F7', approved:'Sim', initiative:'Integração Uncle', dev:'', pipeline:'', comment:'' },
+    { id:'r8', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2097', card:'STK-F2BE', approved:'Sim', initiative:'Integração Uncle', dev:'', pipeline:'', comment:'' },
+    { id:'r9', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2108', card:'STK-1EC9', approved:'Sim', initiative:'Velocity', dev:'', pipeline:'', comment:'' },
+  ]},
+  { id:'d4', ver:'2025-q1-q2', date:'02/04/2025', label:'Sésamo – GOOR / BUG', repo:'sesamo', rows:[
+    { id:'r10', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2106', card:'STK-32FB', approved:'Sim', initiative:'GOOR', dev:'', pipeline:'', comment:'' },
+    { id:'r11', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2115', card:'BUG-4BDF', approved:'Sim', initiative:'BUG', dev:'', pipeline:'', comment:'' },
+    { id:'r12', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2151', card:'IMP-4C2B', approved:'Sim', initiative:'', dev:'', pipeline:'', comment:'Card on File' },
+  ]},
+  { id:'d5', ver:'2025-q1-q2', date:'10/04/2025', label:'Sésamo – Múltiplas Formas', repo:'sesamo', rows:[
+    { id:'r13', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2069', card:'BUG-5EBD', approved:'Sim', initiative:'Multiplas Formas', dev:'', pipeline:'', comment:'' },
+    { id:'r14', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2158', card:'STK-098A', approved:'Sim', initiative:'Multiplas Formas', dev:'', pipeline:'', comment:'' },
+    { id:'r15', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2165', card:'BUG-5EBD', approved:'Sim', initiative:'Multiplas Formas', dev:'', pipeline:'', comment:'' },
+    { id:'r16', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2116', card:'STK-FF06', approved:'Sim', initiative:'Multiplas Formas', dev:'', pipeline:'', comment:'' },
+  ]},
+  // ── 2025 Q3–Q4 ──
+  { id:'d6', ver:'2025-q3-q4', date:'19/05/2025', label:'Sésamo – Retentativa (major)', repo:'sesamo', rows:[
+    { id:'r17', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2130', card:'STK-791D', approved:'Sim', initiative:'Retentativa', dev:'', pipeline:'', comment:'' },
+    { id:'r18', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2152', card:'STK-EF3E', approved:'Sim', initiative:'Retentativa', dev:'', pipeline:'', comment:'' },
+    { id:'r19', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2173', card:'STK-4450', approved:'Sim', initiative:'Retentativa', dev:'', pipeline:'', comment:'' },
+    { id:'r20', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2202', card:'STK-046D', approved:'Sim', initiative:'Retentativa', dev:'', pipeline:'', comment:'' },
+    { id:'r21', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2207', card:'BUG-BDE6', approved:'Sim', initiative:'Retentativa', dev:'', pipeline:'', comment:'' },
+    { id:'r22', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2209', card:'STK-3475', approved:'Sim', initiative:'Retentativa', dev:'', pipeline:'', comment:'' },
+    { id:'r23', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2238', card:'STK-EB35', approved:'Sim', initiative:'Retentativa', dev:'', pipeline:'', comment:'' },
+    { id:'r24', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2194', card:'STK-BB37', approved:'Sim', initiative:'Débito Técnico', dev:'', pipeline:'', comment:'' },
+    { id:'r25', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2240', card:'BUG-122D', approved:'Sim', initiative:'BUG', dev:'', pipeline:'', comment:'' },
+    { id:'r26', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2227', card:'STK-F7CA', approved:'Em andamento', initiative:'Retentativa', dev:'', pipeline:'', comment:'' },
+    { id:'r27', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2255', card:'STK-61E9', approved:'Sim', initiative:'Retentativa', dev:'', pipeline:'', comment:'' },
+  ]},
+  { id:'d7', ver:'2025-q3-q4', date:'28/05/2025', label:'Sésamo – Retentativa', repo:'sesamo', rollback:true, rows:[
+    { id:'r28', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2278', card:'STK-64B6', approved:'Sim', initiative:'Retentativa', dev:'', pipeline:'', comment:'Deu ROLLBACK' },
+  ]},
+  { id:'d8', ver:'2025-q3-q4', date:'02/06/2025', label:'Sésamo – Retentativa (retry v0.6.1)', repo:'sesamo', rows:[
+    { id:'r29', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2278', card:'STK-64B6', approved:'Sim', initiative:'Retentativa', dev:'', pipeline:'', comment:'Nova tentativa v0.6.1' },
+  ]},
+  { id:'d9', ver:'2025-q3-q4', date:'01/07/2025', label:'Sésamo – Retentativa / Múltiplas Formas', repo:'sesamo', rows:[
+    { id:'r30', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/1867', card:'STK-5FF5', approved:'Sim', initiative:'Retentativa', dev:'', pipeline:'', comment:'' },
+    { id:'r31', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2318', card:'STK-098A/STK-8C3E', approved:'Sim', initiative:'Multiplas Formas', dev:'', pipeline:'', comment:'RELEASE → MR 2323' },
+    { id:'r32', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2319', card:'STK-3375', approved:'Não', initiative:'Multiplas Formas', dev:'', pipeline:'', comment:'' },
+    { id:'r33', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2321', card:'STK-7E10', approved:'Não', initiative:'Multiplas Formas', dev:'', pipeline:'', comment:'' },
+    { id:'r34', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2322', card:'STK-329D', approved:'Não', initiative:'Multiplas Formas', dev:'', pipeline:'', comment:'' },
+  ]},
+  { id:'d10', ver:'2025-q3-q4', date:'23/07/2025', label:'Sésamo – Múltiplas Formas / Débito', repo:'sesamo', rows:[
+    { id:'r35', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2279', card:'STK-9B6C', approved:'Sim', initiative:'Multiplas Formas', dev:'', pipeline:'', comment:'' },
+    { id:'r36', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2316', card:'STK-BA08', approved:'Sim', initiative:'Multiplas Formas', dev:'', pipeline:'', comment:'' },
+    { id:'r37', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2317', card:'STK-FB54', approved:'Sim', initiative:'Multiplas Formas', dev:'', pipeline:'', comment:'' },
+    { id:'r38', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2327', card:'STK-BF55', approved:'Sim', initiative:'Débito Técnico', dev:'', pipeline:'', comment:'' },
+    { id:'r39', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2374', card:'BUG-22B1', approved:'Sim', initiative:'Retentativa', dev:'', pipeline:'', comment:'' },
+  ]},
+  { id:'d11', ver:'2025-q3-q4', date:'30/07/2025', label:'Sésamo – BUG', repo:'sesamo', rows:[
+    { id:'r40', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2445', card:'BUG-7A91', approved:'Sim', initiative:'BUG', dev:'', pipeline:'', comment:'' },
+    { id:'r41', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2448', card:'BUG-7A91', approved:'Sim', initiative:'BUG', dev:'', pipeline:'', comment:'' },
+  ]},
+  { id:'d12', ver:'2025-q3-q4', date:'13/08/2025', label:'Sésamo – Múltiplas Formas / Processamento Lista', repo:'sesamo', rows:[
+    { id:'r42', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2393', card:'IMP-0BF3', approved:'Sim', initiative:'Multiplas Formas', dev:'', pipeline:'', comment:'' },
+    { id:'r43', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2396', card:'IMP-3DCC', approved:'Sim', initiative:'Multiplas Formas', dev:'', pipeline:'', comment:'' },
+    { id:'r44', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2466', card:'STK-1512', approved:'Sim', initiative:'Processamento Lista', dev:'', pipeline:'', comment:'' },
+    { id:'r45', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2467', card:'STK-166F', approved:'Sim', initiative:'Processamento Lista', dev:'', pipeline:'', comment:'' },
+    { id:'r46', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2468', card:'STK-8C90', approved:'Sim', initiative:'Processamento Lista', dev:'', pipeline:'', comment:'' },
+    { id:'r47', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2470', card:'STK-43D3', approved:'Sim', initiative:'Processamento Lista', dev:'', pipeline:'', comment:'' },
+    { id:'r48', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2473', card:'STK-1A65', approved:'Sim', initiative:'Processamento Lista', dev:'', pipeline:'', comment:'' },
+  ]},
+  { id:'d13', ver:'2025-q3-q4', date:'26/08/2025', label:'Billy – VULNERABILIDADE', repo:'billy', rows:[
+    { id:'r49', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/billy/-/merge_requests/52', card:'OPS-56E8 +16', approved:'', initiative:'VULNERABILIDADE', dev:'', pipeline:'', comment:'' },
+    { id:'r50', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/billy/-/merge_requests/53', card:'OPS-71DA', approved:'', initiative:'VULNERABILIDADE', dev:'', pipeline:'', comment:'' },
+  ]},
+  { id:'d14', ver:'2025-q3-q4', date:'02/09/2025', label:'Sésamo – Plataforma de Risco', repo:'sesamo', rows:[
+    { id:'r51', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2330', card:'STK-FC5A', approved:'Em andamento', initiative:'Plataforma de Risco', dev:'', pipeline:'', comment:'' },
+    { id:'r52', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2363', card:'STK-8600', approved:'Em andamento', initiative:'Plataforma de Risco', dev:'', pipeline:'', comment:'' },
+    { id:'r53', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2368', card:'STK-A959', approved:'Em andamento', initiative:'Plataforma de Risco', dev:'', pipeline:'', comment:'' },
+    { id:'r54', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2380', card:'STK-E132', approved:'Em andamento', initiative:'Plataforma de Risco', dev:'', pipeline:'', comment:'' },
+    { id:'r55', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2402', card:'STK-AE38', approved:'Em andamento', initiative:'Plataforma de Risco', dev:'', pipeline:'', comment:'' },
+    { id:'r56', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2492', card:'STK-DB58', approved:'Em andamento', initiative:'Processamento Lista', dev:'', pipeline:'', comment:'' },
+  ]},
+  // ── v0.7.46 ──
+  { id:'d15', ver:'v0.7.46', date:'19/01/2026', label:'Sésamo – BUG / Melhoria', repo:'sesamo', rows:[
+    { id:'r57', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2716', card:'IMP-CB39', approved:'Sim', initiative:'BUG', dev:'', pipeline:'Não', comment:'' },
+    { id:'r58', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2722', card:'BUG-9078', approved:'Sim', initiative:'BUG', dev:'', pipeline:'Não', comment:'' },
+    { id:'r59', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2752', card:'BUG-C5FF', approved:'Sim', initiative:'BUG', dev:'', pipeline:'Não', comment:'' },
+    { id:'r60', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2760', card:'IMP-CB75', approved:'Sim', initiative:'Melhoria', dev:'', pipeline:'Não', comment:'' },
+    { id:'r61', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2812', card:'BUG-C5FF', approved:'Sim', initiative:'BUG', dev:'', pipeline:'Não', comment:'' },
+  ]},
+  // ── v0.7.48 ──
+  { id:'d16', ver:'v0.7.48', date:'29/01/2026', label:'Sésamo – VULNERABILIDADE / BUG', repo:'sesamo', rows:[
+    { id:'r62', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2795', card:'OPS-30B0', approved:'Sim', initiative:'VULNERABILIDADE', dev:'Islan', pipeline:'Não', comment:'' },
+    { id:'r63', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2816', card:'BUG-193A', approved:'Sim', initiative:'BUG', dev:'Matheus', pipeline:'Não', comment:'' },
+  ]},
+  // ── v0.8.1 ──
+  { id:'d17', ver:'v0.8.1', date:'23/02/2026', label:'Sésamo – Engenharia / PPL-V2 / BUG', repo:'sesamo', rows:[
+    { id:'r64', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2840', card:'STK-9912', approved:'Sim', initiative:'Engenharia', dev:'Aleson', pipeline:'Não', comment:'Swagger' },
+    { id:'r65', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2861', card:'STK-4A0C', approved:'Não', initiative:'Engenharia', dev:'Aleson', pipeline:'Não', comment:'Mergeado por engano' },
+    { id:'r66', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2782', card:'STK-0360', approved:'Sim', initiative:'PPL - V2', dev:'Matheus', pipeline:'Não', comment:'' },
+    { id:'r67', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2783', card:'STK-3EB9', approved:'Sim', initiative:'PPL - V2', dev:'Matheus', pipeline:'Não', comment:'' },
+    { id:'r68', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2784', card:'STK-3C52', approved:'Sim', initiative:'PPL - V2', dev:'Matheus', pipeline:'Não', comment:'' },
+    { id:'r69', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2790', card:'STK-5C0E', approved:'Sim', initiative:'PPL - V2', dev:'Aleson', pipeline:'Não', comment:'' },
+    { id:'r70', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2815', card:'STK-3DD6', approved:'Sim', initiative:'PPL - V2', dev:'Aleson', pipeline:'Não', comment:'' },
+    { id:'r71', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2832', card:'STK-AF9E', approved:'Sim', initiative:'Engenharia', dev:'Aleson', pipeline:'Não', comment:'Swagger' },
+    { id:'r72', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2898', card:'IMP-4002', approved:'Sim', initiative:'BUG', dev:'Lourene', pipeline:'Não', comment:'' },
+  ]},
+  // ── v0.8.3 ──
+  { id:'d18', ver:'v0.8.3', date:'02/03/2026', label:'Sésamo – Destrava OUT / Melhoria', repo:'sesamo', rows:[
+    { id:'r73', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2856', card:'STK-E0D9/STK-C0F2', approved:'Sim', initiative:'Destrava - OUT', dev:'Terceiros', pipeline:'Não', comment:'' },
+    { id:'r74', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2888', card:'BUG-C23E', approved:'Sim', initiative:'BUG', dev:'Matheus', pipeline:'Não', comment:'' },
+    { id:'r75', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2923', card:'IMP-4A07', approved:'Sim', initiative:'Melhoria', dev:'Islan', pipeline:'Não', comment:'' },
+    { id:'r76', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2940', card:'STK-6C36', approved:'Sim', initiative:'Destrava - OUT', dev:'Lourene', pipeline:'Não', comment:'' },
+    { id:'r77', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2945', card:'IMP-4A07', approved:'Sim', initiative:'Melhoria', dev:'Islan', pipeline:'Não', comment:'' },
+  ]},
+  // ── v0.8.4 ──
+  { id:'d19', ver:'v0.8.4', date:'05/03/2026', label:'Sésamo – BUG / Vale MPay / Engenharia', repo:'sesamo', rows:[
+    { id:'r78', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2846', card:'BUG-09DB', approved:'Sim', initiative:'BUG', dev:'Matheus', pipeline:'Não', comment:'' },
+    { id:'r79', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2873', card:'STK-0820', approved:'Sim', initiative:'Vale MPAY', dev:'Terceiros', pipeline:'Não', comment:'' },
+    { id:'r80', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2880', card:'STK-6FB4', approved:'Sim', initiative:'Vale MPAY', dev:'Terceiros', pipeline:'Não', comment:'' },
+    { id:'r81', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2922', card:'STK-5692', approved:'Sim', initiative:'Vale MPAY', dev:'Matheus', pipeline:'Não', comment:'' },
+    { id:'r82', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2938', card:'BUG-7ACA', approved:'Sim', initiative:'BUG', dev:'Islan', pipeline:'Não', comment:'' },
+    { id:'r83', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2961', card:'BUG-17C4', approved:'Sim', initiative:'BUG', dev:'Aleson', pipeline:'Não', comment:'' },
+    { id:'r84', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2967', card:'STK-3DBB/STK-AE0C', approved:'Sim', initiative:'Engenharia', dev:'Diguinho', pipeline:'Não', comment:'' },
+    { id:'r85', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2971', card:'IMP-77AF', approved:'Sim', initiative:'Engenharia', dev:'Diguinho', pipeline:'Não', comment:'' },
+  ]},
+  // ── v0.8.5 ──
+  { id:'d20', ver:'v0.8.5', date:'18/03/2026', label:'Sésamo – Engenharia / Destrava / Melhoria', repo:'sesamo', rows:[
+    { id:'r86', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2899', card:'STK-73A1/STK-CF47', approved:'Sim', initiative:'Engenharia', dev:'Diguinho', pipeline:'Não', comment:'' },
+    { id:'r87', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2944', card:'STK-1866', approved:'Sim', initiative:'Destrava - OUT', dev:'Aleson', pipeline:'Não', comment:'MIGRATION' },
+    { id:'r88', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2979', card:'STK-B281', approved:'Sim', initiative:'Vale MPAY', dev:'Lourene', pipeline:'Não', comment:'' },
+    { id:'r89', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2987', card:'IMP-5F62', approved:'Sim', initiative:'Melhoria', dev:'Aleson', pipeline:'Não', comment:'' },
+    { id:'r90', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2991', card:'STK-F0AE', approved:'Sim', initiative:'Destrava - OUT', dev:'Lourene', pipeline:'Não', comment:'' },
+    { id:'r91', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3006', card:'IMP-347C', approved:'Sim', initiative:'Melhoria', dev:'Islan', pipeline:'Não', comment:'' },
+    { id:'r92', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3002', card:'STK-F0AE/STK-1866', approved:'Sim', initiative:'Destrava - OUT', dev:'Lourene', pipeline:'', comment:'' },
+  ]},
+  // ── v0.8.7 ──
+  { id:'d21', ver:'v0.8.7', date:'25/03/2026', label:'Sésamo – BUG', repo:'sesamo', rows:[
+    { id:'r93', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2822', card:'BUG-9BE7', approved:'Sim', initiative:'BUG', dev:'Matheus', pipeline:'Não', comment:'' },
+  ]},
+  // ── Wallu v0.2.3 ──
+  { id:'d22', ver:'wallu-v0.2.3', date:'16/04/2026', label:'Wallu – Controle Bins', repo:'wallu', rows:[
+    { id:'r94', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/wallu/-/merge_requests/146', card:'STK-0999', approved:'Sim', initiative:'Controle Bins', dev:'Aleson', pipeline:'Não', comment:'' },
+    { id:'r95', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/wallu/-/merge_requests/148', card:'STK-1E16', approved:'Sim', initiative:'Controle Bins', dev:'Aleson', pipeline:'Não', comment:'' },
+    { id:'r96', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/wallu/-/merge_requests/149', card:'STK-3DDB', approved:'Não', initiative:'Controle Bins', dev:'Aleson', pipeline:'Não', comment:'' },
+  ]},
+  // ── v0.8.8 ──
+  { id:'d23', ver:'v0.8.8', date:'01/04/2026', label:'Sésamo – Vale MPay / Engenharia / Destrava', repo:'sesamo', rows:[
+    { id:'r97', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2974', card:'STK-432A', approved:'Sim', initiative:'Vale MPAY', dev:'Matheus', pipeline:'Não', comment:'rockefeller desligado em prod' },
+    { id:'r98', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3018', card:'STK-41C1', approved:'Sim', initiative:'Vale MPAY', dev:'Matheus', pipeline:'Não', comment:'rockefeller desligado em prod' },
+    { id:'r99', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3040', card:'STK-ACAD', approved:'Sim', initiative:'Vale MPAY', dev:'Lourene', pipeline:'Não', comment:'rockefeller desligado em prod' },
+    { id:'r100', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3043', card:'STK-8EF3', approved:'Sim', initiative:'Vale MPAY', dev:'Matheus', pipeline:'Não', comment:'rockefeller desligado em prod' },
+    { id:'r101', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2878', card:'STK-9C19', approved:'Sim', initiative:'Engenharia', dev:'Diguinho', pipeline:'Não', comment:'' },
+    { id:'r102', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3026', card:'STK-9C19', approved:'Sim', initiative:'Engenharia', dev:'Diguinho', pipeline:'Não', comment:'' },
+    { id:'r103', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3033', card:'STK-9C19', approved:'Sim', initiative:'Engenharia', dev:'Diguinho', pipeline:'Não', comment:'' },
+    { id:'r104', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2836', card:'BUG-380D', approved:'Sim', initiative:'BUG', dev:'Matheus', pipeline:'Não', comment:'' },
+    { id:'r105', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2903', card:'STK-78B7', approved:'Sim', initiative:'Engenharia', dev:'Diguinho', pipeline:'Não', comment:'' },
+    { id:'r106', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3008', card:'IMP-238A', approved:'Sim', initiative:'Melhoria', dev:'Islan', pipeline:'Não', comment:'' },
+    { id:'r107', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3030', card:'BUG-4E0D', approved:'Sim', initiative:'Destrava - OUT', dev:'Aleson', pipeline:'Não', comment:'' },
+    { id:'r108', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3045', card:'BUG-BEC9', approved:'Sim', initiative:'Destrava - OUT', dev:'Lourene', pipeline:'Não', comment:'' },
+    { id:'r109', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3049', card:'BUG-EB19', approved:'Sim', initiative:'Destrava - OUT', dev:'Lourene', pipeline:'Não', comment:'' },
+  ]},
+  // ── v0.9.0 ──
+  { id:'d24', ver:'v0.9.0', date:'29/04/2026', label:'Sésamo – Melhoria / BUG', repo:'sesamo', rows:[
+    { id:'r110', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3021', card:'IMP-F715', approved:'Sim', initiative:'Melhoria', dev:'Matheus', pipeline:'Não', comment:'' },
+    { id:'r111', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3047', card:'BUG-2BEC', approved:'Sim', initiative:'BUG', dev:'Matheus', pipeline:'Não', comment:'' },
+    { id:'r112', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3076', card:'BUG-CDF9', approved:'Sim', initiative:'BUG', dev:'Islan', pipeline:'Não', comment:'' },
+  ]},
+  // ── v0.10.0 ──
+  { id:'d25', ver:'v0.10.0', date:'12/05/2026', label:'Sésamo – Bradesco V2 / Melhoria / Engenharia', repo:'sesamo', rows:[
+    { id:'r113', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2143', card:'BUG-F580/BUG-1C0C', approved:'Sim', initiative:'Melhoria', dev:'Lourene', pipeline:'Não', comment:'' },
+    { id:'r114', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2928', card:'STK-52AF', approved:'Sim', initiative:'Engenharia', dev:'Diguinho', pipeline:'Não', comment:'' },
+    { id:'r115', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3076', card:'BUG-CDF9', approved:'Sim', initiative:'BUG', dev:'Islan', pipeline:'Não', comment:'' },
+    { id:'r116', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3132', card:'STK-F489', approved:'Sim', initiative:'Bradesco V2', dev:'Islan', pipeline:'Não', comment:'' },
+    { id:'r117', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3072', card:'STK-BFBD', approved:'Sim', initiative:'Bradesco V2', dev:'Aleson', pipeline:'Não', comment:'' },
+    { id:'r118', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3085', card:'STK-BFBD', approved:'Sim', initiative:'Bradesco V2', dev:'Aleson', pipeline:'Não', comment:'' },
+    { id:'r119', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3093', card:'STK-BFBD', approved:'Sim', initiative:'Bradesco V2', dev:'Aleson', pipeline:'Não', comment:'' },
+    { id:'r120', mr:'https://gitlab.luizalabs.com/cicd/fintech/magalu-pagamentos/squad-sesamo/sesamo/-/merge_requests/1715', card:'STK-3AB7', approved:'Sim', initiative:'Melhoria', dev:'Lourene', pipeline:'Não', comment:'' },
+  ]},
+  // ── v0.10.2 ──
+  { id:'d26', ver:'v0.10.2', date:'27/05/2026', label:'Sésamo – BUG', repo:'sesamo', rows:[
+    { id:'r121', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3181', card:'IMP-5218', approved:'Sim', initiative:'BUG', dev:'Islan', pipeline:'Não', comment:'' },
+    { id:'r122', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3187', card:'IMP-5218', approved:'Sim', initiative:'BUG', dev:'Islan', pipeline:'Não', comment:'' },
+  ]},
+  // ── v0.10.3 ──
+  { id:'d27', ver:'v0.10.3', date:'01/06/2026', label:'Sésamo – Engenharia / Plataforma de Riscos', repo:'sesamo', rows:[
+    { id:'r123', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2951', card:'STK-5AAC', approved:'Sim', initiative:'Engenharia', dev:'Diguinho', pipeline:'Não', comment:'' },
+    { id:'r124', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2977', card:'STK-B939', approved:'Sim', initiative:'Engenharia', dev:'Diguinho', pipeline:'Não', comment:'' },
+    { id:'r125', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2985', card:'STK-6659', approved:'Sim', initiative:'Engenharia', dev:'Diguinho', pipeline:'Não', comment:'' },
+    { id:'r126', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2989', card:'STK-757C', approved:'Sim', initiative:'Engenharia', dev:'Diguinho', pipeline:'Não', comment:'' },
+    { id:'r127', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2993', card:'STK-1255', approved:'Sim', initiative:'Engenharia', dev:'Diguinho', pipeline:'Não', comment:'' },
+    { id:'r128', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3011', card:'STK-E772', approved:'Sim', initiative:'Engenharia', dev:'Diguinho', pipeline:'Não', comment:'' },
+    { id:'r129', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3027', card:'STK-C1AB', approved:'Sim', initiative:'Engenharia', dev:'Diguinho', pipeline:'Não', comment:'' },
+    { id:'r130', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3123', card:'STK-E87F', approved:'Sim', initiative:'Demais Tarefas', dev:'Lourene', pipeline:'Não', comment:'' },
+    { id:'r131', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3139', card:'STK-3FE4', approved:'Sim', initiative:'Plataforma de riscos', dev:'Lourene', pipeline:'Não', comment:'' },
+    { id:'r132', mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/3149', card:'STK-354B', approved:'Sim', initiative:'Engenharia', dev:'Aleson', pipeline:'Não', comment:'' },
+  ]},
+];
+
+let PENDING = [
+  { id:1, mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2370', card:'STK-1CA4', repo:'sesamo', approved:'Não', initiative:'Processamento Lista', dev:'', pipeline:'', comment:'', nextDeploy:false, version:'' },
+  { id:2, mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2382', card:'STK-3D3B', repo:'sesamo', approved:'Não', initiative:'Processamento Lista', dev:'', pipeline:'', comment:'', nextDeploy:false, version:'' },
+  { id:3, mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2434', card:'BUG-C405', repo:'sesamo', approved:'Em andamento', initiative:'BUG', dev:'', pipeline:'', comment:'BUG - Atualização Pedido', nextDeploy:false, version:'' },
+  { id:4, mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2437', card:'STK-B31A', repo:'sesamo', approved:'Não', initiative:'Processamento Lista', dev:'', pipeline:'', comment:'', nextDeploy:false, version:'' },
+  { id:5, mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2447', card:'BUG-7E22', repo:'sesamo', approved:'Sim', initiative:'BUG', dev:'', pipeline:'', comment:'BUG - retentativa', nextDeploy:false, version:'' },
+  { id:6, mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2459', card:'STK-6B14', repo:'sesamo', approved:'Não', initiative:'Processamento Lista', dev:'', pipeline:'', comment:'', nextDeploy:false, version:'' },
+  { id:7, mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2287', card:'STK-D73E', repo:'sesamo', approved:'Sim', initiative:'Retentativa', dev:'', pipeline:'', comment:'', nextDeploy:false, version:'' },
+  { id:8, mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2291', card:'STK-BA74', repo:'sesamo', approved:'Sim', initiative:'Retentativa', dev:'', pipeline:'', comment:'', nextDeploy:false, version:'' },
+  { id:9, mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2305', card:'BUG-8BEF', repo:'sesamo', approved:'Sim', initiative:'Retentativa', dev:'', pipeline:'', comment:'', nextDeploy:false, version:'' },
+];
+let pendingIdCtr = 200;
+let deployIdCtr = 500;
+let rowIdCtr = 5000;
+let editingDeployRowId = null;
+let activeVersion = '2025-q1-q2';
+let pendingSelected = new Set();
+
+const REVIEW=[
+  { mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2139', card:'STK-B331', initiative:'Multiplas Formas', pipeline:'Não', dev:'Diguinho', approved:'Não', comment:'', ok:'FALSE' },
+  { mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2143', card:'BUG-F580', initiative:'Melhoria', pipeline:'Não', dev:'Lourene', approved:'Sim', comment:'', ok:'TRUE' },
+  { mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2840', card:'STK-9912', initiative:'Engenharia', pipeline:'Não', dev:'Aleson', approved:'Sim', comment:'Swagger', ok:'TRUE' },
+  { mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2861', card:'STK-4A0C', initiative:'Engenharia', pipeline:'Não', dev:'Aleson', approved:'Não', comment:'Mergeado por engano', ok:'TRUE' },
+  { mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2886', card:'STK-755E', initiative:'Destrava - IN', pipeline:'Sim', dev:'Terceiro', approved:'Não', comment:'Disc Aberta', ok:'TRUE' },
+  { mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2899', card:'STK-73A1/STK-CF47', initiative:'Engenharia', pipeline:'Não', dev:'Diguinho', approved:'Não', comment:'', ok:'TRUE' },
+  { mr:'https://gitlab.luizalabs.com/luizalabs/fintech/sesamo/-/merge_requests/2928', card:'STK-52AF', initiative:'Engenharia', pipeline:'Não', dev:'Diguinho', approved:'Não', comment:'', ok:'TRUE' },
+  { mr:'https://gitlab.luizalabs.com/luizalabs/fintech/wallu/-/merge_requests/146', card:'STK-0999', initiative:'Controle Bins', pipeline:'Não', dev:'Aleson', approved:'Sim', comment:'', ok:'TRUE' },
+  { mr:'https://gitlab.luizalabs.com/luizalabs/fintech/wallu/-/merge_requests/148', card:'STK-1E16', initiative:'Controle Bins', pipeline:'Não', dev:'Aleson', approved:'Sim', comment:'', ok:'TRUE' },
+  { mr:'https://gitlab.luizalabs.com/luizalabs/fintech/wallu/-/merge_requests/149', card:'STK-3DDB', initiative:'Controle Bins', pipeline:'Não', dev:'Aleson', approved:'Não', comment:'', ok:'TRUE' },
+];
+const CICD=[
+  { mr:'https://gitlab.luizalabs.com/cicd/fintech/magalu-pagamentos/squad-sesamo/sesamo/-/merge_requests/827', card:'BUG-F580', deployed:'Não', initiative:'BUG', comment:'BUG do recebedor + MR 2186' },
+  { mr:'https://gitlab.luizalabs.com/cicd/fintech/magalu-pagamentos/squad-sesamo/sesamo/-/merge_requests/837', card:'STK-098A', deployed:'Não', initiative:'Multiplas Formas', comment:'CI-CD STG' },
+  { mr:'https://gitlab.luizalabs.com/luizalabs/fintech/jaiminho/-/merge_requests/5', card:'STK-9FD0', deployed:'Sim', initiative:'Migração Notify', comment:'' },
+  { mr:'https://gitlab.luizalabs.com/luizalabs/fintech/jaiminho/-/merge_requests/6', card:'STK-F121', deployed:'Sim', initiative:'Migração Notify', comment:'' },
+  { mr:'https://gitlab.luizalabs.com/luizalabs/fintech/wallu/-/merge_requests/188', card:'STK-55DF', deployed:'', initiative:'Controle Bins', comment:'' },
+  { mr:'https://gitlab.luizalabs.com/luizalabs/fintech/wallu/-/merge_requests/189', card:'STK-CD0A', deployed:'Não', initiative:'Controle Bins', comment:'' },
+  { mr:'https://gitlab.luizalabs.com/luizalabs/fintech/billy-worker/-/merge_requests/28', card:'OPS-4A0A +4', deployed:'', initiative:'VULNERABILIDADE', comment:'' },
+];
+let VERSIONS_DATA=[
+  { id:'v1', version:'0.7.46', date:'19/01/2026', orchestrator:'Leonardo', note:'' },
+  { id:'v2', version:'0.7.47', date:'22/01/2026', orchestrator:'Leonardo', note:'' },
+  { id:'v3', version:'0.7.48', date:'29/01/2026', orchestrator:'Camila',   note:'' },
+  { id:'v4', version:'0.8.1',  date:'26/02/2026', orchestrator:'Leonardo', note:'' },
+  { id:'v5', version:'0.8.3',  date:'02/03/2026', orchestrator:'Leonardo', note:'' },
+  { id:'v6', version:'0.8.4',  date:'05/03/2026', orchestrator:'Camila',   note:'' },
+  { id:'v7', version:'0.8.5',  date:'16/03/2026', orchestrator:'',         note:'' },
+];
+let versionIdCtr = 100;
+
+// ══════════════════════════════════════════════ HELPERS ══
+const devColors={ Aleson:'#FC6D26',Matheus:'#1A7F37',Islan:'#8250DF',Lourene:'#0969DA',Diguinho:'#CF222E',Terceiros:'#656D76',Terceiro:'#656D76' };
+const iniColors={ 'BUG':'#CF222E','VULNERABILIDADE':'#CF222E','Engenharia':'#0969DA','Retentativa':'#8250DF','Melhoria':'#1A7F37','Vale MPAY':'#9A6700','Multiplas Formas':'#0969DA','Processamento Lista':'#1A7F37','Plataforma de Risco':'#CF222E','Plataforma de riscos':'#CF222E','Destrava - OUT':'#9A6700','Destrava - IN':'#9A6700','Controle Bins':'#0969DA','V2':'#8250DF','VIP':'#9A6700','Bradesco V2':'#656D76','PPL - V2':'#0969DA','Débito Técnico':'#656D76','Integração Uncle':'#1A7F37','GOOR':'#1A7F37','Velocity':'#8250DF','Demais Tarefas':'#656D76','Migração Notify':'#8250DF','ROLLBACK':'#CF222E' };
+
+function getMrNum(u){ const m=(u||'').match(/merge_requests\/(\d+)/); return m?'#'+m[1]:(u||''); }
+function getRepo(u){ if(!u)return''; if(u.includes('wallu'))return'wallu'; if(u.includes('billy-worker'))return'billy-worker'; if(u.includes('billy'))return'billy'; if(u.includes('jaiminho'))return'jaiminho'; if(u.includes('/cicd/'))return'ci/cd'; return'sesamo'; }
+function mrLink(u){
+  if(!u||u.trim()==='') return '<span style="color:var(--dim)">—</span>';
+  const num=getMrNum(u), repo=getRepo(u);
+  return `<a href="${u}" target="_blank" class="mr-link"><span class="mr-num">${num}</span><span class="repo-tag">${repo}</span></a>`;
+}
+function cardBadge(c){
+  if(!c||c.trim()==='') return '<span style="color:var(--dim)">—</span>';
+  const t=c.trim().toUpperCase();
+  if(t.startsWith('STK')) return `<span class="cb cb-stk">${c.trim()}</span>`;
+  if(t.startsWith('BUG')) return `<span class="cb cb-bug">${c.trim()}</span>`;
+  if(t.startsWith('IMP')) return `<span class="cb cb-imp">${c.trim()}</span>`;
+  if(t.startsWith('OPS')) return `<span class="cb cb-ops">${c.trim()}</span>`;
+  return `<span class="cb cb-oth">${c.trim()}</span>`;
+}
+function iniBadge(ini){
+  if(!ini||ini.trim()==='') return '<span style="color:var(--dim)">—</span>';
+  const found = INITIATIVES.find(x=>x.name===ini.trim());
+  const col = found ? found.color : (iniColors[ini.trim()]||'#656D76');
+  return `<span class="ib" style="background:${col}18;color:${col};border:1px solid ${col}30">${ini.trim()}</span>`;
+}
+function apBadge(v){
+  if(!v||v.trim()==='') return '<span style="color:var(--dim)">—</span>';
+  const s=v.trim();
+  if(s==='Sim'||s==='TRUE') return `<span class="sb sb-sim">✓ Sim</span>`;
+  if(s==='Não'||s==='FALSE') return `<span class="sb sb-nao">✗ Não</span>`;
+  if(s==='Em andamento') return `<span class="sb sb-and">⟳ Em andamento</span>`;
+  return `<span class="sb">${s}</span>`;
+}
+function pipBadge(v){
+  if(!v||v.trim()==='') return '<span style="color:var(--dim)">—</span>';
+  return v.trim()==='Não'?`<span class="pip-ok">● OK</span>`:`<span class="pip-br">⚠ Quebrada</span>`;
+}
+function devCell(n){
+  if(!n||n.trim()==='') return '<span style="color:var(--dim)">—</span>';
+  const found = DEVS.find(x=>x.name===n.trim());
+  const col = found ? found.color : (devColors[n.trim()]||'#656D76');
+  return `<span class="dev-p"><span class="dev-av" style="background:${col}">${n.trim()[0].toUpperCase()}</span>${n.trim()}</span>`;
+}
+function ccell(c){
+  if(!c||c.trim()==='') return '<span style="color:var(--dim)">—</span>';
+  const imp=/rollback|revert|fechar|problema|engano|disc/i.test(c);
+  return `<span class="cc${imp?' imp':''}" title="${c}">${c}</span>`;
+}
+
+// ══════════════════════════════════════════════ FILTERS ══
+const AF={ dev:'all', ap:'all', pip:'all', repo:'all' };
+let searchQuery='';
+
+function applyFilter(type,val,el){
+  AF[type]=val;
+  document.querySelectorAll(`[data-f="${type}"]`).forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');
+  renderDeploys();
+}
+function matchRow(r,repo){
+  const url=r.mr||'';
+  const rrepo=repo||getRepo(url);
+  if(AF.dev!=='all'&&(r.dev||'').toLowerCase()!==AF.dev.toLowerCase()) return false;
+  if(AF.ap!=='all'){
+    const ap=(r.approved||'').toLowerCase().trim();
+    const isSim=ap==='sim'||ap==='true';
+    const isNao=ap==='não'||ap==='false';
+    if(AF.ap==='true'&&!isSim) return false;
+    if(AF.ap==='false'&&!isNao) return false;
+  }
+  if(AF.pip!=='all'){
+    const pip=(r.pipeline||'').toLowerCase().trim();
+    if(AF.pip==='ok'&&pip!=='não') return false;
+    if(AF.pip==='broken'&&pip!=='sim') return false;
+  }
+  if(AF.repo!=='all'){
+    if(AF.repo==='sesamo'&&!url.includes('sesamo')) return false;
+    if(AF.repo==='wallu'&&!url.includes('wallu')) return false;
+    if(AF.repo==='billy'&&!url.includes('billy')) return false;
+    if(AF.repo==='cicd'&&!url.includes('/cicd/')) return false;
+  }
+  if(searchQuery){
+    const q=searchQuery.toLowerCase();
+    const txt=`${url} ${r.card||''} ${r.initiative||''} ${r.dev||''} ${r.comment||''}`.toLowerCase();
+    if(!txt.includes(q)) return false;
+  }
+  return true;
+}
+
+// ══════════════════════════════════════════════ DEPLOY RENDER ══
+function switchVersion(id){
+  activeVersion=id;
+  document.querySelectorAll('.ver-btn').forEach(b=>b.classList.remove('active'));
+  const b=document.querySelector(`.ver-btn[data-ver="${id}"]`);
+  if(b) b.classList.add('active');
+  document.querySelectorAll('.ver-pane').forEach(p=>p.classList.remove('active'));
+  const p=document.getElementById('vp-'+id);
+  if(p) p.classList.add('active');
+}
+
+function verToNum(label) {
+  // Extract all digit groups from a version label and compute a sortable number
+  const nums = (label || '').match(/\d+/g);
+  if (!nums) return -1;
+  return nums.reduce((acc, n, i) => acc + parseInt(n) * Math.pow(1000, Math.max(0, 4 - i)), 0);
+}
+
+function renderDeploys(){
+  const nav=document.getElementById('ver-nav');
+  const panesEl=document.getElementById('ver-panes');
+  const verCnt={};
+  DEPLOYS.forEach(g=>{ const v=g.rows.filter(r=>matchRow(r,g.repo)).length; verCnt[g.ver]=(verCnt[g.ver]||0)+v; });
+
+  nav.innerHTML=''; panesEl.innerHTML='';
+  let totalMRs=0,totalAp=0,totalRej=0,firstVer=null;
+
+  // Sort versions descending (newest first)
+  const sortedVersions = [...VERSIONS_LIST]
+    .filter(v => (verCnt[v.id]||0) > 0)
+    .sort((a, b) => verToNum(b.label) - verToNum(a.label));
+
+  sortedVersions.forEach(v=>{
+    const cnt=verCnt[v.id]||0;
+    if(!firstVer) firstVer=v.id;
+
+    const btn=document.createElement('button');
+    btn.className='ver-btn'+(v.id===activeVersion?' active':'');
+    btn.setAttribute('data-ver',v.id);
+    const col=v.color;
+    btn.innerHTML=`<span style="font-weight:700;color:${v.id===activeVersion?'#fff':col}">${v.label}</span>`
+      +(v.date?`<span class="ver-date">${v.date}</span>`:'')
+      +`<span class="ver-cnt">${cnt}</span>`;
+    btn.onclick=()=>{ switchVersion(v.id); syncSidebarVersion(v.id); };
+    nav.appendChild(btn);
+
+    const pane=document.createElement('div');
+    pane.className='ver-pane'+(v.id===activeVersion?' active':'');
+    pane.id='vp-'+v.id;
+
+    DEPLOYS.filter(g=>g.ver===v.id).forEach(group=>{
+      const visRows=group.rows
+        .filter(r=>matchRow(r,group.repo))
+        .sort((a,b)=>{
+          const n=u=>{ const m=(u||'').match(/merge_requests\/(\d+)/); return m?parseInt(m[1]):0; };
+          return n(a.mr)-n(b.mr);
+        });
+      if(!visRows.length) return;
+      visRows.forEach(r=>{ totalMRs++; const ap=(r.approved||'').trim(); if(ap==='Sim'||ap==='TRUE') totalAp++; if(ap==='Não'||ap==='FALSE') totalRej++; });
+
+      const dgId='dg-'+group.id;
+      const div=document.createElement('div');
+      div.className='dg'; div.id=dgId;
+
+      // ── version tag color
+      const vinfo=VERSIONS_LIST.find(x=>x.id===group.ver);
+      const tagColor=vinfo?vinfo.color:'#656D76';
+
+      // ── table rows
+      let rowsHtml='';
+      visRows.forEach(r=>{
+        const isRB=(r.comment||'').toLowerCase().includes('rollback');
+        const isEditing=(editingDeployRowId===group.id+'__'+r.id);
+        if(isEditing){
+          rowsHtml+=`<tr class="edit-row">
+            <td><input class="einput" id="er-mr-${r.id}" value="${r.mr}" style="min-width:280px"></td>
+            <td><input class="einput" id="er-card-${r.id}" value="${r.card}" style="width:110px"></td>
+            <td><select class="eselect" id="er-ap-${r.id}" style="width:120px">
+              <option value="">—</option>
+              <option value="Sim"${r.approved==='Sim'?' selected':''}>Sim</option>
+              <option value="Não"${r.approved==='Não'?' selected':''}>Não</option>
+              <option value="Em andamento"${r.approved==='Em andamento'?' selected':''}>Em andamento</option>
+            </select></td>
+            <td><select class="eselect" id="er-ini-${r.id}" style="width:150px">${buildSelectOptions(INITIATIVES, r.initiative)}</select></td>
+            <td><select class="eselect" id="er-dev-${r.id}" style="width:110px">${buildSelectOptions(DEVS, r.dev)}</select></td>
+            <td><select class="eselect" id="er-pip-${r.id}" style="width:100px">
+              <option value="">—</option>
+              <option value="Não"${r.pipeline==='Não'?' selected':''}>OK</option>
+              <option value="Sim"${r.pipeline==='Sim'?' selected':''}>Quebrada</option>
+            </select></td>
+            <td><input class="einput" id="er-cmt-${r.id}" value="${r.comment}" style="width:150px"></td>
+            <td style="white-space:nowrap">
+              <button class="btn-sv" onclick="saveDeployRow('${group.id}','${r.id}')">✓</button>
+              <button class="btn-cn" onclick="cancelDeployEdit()" style="margin-left:4px">✕</button>
+            </td>
+          </tr>`;
+        } else {
+          rowsHtml+=`<tr class="${isRB?'rollback-row':''}">
+            <td>${mrLink(r.mr)}</td>
+            <td>${cardBadge(r.card)}</td>
+            <td>${apBadge(r.approved)}</td>
+            <td>${iniBadge(r.initiative)}</td>
+            <td>${devCell(r.dev)}</td>
+            <td>${pipBadge(r.pipeline)}</td>
+            <td>${ccell(r.comment)}</td>
+            <td><div class="row-actions">
+              <button class="btn-row" onclick="startDeployEdit('${group.id}','${r.id}')" title="Editar">✏️</button>
+              <button class="btn-row btn-row-del" onclick="deleteDeployRow('${group.id}','${r.id}')" title="Remover">🗑</button>
+            </div></td>
+          </tr>`;
+        }
+      });
+
+      // add-row trigger
+      rowsHtml+=`<tr class="add-row-wrapper"><td colspan="8">
+        <div class="add-trigger" onclick="addDeployRow('${group.id}')">＋ Adicionar MR neste deploy</div>
+      </td></tr>`;
+
+      div.innerHTML=`<div class="dg-header" id="dgh-${group.id}">
+        <span class="dg-ver-tag" style="background:${tagColor}">${v.label}</span>
+        <span class="dg-date-edit" id="dge-${group.id}" onclick="event.stopPropagation();openDateEdit('${group.id}')" title="Clique para editar a data">
+          ${group.date
+            ? `<span class="dg-date-tag">📅 ${group.date}</span>`
+            : `<span class="dg-date-tag dg-date-empty">📅 Definir data</span>`}
+        </span>
+        <span class="dg-title">${group.label}${group.rollback?'<span style="color:var(--red);font-size:11px;margin-left:6px">⚠ ROLLBACK</span>':''}</span>
+        <span class="dg-meta">${visRows.length} MR${visRows.length!==1?'s':''}</span>
+        <div class="dg-actions" onclick="event.stopPropagation()">
+          <button class="btn-dg btn-dg-del" onclick="deleteDeployGroup('${group.id}')">🗑 Excluir</button>
+        </div>
+        <span class="dg-arr" onclick="toggleDg('${dgId}')">▼</span>
+      </div>
+      <div class="dg-body">
+        <table class="mrt">
+          <thead><tr><th>MR</th><th>Card</th><th>Aprovado</th><th>Iniciativa</th><th>DEV Responsável</th><th>Pipeline</th><th>Comentários</th><th style="width:70px"></th></tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>`;
+
+      pane.appendChild(div);
+    });
+
+    if(!pane.children.length){
+      pane.innerHTML=`<div class="empty-state"><div class="icon">🔍</div><p>Nenhum resultado.</p></div>`;
+    }
+    panesEl.appendChild(pane);
+  });
+
+  if(!document.querySelector('.ver-btn.active')&&firstVer){ activeVersion=firstVer; switchVersion(firstVer); }
+
+  document.getElementById('s-total').textContent=totalMRs;
+  document.getElementById('s-aprov').textContent=totalAp;
+  document.getElementById('s-reject').textContent=totalRej;
+  document.getElementById('s-vcount').textContent=Object.keys(verCnt).filter(k=>verCnt[k]>0).length;
+  document.getElementById('bd-deploys').textContent=totalMRs;
+  buildDevFilter();
+  buildVersionFilter(sortedVersions, verCnt);
+}
+
+function buildVersionFilter(sortedVersions, verCnt) {
+  const list = document.getElementById('filter-version');
+  if (!list) return;
+  list.innerHTML = `<div class="fi${activeVersion==='all'?' active':''}" data-f="ver" data-v="all" onclick="selectVersion('all',this)">
+    <div class="fdot" style="background:var(--dim)"></div>Todas
+    <span class="fcount">${Object.values(verCnt).reduce((a,b)=>a+b,0)}</span>
+  </div>`;
+  sortedVersions.forEach(v => {
+    const cnt = verCnt[v.id] || 0;
+    if (!cnt) return;
+    const isActive = activeVersion === v.id;
+    const el = document.createElement('div');
+    el.className = 'fi' + (isActive ? ' active' : '');
+    el.setAttribute('data-f','ver');
+    el.setAttribute('data-v', v.id);
+    el.innerHTML = `<div class="fdot" style="background:${v.color}"></div>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${v.label}">${v.label}</span>
+      <span class="fcount">${cnt}</span>`;
+    el.onclick = function() { selectVersion(v.id, this); };
+    list.appendChild(el);
+  });
+}
+
+function selectVersion(verId, el) {
+  // Update sidebar highlight
+  document.querySelectorAll('[data-f="ver"]').forEach(e => e.classList.remove('active'));
+  if (el) el.classList.add('active');
+  // Switch the version pill/pane
+  if (verId === 'all') {
+    if (activeVersion && activeVersion !== 'all') {
+      switchVersion(activeVersion); // keep current version shown
+    }
+  } else {
+    switchVersion(verId);
+  }
+}
+
+function syncSidebarVersion(verId) {
+  document.querySelectorAll('[data-f="ver"]').forEach(e => e.classList.remove('active'));
+  const el = document.querySelector(`[data-f="ver"][data-v="${verId}"]`);
+  if (el) el.classList.add('active');
+  else {
+    const allEl = document.querySelector('[data-f="ver"][data-v="all"]');
+    if (allEl) allEl.classList.add('active');
+  }
+}
+
+function buildDevFilter(){
+  const devMap={};
+  DEPLOYS.forEach(g=>g.rows.forEach(r=>{ if(r.dev) devMap[r.dev.trim()]=(devMap[r.dev.trim()]||0)+1; }));
+  const list=document.getElementById('filter-dev');
+  list.querySelectorAll('[data-dynamic]').forEach(e=>e.remove());
+  Object.entries(devMap).sort((a,b)=>b[1]-a[1]).forEach(([dev,cnt])=>{
+    const col=devColors[dev]||'#656D76';
+    const el=document.createElement('div');
+    el.className='fi'+(AF.dev===dev?' active':'');
+    el.setAttribute('data-f','dev'); el.setAttribute('data-v',dev); el.setAttribute('data-dynamic','1');
+    el.onclick=function(){ applyFilter('dev',dev,this); };
+    el.innerHTML=`<div class="fdot" style="background:${col}"></div>${dev}<span class="fcount">${cnt}</span>`;
+    list.appendChild(el);
+  });
+}
+
+function toggleDg(id){ document.getElementById(id).classList.toggle('collapsed'); }
+
+// ── Deploy row edit/delete ──
+function startDeployEdit(gid,rid){ editingDeployRowId=gid+'__'+rid; renderDeploys(); }
+function cancelDeployEdit(){ editingDeployRowId=null; renderDeploys(); }
+function saveDeployRow(gid,rid){
+  const g=DEPLOYS.find(x=>x.id===gid);
+  if(!g) return;
+  const r=g.rows.find(x=>x.id===rid);
+  if(!r) return;
+  r.mr=document.getElementById('er-mr-'+rid).value.trim();
+  r.card=document.getElementById('er-card-'+rid).value.trim();
+  r.approved=document.getElementById('er-ap-'+rid).value;
+  r.initiative=document.getElementById('er-ini-'+rid).value.trim();
+  r.dev=document.getElementById('er-dev-'+rid).value.trim();
+  r.pipeline=document.getElementById('er-pip-'+rid).value;
+  r.comment=document.getElementById('er-cmt-'+rid).value.trim();
+  editingDeployRowId=null;
+  saveToStorage();
+  renderDeploys();
+}
+function deleteDeployRow(gid,rid){
+  if(!confirm('Remover este MR do deploy?')) return;
+  const g=DEPLOYS.find(x=>x.id===gid);
+  if(g) g.rows=g.rows.filter(r=>r.id!==rid);
+  saveToStorage();
+  renderDeploys();
+}
+function deleteDeployGroup(gid){
+  if(!confirm('Excluir este grupo de deploy inteiro?')) return;
+  DEPLOYS=DEPLOYS.filter(g=>g.id!==gid);
+  saveToStorage();
+  renderDeploys();
+}
+function addDeployRow(gid){
+  const g=DEPLOYS.find(x=>x.id===gid);
+  if(!g) return;
+  const newRow={ id:'r'+rowIdCtr++, mr:'', card:'', approved:'', initiative:'', dev:'', pipeline:'', comment:'' };
+  g.rows.push(newRow);
+  editingDeployRowId=gid+'__'+newRow.id;
+  renderDeploys();
+  switchVersion(g.ver);
+  // saveToStorage() will be called when the row is saved via saveDeployRow
+}
+
+function openDateEdit(groupId) {
+  const group = DEPLOYS.find(g => g.id === groupId);
+  if (!group) return;
+  const wrap = document.getElementById('dge-' + groupId);
+  if (!wrap) return;
+  wrap.innerHTML = `<span class="dg-date-inline" onclick="event.stopPropagation()">
+    <span style="font-size:11px;color:var(--accent);font-weight:600">📅</span>
+    <input id="dei-${groupId}" value="${group.date||''}" placeholder="DD/MM/AAAA"
+      maxlength="10" oninput="maskDate(this)"
+      style="background:none;border:none;outline:none;font:500 12px var(--mono);color:var(--text);width:105px"
+      onkeydown="if(event.key==='Enter')saveDateEdit('${groupId}');if(event.key==='Escape')cancelDateEdit('${groupId}')">
+    <button class="btn-sv" onclick="saveDateEdit('${groupId}')">✓</button>
+    <button class="btn-cn" onclick="cancelDateEdit('${groupId}')">✕</button>
+  </span>`;
+  requestAnimationFrame(()=>{ const i=document.getElementById('dei-'+groupId); if(i)i.focus(); });
+}
+
+function saveDateEdit(groupId) {
+  const group = DEPLOYS.find(g => g.id === groupId);
+  if (!group) return;
+  const inp  = document.getElementById('dei-' + groupId);
+  const date = inp ? inp.value.trim() : '';
+  group.date = date;
+  // Sync to VERSIONS_DATA and VERSIONS_LIST
+  const vd = VERSIONS_DATA.find(v => v.version === group.label || v.version === group.label.replace(/^v/i,''));
+  if (vd) vd.date = date;
+  const vl = VERSIONS_LIST.find(v => v.id === group.ver);
+  if (vl) vl.date = date;
+  saveToStorage();
+  renderDeploys();
+  renderVersions();
+  showToast('📅 Data ' + (date ? 'atualizada: ' + date : 'removida'));
+}
+
+function cancelDateEdit(groupId) { renderDeploys(); }
+
+// ══════════════════════════════════════════════ PENDING ══
+
+function buildSelectOptions(list, selectedVal) {
+  const sorted = [...list].sort((a,b) => a.name.localeCompare(b.name, 'pt-BR'));
+  let html = '<option value="">— Selecionar —</option>';
+  sorted.forEach(item => {
+    html += `<option value="${item.name}"${item.name === selectedVal ? ' selected' : ''}>${item.name}</option>`;
+  });
+  return html;
+}
+
+function repoBadge(repoName) {
+  if (!repoName || !repoName.trim()) return '<span style="color:var(--dim)">—</span>';
+  const r = REPOS.find(x => x.name === repoName.trim());
+  const col = r ? r.color : '#656D76';
+  return `<span class="ib" style="background:${col}18;color:${col};border:1px solid ${col}30">${repoName.trim()}</span>`;
+}
+
+function renderPending(){
+  const tbody = document.getElementById('pending-tbody');
+  tbody.innerHTML = '';
+  const sorted = [...PENDING].sort((a, b) => {
+    const n = u => { const m = (u||'').match(/merge_requests\/(\d+)/); return m ? parseInt(m[1]) : 0; };
+    return n(a.mr) - n(b.mr);
+  });
+  sorted.forEach(r => {
+    const ndBadge  = r.nextDeploy ? `<span class="nd-row-badge">🚀 Próx. Deploy</span>` : '';
+    const verBadge = r.version ? `<span class="ver-row-tag" style="font-size:11px;padding:2px 7px">🏷️ ${r.version}</span>` : '<span style="color:var(--dim)">—</span>';
+    const isSel    = pendingSelected.has(r.id);
+    tbody.innerHTML += `<tr class="${isSel?'pending-selected':''}">
+      <td><input type="checkbox" class="pending-row-cb" ${isSel?'checked':''} onchange="togglePendingSel(${r.id})" title="Selecionar"></td>
+      <td>${mrLink(r.mr)}</td>
+      <td>${cardBadge(r.card)}</td>
+      <td>${repoBadge(r.repo)}</td>
+      <td>${verBadge}</td>
+      <td>${apBadge(r.approved)}</td>
+      <td>${iniBadge(r.initiative)}</td>
+      <td>${devCell(r.dev)}</td>
+      <td>${pipBadge(r.pipeline)}</td>
+      <td>${ccell(r.comment)} ${ndBadge}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:5px;white-space:nowrap">
+          <label class="toggle-switch" title="${r.nextDeploy?'Remover do próximo deploy':'Marcar p/ próximo deploy'}" style="cursor:pointer">
+            <input type="checkbox" ${r.nextDeploy?'checked':''} onchange="toggleNextDeploy(${r.id})">
+            <span class="toggle-track"></span>
+          </label>
+          <button class="btn-row btn-edit-pending" onclick="openEditPending(${r.id})" title="Editar MR">
+            <span>✏️</span> <span style="font-size:11px;font-weight:500">Editar</span>
+          </button>
+          <button class="btn-row btn-row-del" onclick="deletePending(${r.id})" title="Excluir">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  });
+  document.getElementById('bd-pending').textContent = PENDING.length;
+  document.getElementById('pending-count-lbl').textContent = `${PENDING.length} MR${PENDING.length!==1?'s':''} em aberto`;
+
+  // Populate new-form combos (alphabetical)
+  ['nf-ini','nf-dev','nf-repo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const list = id==='nf-ini' ? INITIATIVES : id==='nf-dev' ? DEVS : REPOS;
+    el.innerHTML = buildSelectOptions(list, '');
+  });
+  refreshVersionDatalist();
+
+  // Sync bulk bar
+  syncBulkBar();
+}
+
+// ══════════════════════════════════════════════ BULK EDIT ══
+
+function syncBulkBar() {
+  const cnt  = pendingSelected.size;
+  const bar  = document.getElementById('bulk-bar');
+  const cntEl= document.getElementById('bulk-count');
+  const cbAll= document.getElementById('pending-cb-all');
+  if (bar)  bar.classList.toggle('visible', cnt > 0);
+  if (cntEl) cntEl.textContent = `${cnt} MR${cnt!==1?'s':''} selecionado${cnt!==1?'s':''}`;
+  // Update select-all checkbox state
+  if (cbAll) {
+    const total = PENDING.length;
+    cbAll.checked       = total > 0 && cnt === total;
+    cbAll.indeterminate = cnt > 0 && cnt < total;
+  }
+  // Populate bulk combos once
+  const bIni = document.getElementById('bulk-ini');
+  const bDev = document.getElementById('bulk-dev');
+  const bVer = document.getElementById('bulk-version');
+  if (bIni && bIni.options.length <= 1) {
+    const sorted = [...INITIATIVES].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+    sorted.forEach(x => bIni.add(new Option(x.name, x.name)));
+  }
+  if (bDev && bDev.options.length <= 1) {
+    const sorted = [...DEVS].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+    sorted.forEach(x => bDev.add(new Option(x.name, x.name)));
+  }
+  if (bVer && bVer.options.length <= 1) {
+    const sorted = [...VERSIONS_DATA].sort((a,b)=>a.version.localeCompare(b.version,'pt-BR',{numeric:true}));
+    sorted.forEach(x => bVer.add(new Option(x.version + (x.date?' ('+x.date+')':''), x.version)));
+  }
+}
+
+function togglePendingSel(id) {
+  if (pendingSelected.has(id)) pendingSelected.delete(id);
+  else pendingSelected.add(id);
+  // Update just this row without full re-render
+  const row = document.querySelector(`#pending-tbody tr:has(input[onchange*="togglePendingSel(${id})"])`);
+  if (row) row.classList.toggle('pending-selected', pendingSelected.has(id));
+  syncBulkBar();
+}
+
+function toggleSelectAllPending() {
+  const allIds = PENDING.map(r => r.id);
+  const allSel = allIds.every(id => pendingSelected.has(id));
+  if (allSel) allIds.forEach(id => pendingSelected.delete(id));
+  else        allIds.forEach(id => pendingSelected.add(id));
+  renderPending();
+}
+
+function clearPendingSelection() {
+  pendingSelected.clear();
+  renderPending();
+}
+
+function bulkApply() {
+  if (pendingSelected.size === 0) return;
+  const newVer = document.getElementById('bulk-version')?.value || '';
+  const newIni = document.getElementById('bulk-ini')?.value    || '';
+  const newDev = document.getElementById('bulk-dev')?.value    || '';
+  const newAp  = document.getElementById('bulk-ap')?.value     || '';
+  if (!newVer && !newIni && !newDev && !newAp) {
+    alert('Selecione ao menos um campo para alterar em lote.'); return;
+  }
+  PENDING.forEach(r => {
+    if (!pendingSelected.has(r.id)) return;
+    if (newVer) r.version    = newVer;
+    if (newIni) r.initiative = newIni;
+    if (newDev) r.dev        = newDev;
+    if (newAp)  r.approved   = newAp;
+  });
+  // Reset bulk selects
+  ['bulk-version','bulk-ini','bulk-dev','bulk-ap'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  pendingSelected.clear();
+  renderPending();
+  saveToStorage();
+  showToast(`✓ ${pendingSelected.size || 'MRs'} atualizados em lote`);
+}
+
+function bulkMarkNextDeploy() {
+  if (pendingSelected.size === 0) return;
+  PENDING.forEach(r => { if (pendingSelected.has(r.id)) r.nextDeploy = true; });
+  const cnt = pendingSelected.size;
+  pendingSelected.clear();
+  renderPending();
+  renderNextDeploy();
+  saveToStorage();
+  showToast(`🚀 ${cnt} MR${cnt!==1?'s':''} marcado${cnt!==1?'s':''} para Próximo Deploy`);
+}
+
+function bulkDelete() {
+  const cnt = pendingSelected.size;
+  if (!cnt) return;
+  if (!confirm(`Excluir ${cnt} MR${cnt!==1?'s':''} selecionado${cnt!==1?'s':''}?`)) return;
+  PENDING = PENDING.filter(r => !pendingSelected.has(r.id));
+  pendingSelected.clear();
+  renderPending();
+  renderNextDeploy();
+  saveToStorage();
+  showToast(`🗑 ${cnt} MR${cnt!==1?'s':''} excluído${cnt!==1?'s':''}`);
+}
+
+// ── Edit Pending Modal ──
+let editingPendingModalId = null;
+
+function refreshVersionDatalist() {
+  const dl = document.getElementById('version-datalist');
+  if (!dl) return;
+  const sorted = [...VERSIONS_DATA].sort((a,b) =>
+    a.version.localeCompare(b.version, 'pt-BR', { numeric: true })
+  );
+  dl.innerHTML = sorted.map(v =>
+    `<option value="${v.version}">${v.version}${v.date ? ' — ' + v.date : ''}</option>`
+  ).join('');
+}
+
+function toggleDateField(prefix) {
+  // Pre-fill date when version matches an existing entry
+  const ver    = (document.getElementById(prefix + '-version')?.value || '').trim();
+  const dateEl = document.getElementById(prefix + '-deploy-date');
+  if (ver && dateEl && !dateEl.value) {
+    const existing = VERSIONS_DATA.find(v => v.version === ver);
+    if (existing?.date) dateEl.value = existing.date;
+  }
+}
+
+function maskDate(el) {
+  let v = el.value.replace(/\D/g,'');
+  if (v.length >= 3) v = v.slice(0,2) + '/' + v.slice(2);
+  if (v.length >= 6) v = v.slice(0,5) + '/' + v.slice(5,9);
+  el.value = v;
+}
+
+function openEditPending(id) {
+  const r = PENDING.find(x => x.id === id);
+  if (!r) return;
+  editingPendingModalId = id;
+
+  document.getElementById('epm-mr').value      = r.mr;
+  document.getElementById('epm-card').value    = r.card;
+  document.getElementById('epm-ap').value      = r.approved;
+  document.getElementById('epm-pip').value     = r.pipeline;
+  document.getElementById('epm-comment').value = r.comment;
+  document.getElementById('epm-nd').checked    = r.nextDeploy;
+
+  document.getElementById('epm-repo').innerHTML    = buildSelectOptions(REPOS, r.repo);
+  document.getElementById('epm-ini').innerHTML     = buildSelectOptions(INITIATIVES, r.initiative);
+  document.getElementById('epm-dev').innerHTML     = buildSelectOptions(DEVS, r.dev);
+  refreshVersionDatalist();
+  document.getElementById('epm-version').value     = r.version || '';
+
+  // Pre-fill deploy date from existing version entry
+  const existingVer = VERSIONS_DATA.find(v => v.version === (r.version || ''));
+  document.getElementById('epm-deploy-date').value = existingVer?.date || '';
+
+  document.getElementById('edit-pending-overlay').classList.add('open');
+  document.getElementById('epm-mr').focus();
+}
+
+function closeEditPending() {
+  document.getElementById('edit-pending-overlay').classList.remove('open');
+  editingPendingModalId = null;
+}
+
+function closeEditPendingIfOutside(e) {
+  if (e.target === document.getElementById('edit-pending-overlay')) closeEditPending();
+}
+
+function saveEditPendingModal() {
+  const r = PENDING.find(x => x.id === editingPendingModalId);
+  if (!r) return;
+  const mr = document.getElementById('epm-mr').value.trim();
+  if (!mr) { alert('O link do MR é obrigatório.'); return; }
+
+  r.mr         = mr;
+  r.card       = document.getElementById('epm-card').value.trim();
+  r.repo       = document.getElementById('epm-repo').value;
+  r.approved   = document.getElementById('epm-ap').value;
+  r.pipeline   = document.getElementById('epm-pip').value;
+  r.initiative = document.getElementById('epm-ini').value;
+  r.dev        = document.getElementById('epm-dev').value;
+  r.comment    = document.getElementById('epm-comment').value.trim();
+  r.nextDeploy = document.getElementById('epm-nd').checked;
+  r.version    = document.getElementById('epm-version').value.trim();
+
+  const deployDate   = document.getElementById('epm-deploy-date').value.trim();
+  if (r.version && deployDate) {
+    const existing = VERSIONS_DATA.find(v => v.version === r.version);
+    if (existing) {
+      existing.date = deployDate;
+    } else {
+      VERSIONS_DATA.push({ id:'v'+(++versionIdCtr), version:r.version, date:deployDate, orchestrator:'', note:'' });
+    }
+    renderVersions();
+  }
+
+  closeEditPending();
+  renderPending();
+  renderNextDeploy();
+  saveToStorage();
+}
+
+function deleteFromEditModal() {
+  if (!confirm('Excluir este MR da lista?')) return;
+  PENDING = PENDING.filter(r => r.id !== editingPendingModalId);
+  closeEditPending();
+  renderPending();
+  renderNextDeploy();
+  saveToStorage();
+}
+
+function deletePending(id) {
+  if (!confirm('Remover este MR da lista?')) return;
+  PENDING = PENDING.filter(r => r.id !== id);
+  renderPending();
+  renderNextDeploy();
+  saveToStorage();
+}
+
+function toggleNewForm() {
+  const f = document.getElementById('new-row-form');
+  f.classList.toggle('visible');
+  if (f.classList.contains('visible')) {
+    renderPending();
+    document.getElementById('nf-mr').focus();
+  }
+}
+
+function toggleNextDeploy(id) {
+  const r = PENDING.find(x => x.id === id);
+  if (r) { r.nextDeploy = !r.nextDeploy; renderPending(); renderNextDeploy(); saveToStorage(); }
+}
+
+function clearNextDeploy() {
+  const cnt = PENDING.filter(r => r.nextDeploy).length;
+  if (!cnt) return;
+  if (!confirm(`Remover todos os ${cnt} MRs da fila do próximo deploy?`)) return;
+  PENDING.forEach(r => r.nextDeploy = false);
+  renderPending();
+  renderNextDeploy();
+  saveToStorage();
+}
+
+function saveNewPending() {
+  const mr = document.getElementById('nf-mr').value.trim();
+  if (!mr) { alert('O link do MR é obrigatório.'); return; }
+  const nextDeploy  = document.getElementById('nf-nextdeploy').checked;
+  const version     = document.getElementById('nf-version').value.trim();
+  const deployDate  = document.getElementById('nf-deploy-date')?.value.trim() || '';
+
+  const newEntry = {
+    mr,
+    card:       document.getElementById('nf-card').value.trim(),
+    repo:       document.getElementById('nf-repo').value,
+    approved:   document.getElementById('nf-ap').value,
+    initiative: document.getElementById('nf-ini').value,
+    dev:        document.getElementById('nf-dev').value,
+    pipeline:   document.getElementById('nf-pip').value,
+    comment:    document.getElementById('nf-comment').value.trim(),
+    version,
+    nextDeploy,
+  };
+
+  // Persist deploy date to VERSIONS_DATA if version + date provided
+  if (version && deployDate) {
+    const existing = VERSIONS_DATA.find(v => v.version === version);
+    if (existing) {
+      existing.date = deployDate;
+    } else {
+      VERSIONS_DATA.push({ id:'v'+(++versionIdCtr), version, date:deployDate, orchestrator:'', note:'' });
+    }
+    renderVersions();
+  }
+
+  // Reset form
+  ['nf-mr','nf-card','nf-comment','nf-version','nf-deploy-date'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  ['nf-ap','nf-pip','nf-ini','nf-dev','nf-repo'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  document.getElementById('nf-nextdeploy').checked = false;
+  document.getElementById('new-row-form').classList.remove('visible');
+
+  if (version) {
+    routeToDeployHistory(newEntry, version);
+  } else {
+    PENDING.unshift({ id: ++pendingIdCtr, ...newEntry });
+    renderPending();
+    renderNextDeploy();
+    saveToStorage();
+    if (nextDeploy) {
+      const btn = document.querySelector('.tab-btn-next');
+      if (btn) switchTab('nextdeploy', btn);
+    }
+  }
+}
+
+function routeToDeployHistory(entry, version) {
+  // Build a stable, unique ID from the version string
+  const verId = 'ver-' + version.replace(/\./g, '_');
+
+  // 1 — Ensure entry in VERSIONS_LIST
+  if (!VERSIONS_LIST.find(v => v.id === verId)) {
+    const vData = VERSIONS_DATA.find(v => v.version === version);
+    VERSIONS_LIST.push({
+      id:    verId,
+      label: version,
+      date:  vData ? vData.date : '',
+      color: '#FC6D26'
+    });
+  }
+
+  // 2 — Find or create deploy group
+  let group = DEPLOYS.find(g => g.ver === verId);
+  if (!group) {
+    const vData   = VERSIONS_DATA.find(v => v.version === version);
+    const repo    = entry.repo || getRepo(entry.mr) || 'sesamo';
+    group = {
+      id:    'dNew' + (++deployIdCtr),
+      ver:   verId,
+      date:  vData ? vData.date : '',
+      label: version,
+      repo:  repo,
+      rows:  []
+    };
+    DEPLOYS.push(group);
+  }
+
+  // 3 — Add the row
+  group.rows.push({
+    id:         'rNew' + (++rowIdCtr),
+    mr:         entry.mr,
+    card:       entry.card,
+    approved:   entry.approved,
+    initiative: entry.initiative,
+    dev:        entry.dev,
+    pipeline:   entry.pipeline,
+    comment:    entry.comment
+  });
+
+  // 4 — Persist and render
+  activeVersion = verId;
+  saveToStorage();
+  renderDeploys();
+
+  // 5 — Switch to deploy history tab
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const deplPane = document.getElementById('tab-deploys');
+  const deplBtn  = document.querySelector('.tab-btn:first-child');
+  if (deplPane) deplPane.classList.add('active');
+  if (deplBtn)  deplBtn.classList.add('active');
+
+  // 6 — Activate the correct version pill
+  document.querySelectorAll('.ver-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.ver-pane').forEach(p => p.classList.remove('active'));
+  const pill = document.querySelector(`.ver-btn[data-ver="${verId}"]`);
+  const pane = document.getElementById('vp-' + verId);
+  if (pill) pill.classList.add('active');
+  if (pane) pane.classList.add('active');
+
+  showToast('🚀 MR adicionado ao deploy ' + version);
+}
+
+// ══════════════════════════════════════════════ NEXT DEPLOY ══
+
+let ndSelected = new Set(); // ids of checked MRs
+
+function updatePromoteBar() {
+  const cnt = ndSelected.size;
+  const countEl = document.getElementById('promote-sel-count');
+  const btn     = document.getElementById('btn-promote');
+  if (countEl) countEl.textContent = cnt === 0 ? '0 MRs selecionados' : `${cnt} MR${cnt!==1?'s':''} selecionado${cnt!==1?'s':''}`;
+  if (btn) btn.disabled = cnt === 0;
+}
+
+function toggleNdCheck(id) {
+  if (ndSelected.has(id)) ndSelected.delete(id);
+  else ndSelected.add(id);
+  const card = document.getElementById('ndc-' + id);
+  if (card) card.classList.toggle('checked', ndSelected.has(id));
+  updatePromoteBar();
+}
+
+function toggleSelectAllNd() {
+  const list = PENDING.filter(r => r.nextDeploy);
+  const allSelected = list.every(r => ndSelected.has(r.id));
+  if (allSelected) {
+    list.forEach(r => ndSelected.delete(r.id));
+  } else {
+    list.forEach(r => ndSelected.add(r.id));
+  }
+  renderNextDeploy();
+}
+
+function renderNextDeploy() {
+  const list = PENDING.filter(r => r.nextDeploy);
+  const cnt  = list.length;
+  const badge = document.getElementById('bd-nextdeploy');
+  if (badge) badge.textContent = cnt;
+
+  const container = document.getElementById('nextdeploy-list');
+  if (!container) return;
+
+  // Clean up selections for items no longer in list
+  ndSelected.forEach(id => { if (!list.find(r => r.id === id)) ndSelected.delete(id); });
+  updatePromoteBar();
+
+  if (!cnt) {
+    container.innerHTML = `<div class="nd-empty">
+      <div class="nd-empty-icon">🚀</div>
+      <div class="nd-empty-title">Nenhum MR na fila</div>
+      <div class="nd-empty-sub">Ative o toggle <strong>🚀 Próximo Deploy</strong> em um MR da aba <em>MRs em Aberto</em> para listá-lo aqui.</div>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = list.map((r, idx) => {
+    const num    = getMrNum(r.mr);
+    const repo   = r.repo || getRepo(r.mr);
+    const found  = REPOS.find(x => x.name === repo);
+    const repoc  = found ? found.color : '#656D76';
+    const isChk  = ndSelected.has(r.id);
+    return `<div class="nd-card${isChk?' checked':''}" id="ndc-${r.id}">
+      <input type="checkbox" class="nd-checkbox" ${isChk?'checked':''} onchange="toggleNdCheck(${r.id})" title="Selecionar para deploy">
+      <span style="color:var(--dim);font-size:12px;font-weight:700;width:20px;text-align:center;flex-shrink:0">${idx+1}</span>
+      <a href="${r.mr}" target="_blank" class="nd-num">${num}</a>
+      <span class="nd-repo-tag" style="color:${repoc};background:${repoc}15">${repo}</span>
+      <div class="nd-divider"></div>
+      <div class="nd-info">
+        <div class="nd-card-title">${r.card || '(sem card)'}</div>
+        <div class="nd-card-meta">
+          ${r.initiative ? iniBadge(r.initiative) : ''}
+          ${r.dev        ? devCell(r.dev)          : ''}
+          ${r.approved   ? apBadge(r.approved)     : ''}
+          ${r.comment    ? `<span style="font-size:11px;color:var(--muted)">${r.comment}</span>` : ''}
+        </div>
+      </div>
+      <div class="nd-card-right">
+        <button class="btn-nd-remove" onclick="toggleNextDeploy(${r.id})" title="Remover da fila">✕ Remover</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function promoteToHistory() {
+  const version = (document.getElementById('promote-version')?.value || '').trim();
+  const date    = (document.getElementById('promote-date')?.value || '').trim();
+  if (!version) { alert('Informe a versão antes de realizar o deploy.'); document.getElementById('promote-version')?.focus(); return; }
+  if (ndSelected.size === 0) { alert('Selecione ao menos um MR.'); return; }
+
+  // Collect entries to promote
+  const toPromote = PENDING.filter(r => ndSelected.has(r.id));
+
+  toPromote.forEach(entry => {
+    routeToDeployHistory({ ...entry }, version);
+  });
+
+  // Remove promoted MRs from PENDING entirely
+  PENDING = PENDING.filter(r => !ndSelected.has(r.id));
+
+  // Update date in VERSIONS_DATA if provided
+  if (date) {
+    const existing = VERSIONS_DATA.find(v => v.version === version);
+    if (existing) existing.date = date;
+    else VERSIONS_DATA.push({ id: 'v'+(++versionIdCtr), version, date, orchestrator:'', note:'' });
+    renderVersions();
+  }
+
+  const moved = toPromote.length;
+  ndSelected.clear();
+  document.getElementById('promote-version').value = '';
+  document.getElementById('promote-date').value    = '';
+
+  renderPending();
+  renderNextDeploy();
+  saveToStorage();
+  showToast(`✅ ${moved} MR${moved!==1?'s':''} promovido${moved!==1?'s':''} para a versão ${version}`);
+}
+
+function clearNextDeploy() {
+  const cnt = PENDING.filter(r => r.nextDeploy).length;
+  if (!cnt) return;
+  if (!confirm(`Remover todos os ${cnt} MRs da fila do próximo deploy?`)) return;
+  PENDING.forEach(r => r.nextDeploy = false);
+  ndSelected.clear();
+  renderPending();
+  renderNextDeploy();
+  saveToStorage();
+}
+
+// ══════════════════════════════════════════════ MANAGE MODAL ══
+
+function getManageList() {
+  if (currentManageType === 'initiative') return INITIATIVES;
+  if (currentManageType === 'dev')        return DEVS;
+  return REPOS;
+}
+function setManageList(arr) {
+  if (currentManageType === 'initiative') INITIATIVES = arr;
+  else if (currentManageType === 'dev')   DEVS = arr;
+  else                                    REPOS = arr;
+}
+
+function openManage(type) {
+  currentManageType = type;
+  editingManageId = null;
+  const cfg = {
+    initiative: { icon:'🏷', title:'Gerenciar Iniciativas', placeholder:'Nome da iniciativa…' },
+    dev:        { icon:'👤', title:'Gerenciar Devs Responsáveis', placeholder:'Nome do desenvolvedor…' },
+    repo:       { icon:'📦', title:'Gerenciar Repositórios', placeholder:'Nome do repositório…' },
+  }[type];
+  document.getElementById('manage-icon').textContent  = cfg.icon;
+  document.getElementById('manage-title').textContent = cfg.title;
+  document.getElementById('manage-new-name').placeholder = cfg.placeholder;
+  document.getElementById('manage-new-name').value = '';
+  document.getElementById('manage-new-color').value = '#0969DA';
+  renderManageList();
+  document.getElementById('manage-overlay').classList.add('open');
+}
+
+function closeManage() {
+  document.getElementById('manage-overlay').classList.remove('open');
+  editingManageId = null;
+  renderPending(); // refresh selects
+}
+
+function closeManageIfOutside(e) {
+  if (e.target === document.getElementById('manage-overlay')) closeManage();
+}
+
+function renderManageList() {
+  const list = getManageList();
+  const container = document.getElementById('manage-list');
+  if (!list.length) {
+    container.innerHTML = '<div class="empty-manage">Nenhum item cadastrado. Adicione um acima.</div>';
+    return;
+  }
+  container.innerHTML = list.map(item => {
+    if (editingManageId === item.id) {
+      return `<div class="manage-item manage-item-editing" id="mi-${item.id}">
+        <div class="mi-dot" style="background:${item.color}"></div>
+        <input class="mi-input" id="mi-name-${item.id}" value="${item.name}" placeholder="Nome">
+        <input type="color" class="mi-color" id="mi-color-${item.id}" value="${item.color}" title="Cor">
+        <div class="mi-actions">
+          <button class="mi-btn mi-btn-save" onclick="saveManageItem('${item.id}')">✓</button>
+          <button class="mi-btn" onclick="cancelManageEdit()">✕</button>
+        </div>
+      </div>`;
+    }
+    return `<div class="manage-item" id="mi-${item.id}">
+      <div class="mi-dot" style="background:${item.color}"></div>
+      <span class="mi-label">${item.name}</span>
+      <div class="mi-actions">
+        <button class="mi-btn" onclick="startManageEdit('${item.id}')" title="Editar">✏️</button>
+        <button class="mi-btn mi-btn-del" onclick="deleteManageItem('${item.id}')" title="Excluir">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function startManageEdit(id) { editingManageId = id; renderManageList(); }
+function cancelManageEdit()  { editingManageId = null; renderManageList(); }
+
+function saveManageItem(id) {
+  const list = getManageList();
+  const item = list.find(x => x.id === id);
+  if (!item) return;
+  const name = document.getElementById('mi-name-' + id).value.trim();
+  if (!name) return;
+  item.name  = name;
+  item.color = document.getElementById('mi-color-' + id).value;
+  editingManageId = null;
+  renderManageList();
+  saveToStorage();
+}
+
+function deleteManageItem(id) {
+  if (!confirm('Excluir este item?')) return;
+  const list = getManageList();
+  setManageList(list.filter(x => x.id !== id));
+  renderManageList();
+  saveToStorage();
+}
+
+function addManageItem() {
+  const name = document.getElementById('manage-new-name').value.trim();
+  if (!name) { document.getElementById('manage-new-name').focus(); return; }
+  const color = document.getElementById('manage-new-color').value;
+  const list = getManageList();
+  if (list.find(x => x.name.toLowerCase() === name.toLowerCase())) {
+    alert('Já existe um item com esse nome.'); return;
+  }
+  const prefix = currentManageType === 'initiative' ? 'i' : currentManageType === 'dev' ? 'dv' : 'rp';
+  list.push({ id: prefix + (++manageIdCtr), name, color });
+  document.getElementById('manage-new-name').value = '';
+  renderManageList();
+  saveToStorage();
+}
+
+// ══════════════════════════════════════════════ VERSIONS CRUD ══
+
+let editingVersionId = null;
+
+function openVersionModal(id) {
+  editingVersionId = id || null;
+  const isEdit = !!id;
+  document.getElementById('vm-icon').textContent   = isEdit ? '✏️' : '🏷️';
+  document.getElementById('vm-title').textContent  = isEdit ? 'Editar Versão' : 'Nova Versão';
+  document.getElementById('vm-del-btn').style.display = isEdit ? 'inline-flex' : 'none';
+
+  // Fill orchestrator combo
+  const devList = [...DEVS].sort((a,b) => a.name.localeCompare(b.name,'pt-BR'));
+  let opts = '<option value="">— Selecionar —</option>';
+  devList.forEach(d => { opts += `<option value="${d.name}">${d.name}</option>`; });
+  document.getElementById('vm-orchestrator').innerHTML = opts;
+
+  if (isEdit) {
+    const v = VERSIONS_DATA.find(x => x.id === id);
+    if (!v) return;
+    document.getElementById('vm-version').value     = v.version;
+    document.getElementById('vm-date').value        = v.date;
+    document.getElementById('vm-orchestrator').value= v.orchestrator;
+    document.getElementById('vm-note').value        = v.note || '';
+  } else {
+    document.getElementById('vm-version').value     = '';
+    document.getElementById('vm-date').value        = '';
+    document.getElementById('vm-orchestrator').value= '';
+    document.getElementById('vm-note').value        = '';
+  }
+
+  document.getElementById('version-overlay').classList.add('open');
+  document.getElementById('vm-version').focus();
+}
+
+function closeVersionModal() {
+  document.getElementById('version-overlay').classList.remove('open');
+  editingVersionId = null;
+}
+
+function closeVersionModalIfOutside(e) {
+  if (e.target === document.getElementById('version-overlay')) closeVersionModal();
+}
+
+function saveVersionModal() {
+  const version = document.getElementById('vm-version').value.trim();
+  if (!version) { alert('O número da versão é obrigatório.'); return; }
+  const entry = {
+    id:          editingVersionId || ('v' + (++versionIdCtr)),
+    version,
+    date:        document.getElementById('vm-date').value.trim(),
+    orchestrator:document.getElementById('vm-orchestrator').value,
+    note:        document.getElementById('vm-note').value.trim(),
+  };
+  if (editingVersionId) {
+    const idx = VERSIONS_DATA.findIndex(x => x.id === editingVersionId);
+    if (idx >= 0) VERSIONS_DATA[idx] = entry;
+  } else {
+    VERSIONS_DATA.push(entry);
+  }
+  closeVersionModal();
+  renderVersions();
+  saveToStorage();
+}
+
+function deleteVersionFromModal() {
+  if (!confirm('Excluir esta versão?')) return;
+  VERSIONS_DATA = VERSIONS_DATA.filter(x => x.id !== editingVersionId);
+  closeVersionModal();
+  renderVersions();
+  saveToStorage();
+}
+
+function renderVersions(){
+  refreshVersionDatalist();
+  const tbody = document.getElementById('versions-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  // sort by version string numerically
+  const sorted = [...VERSIONS_DATA].sort((a,b) => {
+    const toNum = s => s.replace(/[^\d.]/g,'').split('.').map(n=>parseInt(n)||0).reduce((acc,v,i)=>acc+v*Math.pow(1000,5-i),0);
+    return toNum(b.version) - toNum(a.version);
+  });
+  sorted.forEach(v => {
+    const hasDate   = v.date && v.date.trim() !== '';
+    const statusBadge = hasDate
+      ? `<span class="ver-status-deployed">✅ Realizado</span>`
+      : `<span class="ver-status-pending">⏳ Pendente</span>`;
+    const dateCell = hasDate
+      ? `<span class="ver-date-cell">📅 ${v.date}</span>`
+      : `<span class="ver-date-cell empty">Sem data</span>`;
+    const orchCell = v.orchestrator
+      ? devCell(v.orchestrator)
+      : '<span style="color:var(--dim)">—</span>';
+    tbody.innerHTML += `<tr>
+      <td>
+        <span class="ver-row-tag">🏷️ ${v.version}</span>
+        ${v.note ? `<span class="ver-note">📝 ${v.note}</span>` : ''}
+      </td>
+      <td>${dateCell}</td>
+      <td>${orchCell}</td>
+      <td>${statusBadge}</td>
+      <td>
+        <div class="mrt-actions">
+          <button class="btn-edit-pending" onclick="openVersionModal('${v.id}')" title="Editar">✏️ Editar</button>
+        </div>
+      </td>
+    </tr>`;
+  });
+}
+
+// ══════════════════════════════════════════════ LOCAL STORAGE ══
+
+const LS_KEY = 'sesamo-tracker-v1';
+
+// Snapshot of original hardcoded data (taken before any loadFromStorage)
+const DEFAULTS = {
+  DEPLOYS:       JSON.parse(JSON.stringify(DEPLOYS)),
+  PENDING:       JSON.parse(JSON.stringify(PENDING)),
+  INITIATIVES:   JSON.parse(JSON.stringify(INITIATIVES)),
+  DEVS:          JSON.parse(JSON.stringify(DEVS)),
+  REPOS:         JSON.parse(JSON.stringify(REPOS)),
+  VERSIONS_DATA: JSON.parse(JSON.stringify(VERSIONS_DATA)),
+  VERSIONS_LIST: JSON.parse(JSON.stringify(VERSIONS_LIST)),
+};
+
+function updateStorageBar(source) {
+  const dot  = document.getElementById('storage-bar-dot');
+  const text = document.getElementById('storage-bar-text');
+  if (!dot || !text) return;
+  if (source === 'loading') {
+    dot.className  = 'topbar-storage-dot pulsing';
+    text.textContent = '⟳ Carregando dados da planilha…';
+  } else if (source === 'storage') {
+    dot.className  = 'topbar-storage-dot loaded';
+    text.textContent = '💾 Dados do armazenamento local';
+  } else if (source === 'default') {
+    dot.className  = 'topbar-storage-dot default';
+    text.textContent = '📋 Dados originais da planilha';
+  } else if (source === 'reset') {
+    dot.className  = 'topbar-storage-dot reset';
+    text.textContent = '✅ Dados restaurados';
+    setTimeout(() => updateStorageBar('default'), 3000);
+  }
+}
+
+function saveToStorage() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      DEPLOYS, PENDING, INITIATIVES, DEVS, REPOS, VERSIONS_DATA, VERSIONS_LIST,
+      pendingIdCtr, versionIdCtr, manageIdCtr, deployIdCtr, rowIdCtr,
+    }));
+    showToast('💾 Dados salvos');
+  } catch(e) { console.warn('localStorage save failed', e); }
+}
+
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) { updateStorageBar('default'); return false; }
+    const data = JSON.parse(raw);
+    if (data.DEPLOYS)       DEPLOYS       = data.DEPLOYS;
+    if (data.PENDING)       PENDING       = data.PENDING;
+    if (data.INITIATIVES)   INITIATIVES   = data.INITIATIVES;
+    if (data.DEVS)          DEVS          = data.DEVS;
+    if (data.REPOS)         REPOS         = data.REPOS;
+    if (data.VERSIONS_DATA) VERSIONS_DATA = data.VERSIONS_DATA;
+    if (data.VERSIONS_LIST) VERSIONS_LIST = data.VERSIONS_LIST;
+    if (data.pendingIdCtr)  pendingIdCtr  = data.pendingIdCtr;
+    if (data.versionIdCtr)  versionIdCtr  = data.versionIdCtr;
+    if (data.manageIdCtr)   manageIdCtr   = data.manageIdCtr;
+    if (data.deployIdCtr)   deployIdCtr   = data.deployIdCtr;
+    if (data.rowIdCtr)      rowIdCtr      = data.rowIdCtr;
+    updateStorageBar('storage');
+    return true;
+  } catch(e) { console.warn('localStorage load failed', e); updateStorageBar('default'); return false; }
+}
+
+function restoreDefaults() {
+  if (!confirm('Restaurar todos os dados para o estado original da planilha?\n\nIsso apagará todas as alterações salvas.')) return;
+  localStorage.removeItem(LS_KEY);
+  DEPLOYS       = JSON.parse(JSON.stringify(DEFAULTS.DEPLOYS));
+  PENDING       = JSON.parse(JSON.stringify(DEFAULTS.PENDING));
+  INITIATIVES   = JSON.parse(JSON.stringify(DEFAULTS.INITIATIVES));
+  DEVS          = JSON.parse(JSON.stringify(DEFAULTS.DEVS));
+  REPOS         = JSON.parse(JSON.stringify(DEFAULTS.REPOS));
+  VERSIONS_DATA = JSON.parse(JSON.stringify(DEFAULTS.VERSIONS_DATA));
+  VERSIONS_LIST = JSON.parse(JSON.stringify(DEFAULTS.VERSIONS_LIST));
+  pendingIdCtr  = 200;
+  versionIdCtr  = 100;
+  manageIdCtr   = 1000;
+  deployIdCtr   = 500;
+  rowIdCtr      = 5000;
+  activeVersion = '2025-q1-q2';
+  updateStorageBar('reset');
+  renderDeploys();
+  renderPending();
+  renderNextDeploy();
+  renderVersions();
+  showToast('↩ Dados restaurados');
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('storage-toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ══════════════════════════════════════════════ TABS / SEARCH ══
+function switchTab(id,btn){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+document.getElementById('globalSearch').addEventListener('input',function(){ searchQuery=this.value.trim(); renderDeploys(); });
+
+// INIT
+(function(){
+  updateStorageBar('loading');
+  setTimeout(() => {
+    loadFromStorage();
+    renderDeploys();
+    renderPending();
+    renderNextDeploy();
+    renderVersions();
+  }, 400);
+})();
+</script>
+</body>
+</html>
