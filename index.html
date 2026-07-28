@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Squad Sésamo · Deploy Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
   --bg:#F6F8FA;--surface:#FFFFFF;--surface2:#F6F8FA;--surface3:#EFF1F3;--surface4:#E2E5E9;
@@ -302,7 +301,41 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .btn-reset-sm{background:none;border:none;cursor:pointer;font-size:11px;font-weight:600;color:var(--muted);padding:2px 6px;border-radius:4px;white-space:nowrap;transition:all .15s}
 .btn-reset-sm:hover{background:var(--red-bg);color:var(--red)}
 
-/* ── DEPLOY GROUP DATE EDIT ── */
+/* ── LOGIN SCREEN ── */
+.login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#F6F8FA 0%,#EFF1F3 100%);z-index:1000;display:flex;align-items:center;justify-content:center}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:40px;width:420px;max-width:calc(100vw - 32px);box-shadow:0 8px 40px rgba(31,35,40,.12)}
+.login-brand{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:32px}
+.login-brand-icon{width:44px;height:44px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px}
+.login-brand-name{font-size:22px;font-weight:800;color:var(--text);letter-spacing:-.5px}
+.login-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px;text-align:center}
+.login-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:28px}
+.login-field{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+.login-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.login-input{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r);padding:10px 14px;color:var(--text);font:14px var(--sans);outline:none;transition:border .15s}
+.login-input:focus{border-color:var(--accent);background:var(--surface)}
+.login-err{background:var(--red-bg);color:var(--red);border:1px solid rgba(207,34,46,.2);border-radius:var(--r);padding:9px 14px;font-size:13px;font-weight:500;display:none;margin-bottom:14px}
+.login-err.show{display:block}
+.btn-login{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font:700 14px var(--sans);cursor:pointer;transition:opacity .15s;margin-top:6px}
+.btn-login:hover{opacity:.88}
+.btn-login:disabled{opacity:.5;cursor:not-allowed}
+.login-footer{margin-top:20px;text-align:center;font-size:11px;color:var(--dim)}
+
+/* ── TOPBAR USER ── */
+.topbar-user{display:flex;align-items:center;gap:8px;padding:4px 10px;border:1px solid var(--border);border-radius:20px;background:var(--surface2);cursor:default}
+.topbar-user-av{width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.topbar-user-name{font-size:12px;font-weight:600;color:var(--text);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-logout{border:none;background:none;cursor:pointer;padding:3px 7px;border-radius:4px;font-size:12px;color:var(--muted);transition:all .15s}
+.btn-logout:hover{background:var(--red-bg);color:var(--red)}
+.btn-topbar-action{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);font:500 11px var(--sans);color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-topbar-action:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-d)}
+
+/* ── GITHUB COMMANDS MODAL ── */
+.code-block{background:var(--surface3);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;font:13px var(--mono);color:var(--text);white-space:pre;overflow-x:auto;margin:6px 0 14px}
+.code-block .comment{color:var(--dim)}
+.code-section{margin-bottom:16px}
+.code-section h4{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:4px}
+.btn-copy-code{float:right;font-size:10px;padding:2px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-family:var(--sans);color:var(--muted);margin-left:8px;transition:all .15s}
+.btn-copy-code:hover{border-color:var(--accent);color:var(--accent)}
 .dg-date-edit{display:inline-flex;align-items:center;cursor:pointer;border-radius:var(--r);transition:background .15s;padding:1px 2px}
 .dg-date-edit:hover .dg-date-tag{border-color:var(--accent);color:var(--accent)}
 .dg-date-empty{color:var(--dim)!important;border-style:dashed!important}
@@ -367,6 +400,118 @@ input[list].einput::-webkit-calendar-picker-indicator { opacity: 0.5; cursor: po
 </head>
 <body>
 
+<!-- ── LOGIN SCREEN ── -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="login-brand-icon">🦑</div>
+      <span class="login-brand-name">Sésamo</span>
+    </div>
+    <div class="login-title">Deploy Tracker</div>
+    <div class="login-sub">Faça login para continuar</div>
+    <div class="login-err" id="login-err">E-mail ou senha incorretos.</div>
+    <div class="login-field">
+      <label class="login-label">E-mail</label>
+      <input class="login-input" id="login-email" type="email" placeholder="seu@email.com" autocomplete="username"
+        onkeydown="if(event.key==='Enter')document.getElementById('login-pwd').focus()">
+    </div>
+    <div class="login-field">
+      <label class="login-label">Senha</label>
+      <input class="login-input" id="login-pwd" type="password" placeholder="••••••••" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn-login" id="btn-login" onclick="doLogin()">Entrar</button>
+    <div class="login-footer">Squad Sésamo · MagaluPay · Deploy Tracker</div>
+  </div>
+</div>
+
+<!-- ── GITHUB/VSCODE COMMANDS MODAL ── -->
+<div class="modal-overlay" id="github-overlay" onclick="if(event.target===this)closeGithubModal()">
+  <div class="modal" style="width:580px;max-height:85vh">
+    <div class="modal-hd">
+      <span class="modal-hd-icon">🚀</span>
+      <span class="modal-hd-title">Publicar no GitHub / Abrir no VSCode</span>
+      <button class="modal-close" onclick="closeGithubModal()">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:6px">
+      <div class="code-section">
+        <h4>1 — Pré-requisitos</h4>
+        <div class="code-block"><span class="comment"># Instalar Git (se não tiver)</span>
+# Windows: https://git-scm.com
+# Mac:
+brew install git
+# Linux:
+sudo apt install git</div>
+      </div>
+      <div class="code-section">
+        <h4>2 — Inicializar repositório local</h4>
+        <div class="code-block" id="code-init"><span class="comment"># Abra o terminal na pasta do arquivo HTML</span>
+git init
+git add mr-deploy-tracker.html
+git commit -m "feat: sesamo deploy tracker v1"</div>
+        <button class="btn-copy-code" onclick="copyCode('code-init')">📋 Copiar</button>
+      </div>
+      <div class="code-section">
+        <h4>3 — Criar repositório no GitHub e fazer push</h4>
+        <div class="code-block" id="code-push"><span class="comment"># Crie o repositório em: https://github.com/new
+# Depois execute:</span>
+git remote add origin https://github.com/SEU_USUARIO/sesamo-deploy-tracker.git
+git branch -M main
+git push -u origin main</div>
+        <button class="btn-copy-code" onclick="copyCode('code-push')">📋 Copiar</button>
+      </div>
+      <div class="code-section">
+        <h4>4 — Publicar como GitHub Pages (acesso via URL)</h4>
+        <div class="code-block" id="code-pages"><span class="comment"># No GitHub:
+# Settings → Pages → Source: Deploy from branch
+# Branch: main / (root) → Save
+# URL: https://SEU_USUARIO.github.io/sesamo-deploy-tracker/mr-deploy-tracker.html</span></div>
+      </div>
+      <div class="code-section">
+        <h4>5 — Abrir no VSCode</h4>
+        <div class="code-block" id="code-vscode"><span class="comment"># Na pasta do arquivo:</span>
+code .
+
+<span class="comment"># Extensão recomendada para preview ao vivo:</span>
+<span class="comment"># "Live Server" by Ritwick Dey
+# Clique com botão direito no .html → "Open with Live Server"</span></div>
+        <button class="btn-copy-code" onclick="copyCode('code-vscode')">📋 Copiar</button>
+      </div>
+      <div class="code-section">
+        <h4>6 — Atualizar após mudanças</h4>
+        <div class="code-block" id="code-update">git add mr-deploy-tracker.html
+git commit -m "update: [descreva a mudança]"
+git push</div>
+        <button class="btn-copy-code" onclick="copyCode('code-update')">📋 Copiar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── USER MANAGEMENT MODAL ── -->
+<div class="modal-overlay" id="users-overlay" onclick="if(event.target===this)closeUsersModal()">
+  <div class="modal" style="width:480px">
+    <div class="modal-hd">
+      <span class="modal-hd-icon">👥</span>
+      <span class="modal-hd-title">Gerenciar Usuários</span>
+      <button class="modal-close" onclick="closeUsersModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-add-row" style="flex-direction:column;gap:8px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <input class="einput" id="new-user-name" placeholder="Nome">
+          <input class="einput" id="new-user-email" placeholder="E-mail" type="email">
+        </div>
+        <div style="display:flex;gap:8px">
+          <input class="einput" id="new-user-pwd" placeholder="Senha" type="password" style="flex:1">
+          <button class="btn-sv" onclick="addUser()" style="white-space:nowrap">＋ Adicionar</button>
+        </div>
+      </div>
+      <div class="manage-list" id="users-list"></div>
+    </div>
+  </div>
+</div>
+
 <div class="topbar">
   <div class="logo">
     <div class="logo-icon">🦑</div>
@@ -379,6 +524,15 @@ input[list].einput::-webkit-calendar-picker-indicator { opacity: 0.5; cursor: po
       <span class="topbar-storage-dot" id="storage-bar-dot"></span>
       <span class="topbar-storage-text" id="storage-bar-text">Carregando…</span>
       <button class="btn-reset-sm" onclick="restoreDefaults()" title="Restaurar dados originais">↩ Restaurar</button>
+    </div>
+    <div class="topbar-divider-v"></div>
+    <button class="btn-topbar-action" onclick="openGithubModal()" title="GitHub / VSCode">🚀 GitHub</button>
+    <button class="btn-topbar-action" onclick="openUsersModal()" title="Gerenciar usuários">👥 Usuários</button>
+    <div class="topbar-divider-v"></div>
+    <div class="topbar-user" id="topbar-user">
+      <span class="topbar-user-av" id="topbar-user-av">?</span>
+      <span class="topbar-user-name" id="topbar-user-name">–</span>
+      <button class="btn-logout" onclick="logout()" title="Sair">⏻</button>
     </div>
     <div class="topbar-divider-v"></div>
     <input class="search" id="globalSearch" type="text" placeholder="Buscar MR, card, dev…">
@@ -2311,65 +2465,41 @@ function updateStorageBar(source) {
   }
 }
 
-const SUPABASE_URL = 'https://avpvkiafowfaemkgmqkh.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_L7R8MR-tN4i8sUimTs_TQw_cWaUcKtc';
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// Salvar estado completo no Supabase
-async function saveToStorage() {
+function saveToStorage() {
   try {
-    const payload = {
+    localStorage.setItem(LS_KEY, JSON.stringify({
       DEPLOYS, PENDING, INITIATIVES, DEVS, REPOS, VERSIONS_DATA, VERSIONS_LIST,
-      pendingIdCtr, versionIdCtr, manageIdCtr, deployIdCtr, rowIdCtr
-    };
-
-    const { error } = await _supabase
-      .from('tracker_state')
-      .upsert({ id: 'current_state', data: payload, updated_at: new Date() });
-
-    if (!error) showToast('☁️ Salvo no Supabase!');
-    else console.warn('Supabase save failed', error);
-  } catch (e) {
-    console.warn('Erro ao salvar no Supabase', e);
-  }
+      pendingIdCtr, versionIdCtr, manageIdCtr, deployIdCtr, rowIdCtr,
+    }));
+    showToast('💾 Dados salvos');
+  } catch(e) { console.warn('localStorage save failed', e); }
 }
 
-// Carregar estado do Supabase
-async function loadFromStorage() {
+function loadFromStorage() {
   try {
-    const { data, error } = await _supabase
-      .from('tracker_state')
-      .select('data')
-      .eq('id', 'current_state')
-      .single();
-
-    if (data && data.data) {
-      const state = data.data;
-      if (state.DEPLOYS) DEPLOYS = state.DEPLOYS;
-      if (state.PENDING) PENDING = state.PENDING;
-      if (state.INITIATIVES) INITIATIVES = state.INITIATIVES;
-      if (state.DEVS) DEVS = state.DEVS;
-      if (state.REPOS) REPOS = state.REPOS;
-      if (state.VERSIONS_DATA) VERSIONS_DATA = state.VERSIONS_DATA;
-      if (state.VERSIONS_LIST) VERSIONS_LIST = state.VERSIONS_LIST;
-      if (state.pendingIdCtr) pendingIdCtr = state.pendingIdCtr;
-      if (state.versionIdCtr) versionIdCtr = state.versionIdCtr;
-      if (state.manageIdCtr) manageIdCtr = state.manageIdCtr;
-      if (state.deployIdCtr) deployIdCtr = state.deployIdCtr;
-      if (state.rowIdCtr) rowIdCtr = state.rowIdCtr;
-      updateStorageBar('storage');
-      return true;
-    }
-    if (error) console.warn('Supabase load failed', error);
-  } catch (e) {
-    console.warn('Erro ao carregar do Supabase', e);
-  }
-  updateStorageBar('default');
-  return false;
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) { updateStorageBar('default'); return false; }
+    const data = JSON.parse(raw);
+    if (data.DEPLOYS)       DEPLOYS       = data.DEPLOYS;
+    if (data.PENDING)       PENDING       = data.PENDING;
+    if (data.INITIATIVES)   INITIATIVES   = data.INITIATIVES;
+    if (data.DEVS)          DEVS          = data.DEVS;
+    if (data.REPOS)         REPOS         = data.REPOS;
+    if (data.VERSIONS_DATA) VERSIONS_DATA = data.VERSIONS_DATA;
+    if (data.VERSIONS_LIST) VERSIONS_LIST = data.VERSIONS_LIST;
+    if (data.pendingIdCtr)  pendingIdCtr  = data.pendingIdCtr;
+    if (data.versionIdCtr)  versionIdCtr  = data.versionIdCtr;
+    if (data.manageIdCtr)   manageIdCtr   = data.manageIdCtr;
+    if (data.deployIdCtr)   deployIdCtr   = data.deployIdCtr;
+    if (data.rowIdCtr)      rowIdCtr      = data.rowIdCtr;
+    updateStorageBar('storage');
+    return true;
+  } catch(e) { console.warn('localStorage load failed', e); updateStorageBar('default'); return false; }
 }
 
 function restoreDefaults() {
   if (!confirm('Restaurar todos os dados para o estado original da planilha?\n\nIsso apagará todas as alterações salvas.')) return;
+  localStorage.removeItem(LS_KEY);
   DEPLOYS       = JSON.parse(JSON.stringify(DEFAULTS.DEPLOYS));
   PENDING       = JSON.parse(JSON.stringify(DEFAULTS.PENDING));
   INITIATIVES   = JSON.parse(JSON.stringify(DEFAULTS.INITIATIVES));
@@ -2400,23 +2530,166 @@ function showToast(msg) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
 }
 
-// ══════════════════════════════════════════════ TABS / SEARCH ══
 function switchTab(id,btn){
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+id).classList.add('active');
   btn.classList.add('active');
 }
+
+// ══════════════════════════════════════════════ AUTH ══
+
+const USERS_KEY    = 'sesamo-users-v1';
+const SESSION_KEY  = 'sesamo-session-v1';
+
+async function hashPwd(pwd) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pwd));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function initDefaultUser() {
+  const existing = localStorage.getItem(USERS_KEY);
+  if (existing) return;
+  const hash = await hashPwd('deploytrackersesamo@');
+  localStorage.setItem(USERS_KEY, JSON.stringify([
+    { email: 'cborgesvaz@gmail.com', name: 'Admin', role: 'admin', hash }
+  ]));
+}
+
+function getUsers()          { try { return JSON.parse(localStorage.getItem(USERS_KEY)||'[]'); } catch(e){return[];} }
+function saveUsers(users)    { localStorage.setItem(USERS_KEY, JSON.stringify(users)); }
+function getSession()        { try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null'); } catch(e){return null;} }
+function setSession(user)    { sessionStorage.setItem(SESSION_KEY, JSON.stringify(user)); }
+function clearSession()      { sessionStorage.removeItem(SESSION_KEY); }
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pwd   = document.getElementById('login-pwd').value;
+  const btn   = document.getElementById('btn-login');
+  const err   = document.getElementById('login-err');
+  if (!email || !pwd) { err.textContent = 'Preencha e-mail e senha.'; err.classList.add('show'); return; }
+  btn.disabled = true; btn.textContent = 'Verificando…';
+  err.classList.remove('show');
+  const hash  = await hashPwd(pwd);
+  const users = getUsers();
+  const user  = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.hash === hash);
+  if (user) {
+    setSession({ email: user.email, name: user.name, role: user.role });
+    showApp(user);
+  } else {
+    err.textContent = 'E-mail ou senha incorretos.';
+    err.classList.add('show');
+    document.getElementById('login-pwd').value = '';
+    document.getElementById('login-pwd').focus();
+  }
+  btn.disabled = false; btn.textContent = 'Entrar';
+}
+
+function showLogin() {
+  document.getElementById('login-overlay').style.display = 'flex';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-pwd').value   = '';
+  document.getElementById('login-err').classList.remove('show');
+  setTimeout(() => document.getElementById('login-email').focus(), 100);
+}
+
+function showApp(user) {
+  document.getElementById('login-overlay').style.display = 'none';
+  // Update topbar user display
+  const av   = document.getElementById('topbar-user-av');
+  const name = document.getElementById('topbar-user-name');
+  if (av)   av.textContent  = user.name ? user.name[0].toUpperCase() : user.email[0].toUpperCase();
+  if (name) name.textContent = user.name || user.email;
+  // Boot app
+  updateStorageBar('loading');
+  setTimeout(() => {
+    loadFromStorage();
+    renderDeploys();
+    renderPending();
+    renderNextDeploy();
+    renderVersions();
+  }, 350);
+}
+
+function logout() {
+  if (!confirm('Deseja sair do Deploy Tracker?')) return;
+  clearSession();
+  showLogin();
+}
+
+// ── User Management ──
+function openUsersModal() {
+  renderUsersList();
+  document.getElementById('users-overlay').classList.add('open');
+}
+function closeUsersModal() {
+  document.getElementById('users-overlay').classList.remove('open');
+}
+
+function renderUsersList() {
+  const users = getUsers();
+  const list  = document.getElementById('users-list');
+  if (!list) return;
+  const session = getSession();
+  list.innerHTML = users.map(u => `
+    <div class="manage-item">
+      <div class="dev-av" style="background:var(--accent);flex-shrink:0">${u.name?u.name[0].toUpperCase():u.email[0].toUpperCase()}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600">${u.name||'–'}</div>
+        <div style="font-size:11px;color:var(--muted)">${u.email}</div>
+      </div>
+      <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${u.role==='admin'?'var(--accent-d)':'var(--surface3)'};color:${u.role==='admin'?'var(--accent)':'var(--muted)'};font-weight:600">${u.role}</span>
+      ${u.email.toLowerCase()!==session?.email?.toLowerCase()
+        ? `<button class="mi-btn mi-btn-del" onclick="removeUser('${u.email}')" title="Remover">🗑</button>`
+        : '<span style="font-size:11px;color:var(--dim);padding:0 6px">você</span>'}
+    </div>`).join('') || '<div class="empty-manage">Nenhum usuário cadastrado.</div>';
+}
+
+async function addUser() {
+  const name  = document.getElementById('new-user-name').value.trim();
+  const email = document.getElementById('new-user-email').value.trim().toLowerCase();
+  const pwd   = document.getElementById('new-user-pwd').value;
+  if (!email || !pwd) { alert('E-mail e senha são obrigatórios.'); return; }
+  const users = getUsers();
+  if (users.find(u => u.email.toLowerCase() === email)) { alert('Este e-mail já está cadastrado.'); return; }
+  const hash = await hashPwd(pwd);
+  users.push({ email, name: name||email, role: 'user', hash });
+  saveUsers(users);
+  ['new-user-name','new-user-email','new-user-pwd'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  renderUsersList();
+  showToast('👤 Usuário adicionado');
+}
+
+function removeUser(email) {
+  if (!confirm(`Remover usuário ${email}?`)) return;
+  const users = getUsers().filter(u => u.email.toLowerCase() !== email.toLowerCase());
+  saveUsers(users);
+  renderUsersList();
+  showToast('🗑 Usuário removido');
+}
+
+// ── GitHub Modal ──
+function openGithubModal()  { document.getElementById('github-overlay').classList.add('open'); }
+function closeGithubModal() { document.getElementById('github-overlay').classList.remove('open'); }
+
+function copyCode(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const text = el.innerText.replace(/^#.*\n?/gm,'').trim(); // strip comments
+  navigator.clipboard?.writeText(text).then(() => showToast('📋 Copiado!')).catch(() => {});
+}
+
+// ══════════════════════════════════════════════ INIT ══
 document.getElementById('globalSearch').addEventListener('input',function(){ searchQuery=this.value.trim(); renderDeploys(); });
 
-// INIT
 (async function(){
-  updateStorageBar('loading');
-  await loadFromStorage();
-  renderDeploys();
-  renderPending();
-  renderNextDeploy();
-  renderVersions();
+  await initDefaultUser();
+  const session = getSession();
+  if (session) {
+    showApp(session);
+  } else {
+    showLogin();
+  }
 })();
 </script>
 </body>
