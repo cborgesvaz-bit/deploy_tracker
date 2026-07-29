@@ -762,7 +762,7 @@ async function loadFromSupabase() {
     const [inis, devs, repos, vers, deplRows, mrRows] = await Promise.all([
       sbSelect('Iniciativas','nome'), sbSelect('responsavel','nome'),
       sbSelect('repositorio','nome'), sbSelect('versao_deploy','versao'),
-      sbSelect('historico_deploy','versao'), sbSelect('mr_aberto','id')
+      sbSelect('historico deploy','versao'), sbSelect('mr_aberto','id')
     ]);
 
     if (inis)   INITIATIVES = inis.map(x=>({id:'i'+x.id, sbId:x.id, name:x.nome, color:INI_COLORS[x.nome]||'#64748B'}));
@@ -844,8 +844,8 @@ async function sbSaveDeployRow(row, versionStr) {
   const mrNum = '#'+getMrNum(row.mr).replace('#','');
   const payload = { versao:versionStr, Label:'', MR:mrNum, Repositorio:row.card?'sesamo':getRepo(row.mr), Card:row.card||null, Aprovado:row.approved||null, 'DEV Responsavel':row.dev||null, Pipeline:row.pipeline||null, Comentario:row.comment||null, iniciativa:row.initiative||null, 'data deploy':null };
   try {
-    if (row.sbId) { await sbUpdate('historico_deploy',row.sbId,payload); }
-    else { const res=await sbInsert('historico_deploy',payload); if(res&&res[0]) row.sbId=res[0].id; }
+    if (row.sbId) { await sbUpdate('historico deploy',row.sbId,payload); }
+    else { const res=await sbInsert('historico deploy',payload); if(res&&res[0]) row.sbId=res[0].id; }
   } catch(e){ console.warn('sbSaveDeployRow fail:',e); }
 }
 
