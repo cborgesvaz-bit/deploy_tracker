@@ -749,7 +749,7 @@ async function loadFromSupabase() {
   showSbLoading(true);
   try {
     const [inis, devs, repos, vers, deplRows, mrRows] = await Promise.all([
-      sbSelect('iniciativas','nome'), sbSelect('responsavel','nome'),
+      sbSelect('Iniciativas','nome'), sbSelect('responsavel','nome'),
       sbSelect('repositorio','nome'), sbSelect('versao_deploy','versao'),
       sbSelect('historico_deploy','versao'), sbSelect('mr_aberto','id')
     ]);
@@ -841,11 +841,11 @@ async function sbSaveDeployRow(row, versionStr) {
 async function sbSaveIni(item) {
   if (!sbConnected) return;
   try {
-    if (item.sbId) { await sbUpdate('iniciativas',item.sbId,{nome:item.name}); }
-    else { const res=await sbInsert('iniciativas',{nome:item.name}); if(res&&res[0]) item.sbId=res[0].id; }
+    if (item.sbId) { await sbUpdate('Iniciativas',item.sbId,{nome:item.name}); }
+    else { const res=await sbInsert('Iniciativas',{nome:item.name}); if(res&&res[0]) item.sbId=res[0].id; }
   } catch(e){ console.warn('sbSaveIni:',e); }
 }
-async function sbDeleteIni(sbId) { if(!sbConnected||!sbId)return; try{await sbDelete('iniciativas',sbId);}catch(e){} }
+async function sbDeleteIni(sbId) { if(!sbConnected||!sbId)return; try{await sbDelete('Iniciativas',sbId);}catch(e){} }
 async function sbSaveDev(item) {
   if (!sbConnected) return;
   try {
@@ -1667,7 +1667,7 @@ async function bootApp(){
   updateStorageBar('loading');
   showSbLoading(true);
   try {
-    await sbFetch('iniciativas','GET',null,'?select=id&limit=1');
+    await sbFetch('Iniciativas','GET',null,'?select=id&limit=1');
     sbConnected = true;
     const ok = await loadFromSupabase();
     if (ok) { renderAll(); return; }
