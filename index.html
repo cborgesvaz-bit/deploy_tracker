@@ -718,13 +718,24 @@ let pendingSel = new Set(), ndSel = new Set();
 async function sbFetch(table, method='GET', body=null, qs='') {
   if (!SB_URL || !SB_KEY) return null;
   const url = `${SB_URL}/rest/v1/${table}${qs}`;
-  const prefer = method==='GET' ? 'return=representation' : method==='POST' ? 'return=representation' : 'return=minimal';
+  const headers = {
+    'apikey': SB_KEY,
+    'Authorization': `Bearer ${SB_KEY}`,
+  };
+  if (method !== 'GET' && method !== 'DELETE') {
+    headers['Content-Type'] = 'application/json';
+    headers['Prefer'] = 'return=representation';
+  }
   const res = await fetch(url, {
     method,
-    headers: { 'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json','Prefer':prefer },
+    headers,
     body: body ? JSON.stringify(body) : undefined
   });
-  if (!res.ok) { const t=await res.text(); throw new Error(`${method} /${table}: ${res.status} ${t}`); }
+  if (!res.ok) {
+    const t = await res.text();
+    throw new Error(`${method} /${table}: ${res.status} ${t}`);
+  }
+  if (method === 'DELETE') return null;
   try { return await res.json(); } catch { return null; }
 }
 
@@ -1666,14 +1677,19 @@ function renderAll(){
 async function bootApp(){
   updateStorageBar('loading');
   showSbLoading(true);
+  console.log('[Supabase] Connecting to:', SB_URL);
   try {
-    await sbFetch('Iniciativas','GET',null,'?select=id&limit=1');
+    const test = await sbFetch('Iniciativas','GET',null,'?select=id&limit=1');
+    console.log('[Supabase] Connection OK, test result:', test);
     sbConnected = true;
     const ok = await loadFromSupabase();
     if (ok) { renderAll(); return; }
   } catch(e) {
-    console.warn('Supabase unavailable, falling back to local:', e);
+    console.error('[Supabase] Connection failed:', e.message);
+    console.error('[Supabase] Full error:', e);
     sbConnected = false;
+    updateStorageBar('default');
+    showSbLoading(false);
   }
   const localOk = loadFromLocal();
   if (!localOk) updateStorageBar('default');
