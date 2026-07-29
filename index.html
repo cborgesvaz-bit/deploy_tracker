@@ -717,7 +717,7 @@ let pendingSel = new Set(), ndSel = new Set();
 // ═══════════════════════════════════════════════════════════
 async function sbFetch(table, method='GET', body=null, qs='') {
   if (!SB_URL || !SB_KEY) return null;
-  const url = `${SB_URL}/rest/v1/${table}${qs}`;
+  const url = `${SB_URL}/rest/v1/${encodeURIComponent(table)}${qs}`;
   const headers = {
     'apikey': SB_KEY,
     'Authorization': `Bearer ${SB_KEY}`,
