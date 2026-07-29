@@ -282,17 +282,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .login-input:focus{border-color:var(--accent);background:var(--surface)}
 .login-footer-text{margin-top:20px;text-align:center;font-size:11px;color:var(--dim)}
 
-/* ── SUPABASE CONFIG ── */
-.supabase-badge{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font:500 11px var(--sans);cursor:pointer;border:1px solid var(--border);background:var(--surface2);transition:all .15s}
-.supabase-badge:hover{border-color:var(--accent);background:var(--accent-d)}
-.supabase-badge .sb-dot{width:7px;height:7px;border-radius:50%}
-.sb-dot.connected{background:var(--green)}
-.sb-dot.disconnected{background:var(--dim)}
-.sb-dot.connecting{background:var(--yellow);animation:pulse 1s infinite}
-.conn-test{padding:8px 12px;border-radius:var(--r);font-size:12px;font-weight:500;margin-top:8px}
-.conn-test.ok{background:var(--green-l);color:var(--green)}
-.conn-test.fail{background:var(--red-l);color:var(--red)}
-
 /* ── EXPORT ── */
 .export-option{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--border);border-radius:var(--rl);cursor:pointer;transition:all .15s}
 .export-option:hover{border-color:var(--accent);background:var(--accent-l)}
@@ -352,17 +341,12 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
   <div class="topbar-sep"></div>
   <span class="topbar-subtitle">Deploy Tracker</span>
   <div class="topbar-right">
-    <div class="storage-pill">
+    <div class="storage-pill" title="Status da conexão com Supabase">
       <span class="storage-dot default" id="stor-dot"></span>
-      <span class="storage-text" id="stor-text">Carregando…</span>
-      <button class="btn btn-ghost btn-sm" onclick="restoreDefaults()" title="Restaurar dados originais" style="margin-left:4px">↩</button>
+      <span class="storage-text" id="stor-text">Conectando ao Supabase…</span>
     </div>
     <div class="topbar-sep"></div>
-    <div class="supabase-badge" onclick="openModal('supabase-modal')" title="Configurar Supabase">
-      <span class="sb-dot disconnected" id="sb-dot"></span>
-      <span id="sb-badge-text">Supabase</span>
-    </div>
-    <button class="topbar-btn" onclick="openModal('export-modal')">Exportar CSV</button>
+    <button class="topbar-btn" onclick="openModal('export-modal')">⬇ Exportar CSV</button>
     <div class="topbar-sep"></div>
     <div class="topbar-user" onclick="toggleUserMenu()" id="topbar-user">
       <span class="user-av" id="user-av">A</span>
@@ -664,24 +648,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
   </div>
 </div>
 
-<!-- Supabase Config Modal -->
-<div class="modal-overlay" id="supabase-modal" onclick="if(event.target===this)closeModal('supabase-modal')">
-  <div class="modal" style="width:480px">
-    <div class="modal-header">☁️<h3>Configurar Supabase</h3><button class="modal-close" onclick="closeModal('supabase-modal')">✕</button></div>
-    <div class="modal-body">
-      <p style="font-size:13px;color:var(--muted)">Conecte ao seu projeto Supabase para persistir os dados na nuvem. Obtenha as credenciais em <strong>Project Settings → API</strong>.</p>
-      <div class="form-cell"><label class="f-label">URL do Projeto</label><input class="f-input" id="sb-url" placeholder="https://xxxxx.supabase.co"></div>
-      <div class="form-cell"><label class="f-label">Anon Key (public)</label><input class="f-input" id="sb-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." type="password"></div>
-      <div id="sb-test-result" style="display:none" class="conn-test"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-primary" onclick="saveSupabaseConfig()">✓ Conectar e Carregar</button>
-      <button class="btn btn-ghost" onclick="closeModal('supabase-modal')">Cancelar</button>
-      <button class="btn btn-danger-ghost" onclick="clearSupabase()" style="margin-left:auto">· Desconectar</button>
-    </div>
-  </div>
-</div>
-
 <!-- Export Modal -->
 <div class="modal-overlay" id="export-modal" onclick="if(event.target===this)closeModal('export-modal')">
   <div class="modal" style="width:440px">
@@ -707,7 +673,8 @@ const USERS_KEY   = 'sesamo-users-v1';
 const SESSION_KEY = 'sesamo-session-v1';
 const SB_CFG_KEY  = 'sesamo-sb-config';
 
-let SB_URL = '', SB_KEY = '';
+let SB_URL = 'https://wfaqqxcrmokglzmbcycc.supabase.co';
+let SB_KEY = 'sb_publishable_FFSdj49IdMgP4w_nbPPaiQ_2UeOnn3-';
 let sbConnected = false;
 
 // Color palettes
@@ -939,40 +906,6 @@ function restoreDefaults() {
 // ═══════════════════════════════════════════════════════════
 // SUPABASE CONFIG UI
 // ═══════════════════════════════════════════════════════════
-function loadSbConfig() {
-  try { const c=JSON.parse(localStorage.getItem(SB_CFG_KEY)||'null'); if(c){SB_URL=c.url;SB_KEY=c.key;} } catch(e){}
-}
-
-async function saveSupabaseConfig() {
-  SB_URL = (document.getElementById('sb-url').value||'').trim().replace(/\/$/,'');
-  SB_KEY = (document.getElementById('sb-key').value||'').trim();
-  if (!SB_URL||!SB_KEY) { alert('Preencha URL e Key.'); return; }
-  const res = document.getElementById('sb-test-result');
-  res.style.display='block'; res.className='conn-test'; res.textContent='Testando conexão…';
-  try {
-    const test = await sbFetch('iniciativas','GET',null,'?select=id&limit=1');
-    res.className='conn-test ok'; res.innerHTML='✓ Conexão OK! Carregando dados…';
-    sbConnected=true;
-    localStorage.setItem(SB_CFG_KEY,JSON.stringify({url:SB_URL,key:SB_KEY}));
-    updateSbBadge(true);
-    setTimeout(async()=>{ await loadFromSupabase(); renderAll(); closeModal('supabase-modal'); },800);
-  } catch(e) {
-    res.className='conn-test fail'; res.innerHTML=`· Erro: ${e.message}`;
-    sbConnected=false;
-  }
-}
-
-function clearSupabase() {
-  SB_URL=''; SB_KEY=''; sbConnected=false;
-  localStorage.removeItem(SB_CFG_KEY);
-  updateSbBadge(false);
-  document.getElementById('sb-url').value='';
-  document.getElementById('sb-key').value='';
-  const res=document.getElementById('sb-test-result'); res.style.display='none';
-  closeModal('supabase-modal');
-  showToast('Supabase desconectado','warn');
-}
-
 function updateSbBadge(connected) {
   const dot=document.getElementById('sb-dot'), txt=document.getElementById('sb-badge-text');
   if(dot){ dot.className='sb-dot '+(connected?'connected':'disconnected'); }
@@ -988,10 +921,10 @@ function updateStorageBar(source) {
   const dot=document.getElementById('stor-dot'), txt=document.getElementById('stor-text');
   if (!dot||!txt) return;
   const map = {
-    loading: ['pulsing','Carregando…'],
-    supabase: ['ok','Sincronizado com Supabase'],
-    local: ['ok','Dados locais'],
-    default: ['default','Dados originais da planilha'],
+    loading:   ['pulsing','Conectando ao Supabase…'],
+    supabase:  ['ok','● Supabase sincronizado'],
+    local:     ['default','⚠ Modo offline (local)'],
+    default:   ['default','⚠ Sem dados do Supabase'],
   };
   const [cls,label] = map[source]||map.default;
   dot.className='storage-dot '+cls; txt.textContent=label;
@@ -1704,11 +1637,6 @@ function openModal(id){
   if(id==='dev-modal') renderManageList('dev');
   if(id==='repo-modal') renderManageList('repo');
   if(id==='users-modal') renderUsersList();
-  if(id==='supabase-modal'){
-    document.getElementById('sb-url').value=SB_URL||'';
-    document.getElementById('sb-key').value=SB_KEY||'';
-    document.getElementById('sb-test-result').style.display='none';
-  }
 }
 function closeModal(id){ document.getElementById(id)?.classList.remove('open'); }
 
@@ -1737,18 +1665,18 @@ function renderAll(){
 // ═══════════════════════════════════════════════════════════
 async function bootApp(){
   updateStorageBar('loading');
-  loadSbConfig();
-  if(SB_URL&&SB_KEY){
-    updateSbBadge(false);
-    document.getElementById('sb-dot').className='sb-dot connecting';
-    try {
-      const test=await sbFetch('iniciativas','GET',null,'?select=id&limit=1');
-      sbConnected=true; updateSbBadge(true);
-      const ok=await loadFromSupabase(); if(ok){ renderAll(); return; }
-    } catch(e){ sbConnected=false; updateSbBadge(false); console.warn('Supabase unreachable, using local',e); }
+  showSbLoading(true);
+  try {
+    await sbFetch('iniciativas','GET',null,'?select=id&limit=1');
+    sbConnected = true;
+    const ok = await loadFromSupabase();
+    if (ok) { renderAll(); return; }
+  } catch(e) {
+    console.warn('Supabase unavailable, falling back to local:', e);
+    sbConnected = false;
   }
-  const localOk=loadFromLocal();
-  if(!localOk) updateStorageBar('default');
+  const localOk = loadFromLocal();
+  if (!localOk) updateStorageBar('default');
   renderAll();
 }
 
