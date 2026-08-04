@@ -94,11 +94,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 
 /* ── VERSION PILLS ── */
 .ver-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
-.ver-pill{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);font:500 12px var(--sans);cursor:pointer;transition:all .15s;white-space:nowrap}
+.ver-pill{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);font:600 12px var(--mono);cursor:pointer;transition:all .15s;white-space:nowrap;max-width:200px}
 .ver-pill:hover{border-color:var(--accent);color:var(--accent)}
 .ver-pill.active{background:var(--accent);border-color:var(--accent);color:#fff}
-.ver-pill .vp-date{font-size:10px;opacity:.75;font-family:var(--mono)}
-.ver-pill .vp-cnt{font-size:10px;background:rgba(0,0,0,.1);padding:1px 5px;border-radius:8px;font-weight:600}
+.ver-pill .vp-date{font-size:9px;font-weight:400;opacity:.75;font-family:var(--mono);max-width:70px;overflow:hidden;text-overflow:ellipsis}
+.ver-pill .vp-cnt{font-size:10px;background:rgba(0,0,0,.1);padding:1px 5px;border-radius:8px;font-weight:700}
 .ver-pill.active .vp-cnt{background:rgba(255,255,255,.25)}
 .ver-pane{display:none}.ver-pane.active{display:block}
 
@@ -739,7 +739,15 @@ async function sbFetch(table, method='GET', body=null, qs='') {
   try { return await res.json(); } catch { return null; }
 }
 
-async function sbSelect(table, order='') { return sbFetch(table,'GET',null,'?select=*'+(order?'&order='+order:'')); }
+function parseDate(raw) {
+  if (!raw) return '';
+  // Already formatted as DD/MM/YYYY
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) return raw;
+  // ISO or PostgreSQL timestamp: 2026-06-18T00:00:00 or 2026-06-18 00:00:00
+  const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  return raw;
+}
 async function sbInsert(table, row) { return sbFetch(table,'POST',row); }
 async function sbUpdate(table, id, row) { return sbFetch(table,'PATCH',row,`?id=eq.${id}`); }
 async function sbDelete(table, id) { return sbFetch(table,'DELETE',null,`?id=eq.${id}`); }
@@ -768,14 +776,14 @@ async function loadFromSupabase() {
     if (inis)   INITIATIVES = inis.map(x=>({id:'i'+x.id, sbId:x.id, name:x.nome, color:INI_COLORS[x.nome]||'#64748B'}));
     if (devs)   DEVS        = devs.map(x=>({id:'d'+x.id, sbId:x.id, name:x.nome, color:DEV_COLORS[x.nome]||'#64748B'}));
     if (repos)  REPOS       = repos.map(x=>({id:'r'+x.id, sbId:x.id, name:x.nome, color:'#64748B'}));
-    if (vers)   VERSIONS_DATA = vers.map(x=>({id:'v'+x.id, sbId:x.id, version:x.versao||'', date:x.data_deploy||'', orchestrator:x.orquestrador||'', note:x.observacao||''}));
+    if (vers)   VERSIONS_DATA = vers.map(x=>({id:'v'+x.id, sbId:x.id, version:x.versao||'', date:parseDate(x.data_deploy), orchestrator:x.orquestrador||'', note:x.observacao||''}));
 
     if (deplRows) {
       const groups={};
       deplRows.forEach(row=>{
         const key = `${row.versao}|||${row.Label}`;
         const dateRaw = row['data deploy'];
-        const dateStr = dateRaw ? (dateRaw.includes('T') ? new Date(dateRaw).toLocaleDateString('pt-BR') : dateRaw) : '';
+        const dateStr = parseDate(dateRaw);
         if (!groups[key]) {
           const verId = 'ver-'+(row.versao||'unknown').replace(/\./g,'_');
           groups[key] = { id:'dSB'+Object.keys(groups).length, ver:verId, date:dateStr, label:row.Label||row.versao||'', repo:(row.Repositorio||'sesamo').toLowerCase(), rows:[] };
@@ -1158,7 +1166,7 @@ function renderDeployHistory() {
     const pill=document.createElement('button');
     pill.className='ver-pill'+(isAct?' active':'');
     pill.dataset.ver=v.id;
-    pill.innerHTML=`<span style="font-weight:700">${v.label}</span>${v.date?`<span class="vp-date">${v.date}</span>`:''}<span class="vp-cnt">${cnt}</span>`;
+    pill.innerHTML = `<span style="font-weight:700">${v.label}</span>${v.date ? `<span class="vp-date">${v.date.slice(0,5)}</span>` : ''}<span class="vp-cnt">${cnt}</span>`;
     pill.onclick=()=>switchVersion(v.id);
     pillsEl.appendChild(pill);
 
