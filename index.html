@@ -94,11 +94,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 
 /* ── VERSION PILLS ── */
 .ver-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
-.ver-pill{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);font:600 12px var(--mono);cursor:pointer;transition:all .15s;white-space:nowrap;max-width:200px}
+.ver-pill{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);font:500 12px var(--sans);cursor:pointer;transition:all .15s;white-space:nowrap}
 .ver-pill:hover{border-color:var(--accent);color:var(--accent)}
 .ver-pill.active{background:var(--accent);border-color:var(--accent);color:#fff}
-.ver-pill .vp-date{font-size:9px;font-weight:400;opacity:.75;font-family:var(--mono);max-width:70px;overflow:hidden;text-overflow:ellipsis}
-.ver-pill .vp-cnt{font-size:10px;background:rgba(0,0,0,.1);padding:1px 5px;border-radius:8px;font-weight:700}
+.ver-pill .vp-date{font-size:10px;opacity:.75;font-family:var(--mono)}
+.ver-pill .vp-cnt{font-size:10px;background:rgba(0,0,0,.1);padding:1px 5px;border-radius:8px;font-weight:600}
 .ver-pill.active .vp-cnt{background:rgba(255,255,255,.25)}
 .ver-pane{display:none}.ver-pane.active{display:block}
 
@@ -739,15 +739,7 @@ async function sbFetch(table, method='GET', body=null, qs='') {
   try { return await res.json(); } catch { return null; }
 }
 
-function parseDate(raw) {
-  if (!raw) return '';
-  // Already formatted as DD/MM/YYYY
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) return raw;
-  // ISO or PostgreSQL timestamp: 2026-06-18T00:00:00 or 2026-06-18 00:00:00
-  const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
-  return raw;
-}
+async function sbSelect(table, order='') { return sbFetch(table,'GET',null,'?select=*'+(order?'&order='+order:'')); }
 async function sbInsert(table, row) { return sbFetch(table,'POST',row); }
 async function sbUpdate(table, id, row) { return sbFetch(table,'PATCH',row,`?id=eq.${id}`); }
 async function sbDelete(table, id) { return sbFetch(table,'DELETE',null,`?id=eq.${id}`); }
@@ -776,18 +768,18 @@ async function loadFromSupabase() {
     if (inis)   INITIATIVES = inis.map(x=>({id:'i'+x.id, sbId:x.id, name:x.nome, color:INI_COLORS[x.nome]||'#64748B'}));
     if (devs)   DEVS        = devs.map(x=>({id:'d'+x.id, sbId:x.id, name:x.nome, color:DEV_COLORS[x.nome]||'#64748B'}));
     if (repos)  REPOS       = repos.map(x=>({id:'r'+x.id, sbId:x.id, name:x.nome, color:'#64748B'}));
-    if (vers)   VERSIONS_DATA = vers.map(x=>({id:'v'+x.id, sbId:x.id, version:x.versao||'', date:parseDate(x.data_deploy), orchestrator:x.orquestrador||'', note:x.observacao||''}));
+    if (vers)   VERSIONS_DATA = vers.map(x=>({id:'v'+x.id, sbId:x.id, version:x.versao||'', date:x.data_deploy||'', orchestrator:x.orquestrador||'', note:x.observacao||''}));
 
     if (deplRows) {
       const groups={};
       deplRows.forEach(row=>{
         const key = `${row.versao}|||${row.Label}`;
         const dateRaw = row['data deploy'];
-        const dateStr = parseDate(dateRaw);
+        const dateStr = dateRaw ? (dateRaw.includes('T') ? new Date(dateRaw).toLocaleDateString('pt-BR') : dateRaw) : '';
         if (!groups[key]) {
           const verId = 'ver-'+(row.versao||'unknown').replace(/\./g,'_');
           groups[key] = { id:'dSB'+Object.keys(groups).length, ver:verId, date:dateStr, label:row.Label||row.versao||'', repo:(row.Repositorio||'sesamo').toLowerCase(), rows:[] };
-          if (!VERSIONS_LIST.find(v=>v.id===verId)) VERSIONS_LIST.push({id:verId,label:row.versao||'',date:dateStr,color:'#F97316'});
+          if (!VERSIONS_LIST.find(v=>v.id===verId)) VERSIONS_LIST.push({id:verId,label:row.versao||'',date:dateStr,color:'#64748B'});
         }
         const repo = (row.Repositorio||'sesamo').toLowerCase();
         groups[key].rows.push({ id:'rSB'+row.id, sbId:row.id, mr:mrNumToUrl(row.MR,repo), card:row.Card||'', approved:row.Aprovado||'', initiative:row.iniciativa||'', dev:row['DEV Responsavel']||'', pipeline:row.Pipeline||'', comment:row.Comentario||'' });
@@ -1055,6 +1047,19 @@ function maskDate(el){ let v=el.value.replace(/\D/g,''); if(v.length>=3)v=v.slic
 function csvEsc(v){ const s=(v==null?'':String(v)).replace(/"/g,'""'); return(s.includes(',')||s.includes('"')||s.includes('\n'))?`"${s}"`:s; }
 function verToNum(label){ const nums=(label||'').match(/\d+/g); if(!nums)return-1; return nums.reduce((a,n,i)=>a+parseInt(n)*Math.pow(1000,Math.max(0,4-i)),0); }
 
+// Remove horário (hora/minuto/segundo) de uma string de data, mantendo só a parte da data
+function cleanDateTime(v) {
+  if (!v) return '';
+  return String(v).trim().split(/[ T]/)[0];
+}
+// Remove o ano de uma data já limpa (aceita DD/MM/AAAA ou AAAA-MM-DD)
+function dateNoYear(v) {
+  const d = cleanDateTime(v);
+  if (!d) return '';
+  const parts = d.split(/[-\/]/).filter(p=>!/^\d{4}$/.test(p));
+  return parts.join('/');
+}
+
 function buildSelect(list, sel='') {
   const sorted=[...list].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
   return '<option value="">— Selecionar —</option>'+sorted.map(x=>`<option value="${x.name}"${x.name===sel?' selected':''}>${x.name}</option>`).join('');
@@ -1062,8 +1067,8 @@ function buildSelect(list, sel='') {
 function buildVersionOptions(sel='') {
   const sorted=[...VERSIONS_DATA].sort((a,b)=>a.version.localeCompare(b.version,'pt-BR',{numeric:true}));
   const dl=document.getElementById('version-datalist');
-  if(dl) dl.innerHTML=sorted.map(v=>`<option value="${v.version}">${v.version}${v.date?' — '+v.date:''}</option>`).join('');
-  return '<option value="">— Sem versão —</option>'+sorted.map(x=>`<option value="${x.version}"${x.version===sel?' selected':''}>${x.version}${x.date?' ('+x.date+')':''}</option>`).join('');
+  if(dl) dl.innerHTML=sorted.map(v=>`<option value="${v.version}">${v.version}${v.date?' — '+cleanDateTime(v.date):''}</option>`).join('');
+  return '<option value="">— Sem versão —</option>'+sorted.map(x=>`<option value="${x.version}"${x.version===sel?' selected':''}>${x.version}${x.date?' ('+cleanDateTime(x.date)+')':''}</option>`).join('');
 }
 
 // Badges
@@ -1166,7 +1171,7 @@ function renderDeployHistory() {
     const pill=document.createElement('button');
     pill.className='ver-pill'+(isAct?' active':'');
     pill.dataset.ver=v.id;
-    pill.innerHTML = `<span style="font-weight:700">${v.label}</span>${v.date ? `<span class="vp-date">${v.date.slice(0,5)}</span>` : ''}<span class="vp-cnt">${cnt}</span>`;
+    pill.innerHTML=`<span style="font-weight:700">${v.label}</span><span class="vp-cnt">${cnt}</span>`;
     pill.onclick=()=>switchVersion(v.id);
     pillsEl.appendChild(pill);
 
@@ -1184,8 +1189,9 @@ function renderDeployHistory() {
 
       const div=document.createElement('div'); div.className='deploy-group'; div.id='dg-'+group.id;
 
-      const dateDisplay = group.date
-        ? `<span class="dg-date" onclick="event.stopPropagation();openDateEdit('${group.id}')" title="Editar data">📅 ${group.date}</span>`
+      const cleanGroupDate = cleanDateTime(group.date);
+      const dateDisplay = cleanGroupDate
+        ? `<span class="dg-date" onclick="event.stopPropagation();openDateEdit('${group.id}')" title="Editar data">📅 ${cleanGroupDate}</span>`
         : `<span class="dg-date empty-date" onclick="event.stopPropagation();openDateEdit('${group.id}')" title="Definir data">📅 Definir data</span>`;
 
       let rowsHtml='';
@@ -1214,7 +1220,7 @@ function renderDeployHistory() {
       rowsHtml+=`<tr><td colspan="8"><button style="background:none;border:none;cursor:pointer;padding:8px 14px;color:var(--accent);font:500 12px var(--sans);display:flex;align-items:center;gap:5px" onclick="addDeployRow('${group.id}')">+ Adicionar MR neste deploy</button></td></tr>`;
 
       div.innerHTML=`<div class="dg-head" onclick="toggleDg('dg-${group.id}')">
-        <span class="dg-ver" style="background:${v.color}">${v.label}</span>
+        <span class="dg-ver" style="background:var(--muted)">${v.label}</span>
         ${dateDisplay}
         <span class="dg-label">${group.label}${group.rollback?'<span style="color:var(--red);font-size:11px;margin-left:6px">⚠ ROLLBACK</span>':''}</span>
         <span class="dg-meta">${visRows.length} MR${visRows.length!==1?'s':''}</span>
@@ -1267,7 +1273,7 @@ function buildVersionFilter(sorted, verCnt) {
     const el=document.createElement('div'); el.className='filter-item'+(activeVersion===v.id?' active':'');
     el.setAttribute('data-f','ver'); el.setAttribute('data-v',v.id);
     el.onclick=function(){selectVersion(v.id,this);};
-    el.innerHTML=`<span class="fi-dot" style="background:${v.color}"></span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px" title="${v.label}">${v.label}</span><span class="fi-count">${cnt}</span>`;
+    el.innerHTML=`<span class="fi-dot" style="background:var(--muted)"></span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px" title="${v.label}">${v.label}</span><span class="fi-count">${cnt}</span>`;
     list.appendChild(el);
   });
 }
@@ -1319,7 +1325,7 @@ function openDateEdit(gid){
   const wrap=document.getElementById('dg-'+gid)?.querySelector('.dg-date, .dg-date.empty-date'); if(!wrap) return;
   wrap.outerHTML=`<span class="date-inline-editor" id="dei-${gid}" onclick="event.stopPropagation()">
     📅
-    <input value="${g.date||''}" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskDate(this)"
+    <input value="${cleanDateTime(g.date)||''}" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskDate(this)"
       onkeydown="if(event.key==='Enter')saveDateEdit('${gid}');if(event.key==='Escape')cancelDateEdit();"
       style="background:none;border:none;outline:none;font:500 11px var(--mono);color:var(--text);width:105px">
     <button class="btn btn-success btn-sm" style="padding:2px 8px" onclick="saveDateEdit('${gid}')">✓</button>
@@ -1343,7 +1349,7 @@ function routeToDeployHistory(entry, version) {
   const verId='ver-'+version.replace(/\./g,'_');
   if(!VERSIONS_LIST.find(v=>v.id===verId)) {
     const vd=VERSIONS_DATA.find(v=>v.version===version);
-    VERSIONS_LIST.push({id:verId,label:version,date:vd?.date||'',color:'#F97316'});
+    VERSIONS_LIST.push({id:verId,label:version,date:vd?.date||'',color:'#64748B'});
   }
   let g=DEPLOYS.find(x=>x.ver===verId);
   if(!g){
@@ -1437,7 +1443,7 @@ function openEditPending(id){
   document.getElementById('ep-ini').innerHTML=buildSelect(INITIATIVES,r.initiative);
   document.getElementById('ep-dev').innerHTML=buildSelect(DEVS,r.dev);
   buildVersionOptions(r.version);
-  const vd=VERSIONS_DATA.find(v=>v.version===r.version); if(vd) document.getElementById('ep-deploy-date').value=vd.date||'';
+  const vd=VERSIONS_DATA.find(v=>v.version===r.version); if(vd) document.getElementById('ep-deploy-date').value=cleanDateTime(vd.date)||'';
   openModal('edit-pending-modal'); document.getElementById('ep-mr').focus();
 }
 function saveEditPending(){
@@ -1548,7 +1554,7 @@ function renderVersions(){
   const sorted=[...VERSIONS_DATA].sort((a,b)=>verToNum(b.version)-verToNum(a.version));
   tbody.innerHTML=sorted.map(v=>`<tr>
     <td><span class="ver-num-tag">🏷 ${v.version}</span>${v.note?`<div style="font-size:11px;color:var(--muted);margin-top:3px">✏️ ${v.note}</div>`:''}</td>
-    <td style="font-family:var(--mono);font-size:12px">${v.date?`📅 ${v.date}`:'<span style="color:var(--dim)">Sem data</span>'}</td>
+    <td style="font-family:var(--mono);font-size:12px">${v.date?`📅 ${cleanDateTime(v.date)}`:'<span style="color:var(--dim)">Sem data</span>'}</td>
     <td>${v.orchestrator?devBadge(v.orchestrator):'<span style="color:var(--dim)">—</span>'}</td>
     <td style="font-size:12px;color:var(--muted)">${v.note||'—'}</td>
     <td>${v.date?`<span class="ver-status vs-done">✓ Realizado</span>`:`<span class="ver-status vs-pending">· Pendente</span>`}</td>
@@ -1562,7 +1568,7 @@ function openVersionModal(id){
   document.getElementById('vm-title').textContent=isEdit?'Editar Versão':'Nova Versão';
   document.getElementById('vm-del-btn').style.display=isEdit?'inline-flex':'none';
   document.getElementById('vm-ver').value=v?.version||'';
-  document.getElementById('vm-date').value=v?.date||'';
+  document.getElementById('vm-date').value=cleanDateTime(v?.date)||'';
   document.getElementById('vm-note').value=v?.note||'';
   openModal('version-modal'); document.getElementById('vm-ver').focus();
 }
@@ -1642,9 +1648,9 @@ function exportCSV(type){
   const today=new Date().toISOString().slice(0,10);
   function dl(name,rows){ const c='\uFEFF'+rows.map(r=>r.map(csvEsc).join(',')).join('\n'); const b=new Blob([c],{type:'text/csv;charset=utf-8;'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=name; a.click(); URL.revokeObjectURL(u); }
   if(type==='all'){ exportCSV('history'); setTimeout(()=>exportCSV('pending'),400); setTimeout(()=>exportCSV('versions'),800); showToast('↓ 3 CSVs exportados','ok'); return; }
-  if(type==='history'){ const rows=[['Versão','Data','Label','MR','Repositório','Card','Aprovado','Iniciativa','DEV','Pipeline','Comentários']]; DEPLOYS.forEach(g=>{ const vl=VERSIONS_LIST.find(v=>v.id===g.ver); g.rows.forEach(r=>rows.push([vl?.label||g.ver,g.date||'',g.label,getMrNum(r.mr),getRepo(r.mr),r.card||'',r.approved||'',r.initiative||'',r.dev||'',r.pipeline||'',r.comment||''])); }); dl(`historico-deploys-${today}.csv`,rows); showToast('↓ Histórico exportado','ok'); }
+  if(type==='history'){ const rows=[['Versão','Data','Label','MR','Repositório','Card','Aprovado','Iniciativa','DEV','Pipeline','Comentários']]; DEPLOYS.forEach(g=>{ const vl=VERSIONS_LIST.find(v=>v.id===g.ver); g.rows.forEach(r=>rows.push([vl?.label||g.ver,cleanDateTime(g.date)||'',g.label,getMrNum(r.mr),getRepo(r.mr),r.card||'',r.approved||'',r.initiative||'',r.dev||'',r.pipeline||'',r.comment||''])); }); dl(`historico-deploys-${today}.csv`,rows); showToast('↓ Histórico exportado','ok'); }
   if(type==='pending'){ const rows=[['MR','Repositório','Card','Versão','Aprovado','Iniciativa','DEV','Pipeline','Comentários','Próx. Deploy']]; PENDING.forEach(r=>rows.push([getMrNum(r.mr),r.repo||'',r.card||'',r.version||'',r.approved||'',r.initiative||'',r.dev||'',r.pipeline||'',r.comment||'',r.nextDeploy?'Sim':'Não'])); dl(`mrs-em-aberto-${today}.csv`,rows); showToast('↓ MRs exportados','ok'); }
-  if(type==='versions'){ const rows=[['Versão','Data Deploy','Observação']]; VERSIONS_DATA.forEach(v=>rows.push([v.version,v.date||'',v.note||''])); dl(`versoes-${today}.csv`,rows); showToast('↓ Versões exportadas','ok'); }
+  if(type==='versions'){ const rows=[['Versão','Data Deploy','Observação']]; VERSIONS_DATA.forEach(v=>rows.push([v.version,cleanDateTime(v.date)||'',v.note||''])); dl(`versoes-${today}.csv`,rows); showToast('↓ Versões exportadas','ok'); }
 }
 
 // ═══════════════════════════════════════════════════════════
