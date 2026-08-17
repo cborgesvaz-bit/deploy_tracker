@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sésamo · Deploy Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <style>
 .ic{display:inline-flex;align-items:center;justify-content:center;font-style:normal;line-height:1;flex-shrink:0;font-size:inherit}
 :root{
@@ -613,7 +614,7 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
   <div class="modal" style="width:440px">
     <div class="modal-header">🚩<h3>Iniciativas</h3><button class="modal-close" onclick="closeModal('ini-modal')">✕</button></div>
     <div class="modal-body">
-      <div class="add-row"><input class="f-input" id="new-ini-name" placeholder="Nome da iniciativa…" style="flex:1" onkeydown="if(event.key==='Enter')addManageItem('ini')"><input type="color" class="mi-color" id="new-ini-color" value="#F97316"><button class="btn btn-primary btn-sm" onclick="addManageItem('ini')">+ Adicionar</button></div>
+      <div class="add-row" data-admin-only><input class="f-input" id="new-ini-name" placeholder="Nome da iniciativa…" style="flex:1" onkeydown="if(event.key==='Enter')addManageItem('ini')"><input type="color" class="mi-color" id="new-ini-color" value="#F97316"><button class="btn btn-primary btn-sm" onclick="addManageItem('ini')">+ Adicionar</button></div>
       <div class="manage-list" id="ini-list"></div>
     </div>
   </div>
@@ -624,7 +625,7 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
   <div class="modal" style="width:440px">
     <div class="modal-header">👤<h3>Devs Responsáveis</h3><button class="modal-close" onclick="closeModal('dev-modal')">✕</button></div>
     <div class="modal-body">
-      <div class="add-row"><input class="f-input" id="new-dev-name" placeholder="Nome do dev…" style="flex:1" onkeydown="if(event.key==='Enter')addManageItem('dev')"><input type="color" class="mi-color" id="new-dev-color" value="#F97316"><button class="btn btn-primary btn-sm" onclick="addManageItem('dev')">+ Adicionar</button></div>
+      <div class="add-row" data-admin-only><input class="f-input" id="new-dev-name" placeholder="Nome do dev…" style="flex:1" onkeydown="if(event.key==='Enter')addManageItem('dev')"><input type="color" class="mi-color" id="new-dev-color" value="#F97316"><button class="btn btn-primary btn-sm" onclick="addManageItem('dev')">+ Adicionar</button></div>
       <div class="manage-list" id="dev-list"></div>
     </div>
   </div>
@@ -635,7 +636,7 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
   <div class="modal" style="width:440px">
     <div class="modal-header">📦<h3>Repositórios</h3><button class="modal-close" onclick="closeModal('repo-modal')">✕</button></div>
     <div class="modal-body">
-      <div class="add-row"><input class="f-input" id="new-repo-name" placeholder="Nome do repositório…" style="flex:1" onkeydown="if(event.key==='Enter')addManageItem('repo')"><input type="color" class="mi-color" id="new-repo-color" value="#F97316"><button class="btn btn-primary btn-sm" onclick="addManageItem('repo')">+ Adicionar</button></div>
+      <div class="add-row" data-admin-only><input class="f-input" id="new-repo-name" placeholder="Nome do repositório…" style="flex:1" onkeydown="if(event.key==='Enter')addManageItem('repo')"><input type="color" class="mi-color" id="new-repo-color" value="#F97316"><button class="btn btn-primary btn-sm" onclick="addManageItem('repo')">+ Adicionar</button></div>
       <div class="manage-list" id="repo-list"></div>
     </div>
   </div>
@@ -647,10 +648,8 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
     <div class="modal-header">👥<h3>Usuários</h3><button class="modal-close" onclick="closeModal('users-modal')">✕</button></div>
     <div class="modal-body">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-bottom:14px;border-bottom:1px solid var(--border);margin-bottom:6px">
-        <input class="f-input" id="nu-name" placeholder="Nome">
-        <input class="f-input" id="nu-email" placeholder="E-mail" type="email">
-        <input class="f-input" id="nu-pwd" placeholder="Senha" type="password">
-        <button class="btn btn-primary btn-sm" onclick="addUser()">+ Adicionar</button>
+        <input class="f-input" id="nu-pwd" placeholder="Nova senha (mín. 8)" type="password" autocomplete="new-password">
+        <button class="btn btn-primary btn-sm" onclick="changeOwnPassword()">Alterar minha senha</button>
       </div>
       <div class="manage-list" id="users-list"></div>
     </div>
@@ -678,8 +677,6 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
 // CONSTANTS & STATE
 // ═══════════════════════════════════════════════════════════
 const LS_KEY      = 'sesamo-v3';
-const USERS_KEY   = 'sesamo-users-v1';
-const SESSION_KEY = 'sesamo-session-v1';
 const SB_CFG_KEY  = 'sesamo-sb-config';
 
 let SB_URL = 'https://wfaqqxcrmokglzmbcycc.supabase.co';
@@ -726,10 +723,14 @@ let pendingSel = new Set(), ndSel = new Set();
 // ═══════════════════════════════════════════════════════════
 async function sbFetch(table, method='GET', body=null, qs='') {
   if (!SB_URL || !SB_KEY) return null;
+  // RLS: o Postgres precisa do JWT DO USUÁRIO, não da chave publishable.
+  // Sem token, a role vira "anon" e todas as policies negam acesso.
+  const token = await getAccessToken();
+  if (!token) { showLogin(); throw new Error('Sessão expirada — faça login novamente.'); }
   const url = `${SB_URL}/rest/v1/${encodeURIComponent(table)}${qs}`;
   const headers = {
     'apikey': SB_KEY,
-    'Authorization': `Bearer ${SB_KEY}`,
+    'Authorization': `Bearer ${token}`,
   };
   if (method !== 'GET' && method !== 'DELETE') {
     headers['Content-Type'] = 'application/json';
@@ -740,6 +741,11 @@ async function sbFetch(table, method='GET', body=null, qs='') {
     headers,
     body: body ? JSON.stringify(body) : undefined
   });
+  if (res.status === 401) { showLogin(); throw new Error('Sessão expirada — faça login novamente.'); }
+  if (res.status === 403) {
+    showToast('🔒 Sem permissão para esta ação','error');
+    throw new Error(`${method} /${table}: 403 bloqueado por RLS`);
+  }
   if (!res.ok) {
     const t = await res.text();
     throw new Error(`${method} /${table}: ${res.status} ${t}`);
@@ -951,46 +957,75 @@ function updateStorageBar(source) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// AUTH
+// AUTH — Supabase Auth (JWT server-side, compatível com RLS)
 // ═══════════════════════════════════════════════════════════
-async function hashPwd(p) {
-  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(p));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-function getUsers() { try{return JSON.parse(localStorage.getItem(USERS_KEY)||'[]');}catch{return[];} }
-function saveUsers(u) { localStorage.setItem(USERS_KEY,JSON.stringify(u)); }
-function getSession() { try{return JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null');}catch{return null;} }
-function setSession(u) { sessionStorage.setItem(SESSION_KEY,JSON.stringify(u)); }
-function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
+// Cliente Supabase. A sessão fica em localStorage gerenciada pelo SDK
+// (access_token + refresh_token), com renovação automática.
+const sb = supabase.createClient(SB_URL, SB_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+});
 
-async function initDefaultUser() {
-  if (getUsers().length) return;
-  const hash=await hashPwd('deploytrackersesamo@');
-  saveUsers([{email:'cborgesvaz@gmail.com',name:'Admin',role:'admin',hash}]);
+// Usuário logado (derivado do JWT, nunca escrito manualmente)
+let CURRENT_USER = null;
+
+function sessionFromSb(u) {
+  if (!u) return null;
+  return {
+    id:    u.id,
+    email: u.email,
+    name:  u.user_metadata?.name || (u.email || '').split('@')[0],
+    role:  u.app_metadata?.role || 'user'
+  };
+}
+
+function isAdmin() { return CURRENT_USER?.role === 'admin'; }
+
+// Token de acesso atual — usado pelo sbFetch em todas as chamadas REST
+async function getAccessToken() {
+  const { data: { session } } = await sb.auth.getSession();
+  return session?.access_token || null;
 }
 
 async function doLogin() {
-  const email=document.getElementById('l-email').value.trim();
-  const pwd  =document.getElementById('l-pwd').value;
-  const err  =document.getElementById('login-err');
-  const btn  =document.getElementById('login-btn');
-  if (!email||!pwd) { showLoginErr('Preencha e-mail e senha.'); return; }
-  btn.disabled=true; btn.innerHTML='⏳ Verificando…';
+  const email = document.getElementById('l-email').value.trim();
+  const pwd   = document.getElementById('l-pwd').value;
+  const err   = document.getElementById('login-err');
+  const btn   = document.getElementById('login-btn');
+  if (!email || !pwd) { showLoginErr('Preencha e-mail e senha.'); return; }
+
+  btn.disabled = true; btn.innerHTML = '⏳ Verificando…';
   err.classList.remove('show');
-  const hash=await hashPwd(pwd);
-  const user=getUsers().find(u=>u.email.toLowerCase()===email.toLowerCase()&&u.hash===hash);
-  if (user) { setSession(user); showApp(user); }
-  else { showLoginErr('E-mail ou senha incorretos.'); document.getElementById('l-pwd').value=''; }
-  btn.disabled=false; btn.innerHTML=' Entrar';
+
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pwd });
+    if (error) {
+      const msg = /Email not confirmed/i.test(error.message)
+        ? 'E-mail não confirmado. Peça ao admin para confirmar no Supabase.'
+        : 'E-mail ou senha incorretos.';
+      showLoginErr(msg);
+      document.getElementById('l-pwd').value = '';
+    } else {
+      CURRENT_USER = sessionFromSb(data.user);
+      showApp(CURRENT_USER);
+    }
+  } catch (e) {
+    showLoginErr('Falha de conexão com o Supabase. Verifique a rede.');
+    console.error('[Auth] signIn falhou:', e);
+  } finally {
+    btn.disabled = false; btn.innerHTML = ' Entrar';
+  }
 }
+
 function showLoginErr(msg){ const e=document.getElementById('login-err'); e.textContent=msg; e.classList.add('show'); }
+
 function showLogin() {
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('topbar').style.display='none';
   document.getElementById('nav-tabs').style.display='none';
   document.getElementById('app-body').style.display='none';
-  setTimeout(()=>document.getElementById('l-email').focus(),100);
+  setTimeout(()=>document.getElementById('l-email')?.focus(),100);
 }
+
 function showApp(user) {
   document.getElementById('login-screen').style.display='none';
   document.getElementById('topbar').style.display='flex';
@@ -999,47 +1034,78 @@ function showApp(user) {
   const av=document.getElementById('user-av'), nm=document.getElementById('user-name');
   if(av) av.textContent=(user.name||user.email)[0].toUpperCase();
   if(nm) nm.textContent=user.name||user.email;
+  applyRoleUI();
   bootApp();
 }
-function doLogout() {
-  if (!confirm('Sair do Deploy Tracker?')) return;
-  clearSession(); showLogin();
+
+// Esconde ações de admin para usuários comuns.
+// IMPORTANTE: isto é só conveniência de UI. A regra real é a policy
+// admin_write no Postgres — o RLS bloqueia mesmo se alguém forçar o DOM.
+function applyRoleUI() {
+  document.querySelectorAll('[data-admin-only]').forEach(el => {
+    el.style.display = isAdmin() ? '' : 'none';
+  });
 }
+
+async function doLogout() {
+  if (!confirm('Sair do Deploy Tracker?')) return;
+  try { await sb.auth.signOut(); } catch(e) { console.warn(e); }
+  CURRENT_USER = null;
+  // Limpa cache local para não deixar dados do time na máquina após logout
+  try { localStorage.removeItem(LS_KEY); } catch(e){}
+  location.reload();
+}
+
 function toggleUserMenu() { document.getElementById('user-dd').classList.toggle('open'); }
 function closeUserMenu()  { document.getElementById('user-dd').classList.remove('open'); }
 document.addEventListener('click', e => { const u=document.getElementById('topbar-user'); if(u&&!u.contains(e.target)) closeUserMenu(); });
 
-// Users CRUD
-async function addUser() {
-  const name=document.getElementById('nu-name').value.trim();
-  const email=document.getElementById('nu-email').value.trim().toLowerCase();
-  const pwd=document.getElementById('nu-pwd').value;
-  if (!email||!pwd){ alert('E-mail e senha obrigatórios.'); return; }
-  const users=getUsers();
-  if (users.find(u=>u.email.toLowerCase()===email)){ alert('E-mail já cadastrado.'); return; }
-  const hash=await hashPwd(pwd);
-  users.push({email,name:name||email,role:'user',hash});
-  saveUsers(users); renderUsersList();
-  ['nu-name','nu-email','nu-pwd'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  showToast('+ Usuário adicionado','ok');
-}
-function removeUser(email) {
-  if(!confirm(`Remover ${email}?`)) return;
-  saveUsers(getUsers().filter(u=>u.email.toLowerCase()!==email.toLowerCase()));
-  renderUsersList(); showToast('🗑 Usuário removido','warn');
-}
+// Sessão expirada / revogada em outra aba → volta pro login
+sb.auth.onAuthStateChange((event) => {
+  if (event === 'SIGNED_OUT') { CURRENT_USER = null; showLogin(); }
+});
+
+// ═══════════════════════════════════════════════════════════
+// USUÁRIOS
+// ═══════════════════════════════════════════════════════════
+// A criação/remoção de usuários exige a service_role key, que NÃO pode
+// existir no front-end. Portanto este painel é informativo: a gestão é
+// feita no Supabase Dashboard (ou por um backend próprio, no futuro).
 function renderUsersList() {
-  const list=document.getElementById('users-list'); if(!list) return;
-  const users=getUsers(), session=getSession();
-  list.innerHTML=users.map(u=>`
+  const list = document.getElementById('users-list');
+  if (!list) return;
+  const u = CURRENT_USER;
+  list.innerHTML = `
     <div class="manage-item">
-      <div class="dev-av" style="background:var(--accent)">${(u.name||u.email)[0].toUpperCase()}</div>
-      <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">${u.name||'–'}</div><div style="font-size:11px;color:var(--muted)">${u.email}</div></div>
-      <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${u.role==='admin'?'var(--accent-d)':'var(--surface3)'};color:${u.role==='admin'?'var(--accent)':'var(--muted)'};font-weight:600">${u.role}</span>
-      ${u.email.toLowerCase()!==session?.email?.toLowerCase()
-        ?`<button class="mi-btn red" onclick="removeUser('${u.email}')">🗑</button>`
-        :'<span style="font-size:11px;color:var(--dim);padding:0 6px">você</span>'}
-    </div>`).join('')||'<div style="text-align:center;padding:24px;color:var(--dim)">Nenhum usuário.</div>';
+      <div class="dev-av" style="background:var(--accent)">${((u?.name||u?.email||'?')[0]).toUpperCase()}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600">${u?.name||'–'}</div>
+        <div style="font-size:11px;color:var(--muted)">${u?.email||'–'}</div>
+      </div>
+      <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${isAdmin()?'var(--accent-d)':'var(--surface3)'};color:${isAdmin()?'var(--accent)':'var(--muted)'};font-weight:600">${u?.role||'user'}</span>
+      <span style="font-size:11px;color:var(--dim);padding:0 6px">você</span>
+    </div>
+    <div style="margin-top:12px;padding:12px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);font-size:12px;color:var(--muted);line-height:1.6">
+      <strong style="color:var(--text)">Gestão de acessos</strong><br>
+      Usuários são gerenciados no Supabase Dashboard →
+      <em>Authentication → Users</em>. Criar usuário pelo navegador exigiria
+      expor a <code>service_role key</code>, o que abriria acesso total ao banco.
+      <br><br>
+      Para promover alguém a admin, rode no SQL Editor:<br>
+      <code style="display:block;margin-top:6px;padding:6px;background:var(--surface3);border-radius:4px;font-size:11px;white-space:pre-wrap">update auth.users set raw_app_meta_data =
+  coalesce(raw_app_meta_data,'{}'::jsonb) || '{"role":"admin"}'::jsonb
+where lower(email) = lower('pessoa@email.com');</code>
+    </div>`;
+}
+
+// Trocar a própria senha (permitido com o próprio JWT, sem service_role)
+async function changeOwnPassword() {
+  const pwd = document.getElementById('nu-pwd')?.value || '';
+  if (pwd.length < 8) { alert('A nova senha precisa ter no mínimo 8 caracteres.'); return; }
+  const { error } = await sb.auth.updateUser({ password: pwd });
+  if (error) { alert('Não foi possível alterar: ' + error.message); return; }
+  document.getElementById('nu-pwd').value = '';
+  showToast('✓ Senha alterada','ok');
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1720,9 +1786,15 @@ async function bootApp(){
 }
 
 (async function init(){
-  await initDefaultUser();
-  const session=getSession();
-  if(session) showApp(session); else showLogin();
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      CURRENT_USER = sessionFromSb(session.user);
+      showApp(CURRENT_USER);
+      return;
+    }
+  } catch(e) { console.error('[Auth] getSession falhou:', e); }
+  showLogin();
 })();
 </script>
 </body>
