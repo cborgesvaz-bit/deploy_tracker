@@ -303,6 +303,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .toast i{font-size:14px}
 .supabase-loading{position:fixed;top:58px;left:0;right:0;background:var(--accent);color:#fff;padding:8px 16px;font:500 12px var(--sans);display:flex;align-items:center;gap:8px;z-index:99;display:none}
 .supabase-loading.show{display:flex}
+.ro-banner{position:sticky;top:0;background:#7C3AED;color:#fff;padding:9px 16px;font:600 12px var(--sans);display:none;align-items:center;gap:10px;z-index:98}
+.ro-banner.show{display:flex}
+.ro-banner .ro-actions{margin-left:auto;display:flex;gap:8px}
+.ro-banner button{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:6px;padding:4px 10px;font:600 11px var(--sans);cursor:pointer}
+.ro-banner button:hover{background:rgba(255,255,255,.3)}
 <datalist id="version-datalist"></datalist>
 
 ::-webkit-scrollbar{width:6px;height:6px}
@@ -357,6 +362,7 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
     </div>
     <div class="topbar-sep"></div>
     <button class="topbar-btn" onclick="openModal('export-modal')">⬇ Exportar CSV</button>
+    <button class="topbar-btn" onclick="exportBackupJSON()" title="Baixar backup completo em JSON">🛟 Backup</button>
     <div class="topbar-sep"></div>
     <div class="topbar-user" onclick="toggleUserMenu()" id="topbar-user">
       <span class="user-av" id="user-av">A</span>
@@ -374,6 +380,15 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
       <input class="search-input" id="search-input" placeholder="Buscar MR, card, dev…" oninput="onSearch(this.value)">
     </div>
   </div>
+</div>
+
+<!-- READ-ONLY / OFFLINE BANNER -->
+<div class="ro-banner" id="ro-banner">
+  <span id="ro-msg">Modo somente leitura.</span>
+  <span class="ro-actions">
+    <button onclick="exportBackupJSON()">⬇ Baixar backup</button>
+    <button onclick="bootApp()">↻ Tentar reconectar</button>
+  </span>
 </div>
 
 <!-- SUPABASE LOADING BANNER -->
@@ -678,6 +693,11 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
 // ═══════════════════════════════════════════════════════════
 const LS_KEY      = 'sesamo-v3';
 const SB_CFG_KEY  = 'sesamo-sb-config';
+const BACKUP_KEY  = 'sesamo-v3-backup';   // snapshot imutável do último estado bom
+
+// Modo somente leitura: ligado sempre que NÃO houver dados confiáveis do Supabase.
+// Impede que edições feitas offline sobrescrevam o cache local bom.
+let READ_ONLY = true;
 
 let SB_URL = 'https://wfaqqxcrmokglzmbcycc.supabase.co';
 let SB_KEY = 'sb_publishable_FFSdj49IdMgP4w_nbPPaiQ_2UeOnn3-';
@@ -741,14 +761,17 @@ async function sbFetch(table, method='GET', body=null, qs='') {
     headers,
     body: body ? JSON.stringify(body) : undefined
   });
-  if (res.status === 401) { showLogin(); throw new Error('Sessão expirada — faça login novamente.'); }
-  if (res.status === 403) {
-    showToast('🔒 Sem permissão para esta ação','error');
-    throw new Error(`${method} /${table}: 403 bloqueado por RLS`);
-  }
   if (!res.ok) {
-    const t = await res.text();
-    throw new Error(`${method} /${table}: ${res.status} ${t}`);
+    let detail = ''; try { detail = await res.text(); } catch(_) {}
+    const err = new Error(`${method} /${table}: ${res.status} ${detail}`);
+    err.status = res.status;
+    err.kind = res.status === 401 ? 'AUTH'
+             : res.status === 403 ? 'RLS'
+             : res.status === 404 ? 'TABELA_INEXISTENTE'
+             : res.status >= 500  ? 'SERVIDOR' : 'HTTP';
+    if (err.kind === 'AUTH') showLogin();
+    if (err.kind === 'RLS')  showToast('🔒 Sem permissão para esta ação','error');
+    throw err;
   }
   if (method === 'DELETE') return null;
   try { return await res.json(); } catch { return null; }
@@ -816,6 +839,8 @@ async function loadFromSupabase() {
 
     showSbLoading(false);
     updateStorageBar('supabase');
+    // grava o cache local com dado bom (saveToLocal respeita READ_ONLY, então libera antes)
+    READ_ONLY = false;
     saveToLocal();
     return true;
   } catch(e) {
@@ -894,11 +919,58 @@ async function sbDeleteRepo(sbId) { if(!sbConnected||!sbId)return; try{await sbD
 // ═══════════════════════════════════════════════════════════
 const DEFAULT_DATA = {};
 
-function saveToLocal() {
+// Snapshot do que já existe no localStorage, feito ANTES de qualquer escrita.
+// Nunca é sobrescrito por um estado vazio/default.
+function snapshotBackup() {
   try {
-    localStorage.setItem(LS_KEY, JSON.stringify({ DEPLOYS,PENDING,INITIATIVES,DEVS,REPOS,VERSIONS_DATA,VERSIONS_LIST,pendingIdCtr,deployIdCtr,rowIdCtr,versionIdCtr,manageIdCtr }));
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return;
+    const cur = JSON.parse(raw);
+    const size = (cur.DEPLOYS?.length||0) + (cur.PENDING?.length||0) + (cur.VERSIONS_DATA?.length||0);
+    if (!size) return;
+    const prevRaw = localStorage.getItem(BACKUP_KEY);
+    if (prevRaw) {
+      const prev = JSON.parse(prevRaw);
+      const prevSize = (prev.DEPLOYS?.length||0) + (prev.PENDING?.length||0) + (prev.VERSIONS_DATA?.length||0);
+      if (prevSize > size) return;  // não degrada o backup
+    }
+    localStorage.setItem(BACKUP_KEY, JSON.stringify({ ...cur, _backupAt:new Date().toISOString() }));
+  } catch(e){ console.warn('snapshotBackup:', e); }
+}
+
+function currentState() {
+  return { DEPLOYS,PENDING,INITIATIVES,DEVS,REPOS,VERSIONS_DATA,VERSIONS_LIST,pendingIdCtr,deployIdCtr,rowIdCtr,versionIdCtr,manageIdCtr };
+}
+
+// Baixa um .json com tudo que está em memória + o backup guardado.
+function exportBackupJSON() {
+  try {
+    const payload = {
+      exportadoEm: new Date().toISOString(),
+      origem: sbConnected ? 'supabase' : 'local',
+      estadoAtual: currentState(),
+      backupAnterior: JSON.parse(localStorage.getItem(BACKUP_KEY) || 'null')
+    };
+    const blob = new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `sesamo-backup-${new Date().toISOString().slice(0,10)}.json`;
+    a.click(); URL.revokeObjectURL(a.href);
+    showToast('⬇ Backup baixado','ok');
+  } catch(e){ console.error(e); showToast('Falha ao gerar backup','error'); }
+}
+
+function saveToLocal() {
+  if (READ_ONLY) {
+    showToast('🔒 Somente leitura — alteração não gravada. Reconecte ao Supabase.','error');
+    return false;
+  }
+  try {
+    snapshotBackup();
+    localStorage.setItem(LS_KEY, JSON.stringify(currentState()));
     showToast('✓ Dados salvos','ok');
-  } catch(e){ console.warn(e); }
+    return true;
+  } catch(e){ console.warn(e); showToast('Falha ao salvar localmente','error'); return false; }
 }
 
 function loadFromLocal() {
@@ -924,7 +996,9 @@ function loadFromLocal() {
 }
 
 function restoreDefaults() {
-  if (!confirm('Restaurar dados originais?\nIsso apaga tudo o que foi alterado localmente.')) return;
+  if (!confirm('Restaurar dados originais?\nIsso apaga o cache local. Um backup será baixado antes.')) return;
+  exportBackupJSON();                       // nunca apaga sem baixar antes
+  snapshotBackup();
   localStorage.removeItem(LS_KEY); localStorage.removeItem(SB_CFG_KEY);
   location.reload();
 }
@@ -941,6 +1015,14 @@ function updateSbBadge(connected) {
 function showSbLoading(show) {
   const el=document.getElementById('sb-loading');
   if(el) el.style.display=show?'flex':'none';
+}
+
+function setReadOnly(on, motivo) {
+  READ_ONLY = !!on;
+  const b = document.getElementById('ro-banner'), m = document.getElementById('ro-msg');
+  if (b) b.classList.toggle('show', READ_ONLY);
+  if (m && READ_ONLY) m.textContent = '🔒 Somente leitura — ' + (motivo || 'sem conexão com o Supabase') + '. Nada será gravado.';
+  document.body.classList.toggle('is-readonly', READ_ONLY);
 }
 
 function updateStorageBar(source) {
@@ -1763,26 +1845,43 @@ function renderAll(){
 // ═══════════════════════════════════════════════════════════
 // BOOT
 // ═══════════════════════════════════════════════════════════
+const BOOT_ERR_MSG = {
+  RLS:                'sem permissão no banco (RLS). Rode as policies para o role authenticated',
+  AUTH:               'sessão expirada ou chave inválida',
+  TABELA_INEXISTENTE: 'tabela não encontrada no Supabase',
+  SERVIDOR:           'o Supabase respondeu com erro interno',
+  HTTP:               'falha HTTP ao consultar o Supabase',
+};
+
 async function bootApp(){
   updateStorageBar('loading');
   showSbLoading(true);
-  console.log('[Supabase] Connecting to:', SB_URL);
+  snapshotBackup();                  // protege o que já existe antes de qualquer coisa
+  setReadOnly(true, 'conectando');
+
   try {
-    const test = await sbFetch('Iniciativas','GET',null,'?select=id&limit=1');
-    console.log('[Supabase] Connection OK, test result:', test);
+    await sbFetch('Iniciativas','GET',null,'?select=id&limit=1');
     sbConnected = true;
     const ok = await loadFromSupabase();
-    if (ok) { renderAll(); return; }
+    if (ok) {
+      setReadOnly(false);
+      snapshotBackup();              // agora o cache local é confiável: vira backup
+      renderAll();
+      return;
+    }
+    throw new Error('loadFromSupabase retornou falha');
   } catch(e) {
-    console.error('[Supabase] Connection failed:', e.message);
-    console.error('[Supabase] Full error:', e);
     sbConnected = false;
-    updateStorageBar('default');
+    const motivo = BOOT_ERR_MSG[e.kind] || 'falha ao conectar no Supabase';
+    console.error('[Supabase]', e.kind || 'ERRO', e.message);
     showSbLoading(false);
+
+    const localOk = loadFromLocal();
+    updateStorageBar(localOk ? 'local' : 'default');
+    setReadOnly(true, motivo);
+    showToast(`⚠ ${motivo}. Exibindo ${localOk ? 'o último cache local' : 'apenas as listas padrão'} em modo leitura.`, 'warn');
+    renderAll();
   }
-  const localOk = loadFromLocal();
-  if (!localOk) updateStorageBar('default');
-  renderAll();
 }
 
 (async function init(){
