@@ -820,7 +820,7 @@ async function loadFromSupabase() {
           if (!VERSIONS_LIST.find(v=>v.id===verId)) VERSIONS_LIST.push({id:verId,label:row.versao||'',date:dateStr,color:'#64748B'});
         }
         const repo = (row.Repositorio||'sesamo').toLowerCase();
-        groups[key].rows.push({ id:'rSB'+row.id, sbId:row.id, mr:mrNumToUrl(row.MR,repo), card:row.Card||'', approved:row.Aprovado||'', initiative:row.iniciativa||'', dev:row['DEV Responsavel']||'', pipeline:row.Pipeline||'', comment:row.Comentario||'' });
+        groups[key].rows.push({ id:'rSB'+row.id, sbId:row.id, mr:mrNumToUrl(row.MR,repo), repo:repo, card:row.Card||'', approved:row.Aprovado||'', initiative:row.iniciativa||'', dev:row['DEV Responsavel']||'', pipeline:row.Pipeline||'', comment:row.Comentario||'' });
       });
       DEPLOYS = Object.values(groups);
     }
@@ -887,7 +887,7 @@ async function sbDeleteDeployRow(sbId) {
 async function sbSaveDeployRow(row, versionStr) {
   if (!sbConnected) return;
   const mrNum = '#'+getMrNum(row.mr).replace('#','');
-  const payload = { versao:versionStr, Label:'', MR:mrNum, Repositorio:row.card?'sesamo':getRepo(row.mr), Card:row.card||null, Aprovado:row.approved||null, 'DEV Responsavel':row.dev||null, Pipeline:row.pipeline||null, Comentario:row.comment||null, iniciativa:row.initiative||null, 'data deploy':null };
+  const payload = { versao:versionStr, Label:'', MR:mrNum, Repositorio:(row.repo||getRepo(row.mr)||'sesamo'), Card:row.card||null, Aprovado:row.approved||null, 'DEV Responsavel':row.dev||null, Pipeline:row.pipeline||null, Comentario:row.comment||null, iniciativa:row.initiative||null, 'data deploy':null };
   try {
     if (row.sbId) { await sbUpdate('historico deploy',row.sbId,payload); }
     else { const res=await sbInsert('historico deploy',payload); if(res&&res[0]) row.sbId=res[0].id; }
@@ -1234,9 +1234,9 @@ function buildVersionOptions(sel='') {
 }
 
 // Badges
-function mrLink(url) {
+function mrLink(url, repoOverride) {
   if(!url||!url.trim()) return '<span style="color:var(--dim)">—</span>';
-  const num=getMrNum(url), repo=getRepo(url);
+  const num=getMrNum(url), repo=(repoOverride&&repoOverride.trim())?repoOverride.trim():getRepo(url);
   return `<a href="${url}" target="_blank" class="mr-link"><span class="mr-chip">${num}</span><span class="repo-tag">${repo}</span></a>`;
 }
 function cardBadge(c) {
@@ -1296,11 +1296,16 @@ function applyFilter(type, val, el) {
 }
 function onSearch(q) { searchQ=q; renderDeployHistory(); }
 function matchRow(r, repoHint) {
-  const url=r.mr||'', repo=repoHint||getRepo(url);
+  const url=r.mr||'', repo=((r.repo||repoHint||getRepo(url))||'').toLowerCase();
   if(AF.dev!=='all'&&(r.dev||'').toLowerCase()!==AF.dev.toLowerCase()) return false;
   if(AF.ap!=='all'){ const ap=(r.approved||'').toLowerCase(); const ok=ap==='sim'||ap==='true'; const no=ap==='não'||ap==='nao'||ap==='false'; if(AF.ap==='sim'&&!ok) return false; if(AF.ap==='nao'&&!no) return false; }
   if(AF.pip!=='all'){ const p=(r.pipeline||'').toLowerCase(); if(AF.pip==='ok'&&p!=='não') return false; if(AF.pip==='broken'&&p!=='sim') return false; }
-  if(AF.repo!=='all'){ if(AF.repo==='sesamo'&&!url.includes('sesamo')) return false; if(AF.repo==='wallu'&&!url.includes('wallu')) return false; if(AF.repo==='billy'&&!url.includes('billy')) return false; if(AF.repo==='cicd'&&!url.includes('/cicd/')) return false; }
+  if(AF.repo!=='all'){
+    const rn=repo.replace(/[\s_]/g,'');
+    if(AF.repo==='cicd'){ if(!(rn.includes('cicd')||rn.includes('ci/cd'))) return false; }
+    else if(AF.repo==='sesamo'){ if(!(rn==='sesamo'||(rn.includes('sesamo')&&!rn.includes('cicd')))) return false; }
+    else if(!rn.includes(AF.repo)) return false;
+  }
   if(searchQ){ const q=searchQ.toLowerCase(), txt=`${url} ${r.card||''} ${r.initiative||''} ${r.dev||''} ${r.comment||''}`.toLowerCase(); if(!txt.includes(q)) return false; }
   return true;
 }
@@ -1361,7 +1366,7 @@ function renderDeployHistory() {
         const isEdit=editingDeployRowId===group.id+'__'+r.id;
         if(isEdit){
           rowsHtml+=`<tr class="editing">
-            <td><input class="f-input" id="er-mr-${r.id}" value="${r.mr}" style="min-width:260px"></td>
+            <td><div style="display:flex;gap:4px;align-items:center"><input class="f-input" id="er-mr-${r.id}" value="${r.mr}" style="min-width:220px"><select class="f-select" id="er-repo-${r.id}" style="width:110px">${buildSelect(REPOS, r.repo||group.repo||getRepo(r.mr))}</select></div></td>
             <td><input class="f-input" id="er-card-${r.id}" value="${r.card}" style="width:100px"></td>
             <td>${apBadge(r.approved)}</td>
             <td><select class="f-select" id="er-ini-${r.id}" style="width:140px">${buildSelect(INITIATIVES,r.initiative)}</select></td>
@@ -1372,7 +1377,7 @@ function renderDeployHistory() {
           </tr>`;
         } else {
           rowsHtml+=`<tr class="${(r.comment||'').toLowerCase().includes('rollback')?'rollback-row':''}">
-            <td>${mrLink(r.mr)}</td><td>${cardBadge(r.card)}</td><td>${apBadge(r.approved)}</td>
+            <td>${mrLink(r.mr, r.repo||group.repo)}</td><td>${cardBadge(r.card)}</td><td>${apBadge(r.approved)}</td>
             <td>${iniBadge(r.initiative)}</td><td>${devBadge(r.dev)}</td><td>${pipBadge(r.pipeline)}</td>
             <td>${ccell(r.comment)}</td>
             <td><div class="row-actions"><button class="ra-btn" onclick="startDeployEdit('${group.id}','${r.id}')" title="Editar">✏️</button><button class="ra-btn danger" onclick="deleteDeployRow('${group.id}','${r.id}')" title="Excluir">🗑</button></div></td>
@@ -1459,6 +1464,8 @@ function saveDeployRow(gid,rid){
   const g=DEPLOYS.find(x=>x.id===gid); if(!g) return;
   const r=g.rows.find(x=>x.id===rid); if(!r) return;
   r.mr=document.getElementById('er-mr-'+rid).value.trim();
+  const repoSel=document.getElementById('er-repo-'+rid);
+  r.repo=(repoSel&&repoSel.value)?repoSel.value.toLowerCase():(r.repo||getRepo(r.mr));
   r.card=document.getElementById('er-card-'+rid).value.trim();
   r.initiative=document.getElementById('er-ini-'+rid).value;
   r.dev=document.getElementById('er-dev-'+rid).value;
@@ -1483,7 +1490,7 @@ function deleteDeployGroup(gid){
 }
 function addDeployRow(gid){
   const g=DEPLOYS.find(x=>x.id===gid); if(!g) return;
-  const r={id:'r'+rowIdCtr++, mr:'', card:'', approved:'', initiative:'', dev:'', pipeline:'', comment:''};
+  const r={id:'r'+rowIdCtr++, mr:'', repo:(g.repo||'sesamo'), card:'', approved:'', initiative:'', dev:'', pipeline:'', comment:''};
   g.rows.push(r); editingDeployRowId=gid+'__'+r.id; renderDeployHistory(); switchVersion(g.ver);
 }
 
@@ -1525,7 +1532,7 @@ function routeToDeployHistory(entry, version) {
     g={id:'dNew'+(++deployIdCtr),ver:verId,date:vd?.date||'',label:version,repo:entry.repo||getRepo(entry.mr)||'sesamo',rows:[]};
     DEPLOYS.push(g);
   }
-  const newRow={id:'rNew'+(++rowIdCtr),mr:entry.mr,card:entry.card,approved:entry.approved,initiative:entry.initiative,dev:entry.dev,pipeline:entry.pipeline,comment:entry.comment};
+  const newRow={id:'rNew'+(++rowIdCtr),mr:entry.mr,repo:(entry.repo||getRepo(entry.mr)||'sesamo').toLowerCase(),card:entry.card,approved:entry.approved,initiative:entry.initiative,dev:entry.dev,pipeline:entry.pipeline,comment:entry.comment};
   g.rows.push(newRow);
   sbSaveDeployRow(newRow,version);
   activeVersion=verId; saveToLocal(); renderDeployHistory();
