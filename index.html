@@ -879,6 +879,11 @@ async function sbDeleteVersion(sbId) {
   try { await sbDelete('versao_deploy',sbId); } catch(e){ console.warn('sbDeleteVersion fail:',e); }
 }
 
+async function sbDeleteDeployRow(sbId) {
+  if (!sbConnected||!sbId) return;
+  try { await sbDelete('historico deploy',sbId); } catch(e){ console.warn('sbDeleteDeployRow fail:',e); }
+}
+
 async function sbSaveDeployRow(row, versionStr) {
   if (!sbConnected) return;
   const mrNum = '#'+getMrNum(row.mr).replace('#','');
@@ -1463,12 +1468,18 @@ function saveDeployRow(gid,rid){
 }
 function deleteDeployRow(gid,rid){
   if(!confirm('Remover MR?')) return;
-  const g=DEPLOYS.find(x=>x.id===gid); if(g) g.rows=g.rows.filter(r=>r.id!==rid);
+  const g=DEPLOYS.find(x=>x.id===gid); if(!g) return;
+  const r=g.rows.find(x=>x.id===rid); if(r) sbDeleteDeployRow(r.sbId);
+  g.rows=g.rows.filter(x=>x.id!==rid);
   saveToLocal(); renderDeployHistory();
+  showToast('🗑 MR removido','warn');
 }
 function deleteDeployGroup(gid){
   if(!confirm('Excluir grupo de deploy inteiro?')) return;
-  DEPLOYS=DEPLOYS.filter(g=>g.id!==gid); saveToLocal(); renderDeployHistory();
+  const g=DEPLOYS.find(x=>x.id===gid); if(!g) return;
+  g.rows.forEach(r=>sbDeleteDeployRow(r.sbId));
+  DEPLOYS=DEPLOYS.filter(x=>x.id!==gid); saveToLocal(); renderDeployHistory();
+  showToast('🗑 Grupo de deploy excluído','warn');
 }
 function addDeployRow(gid){
   const g=DEPLOYS.find(x=>x.id===gid); if(!g) return;
