@@ -308,17 +308,96 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .ro-banner .ro-actions{margin-left:auto;display:flex;gap:8px}
 .ro-banner button{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:6px;padding:4px 10px;font:600 11px var(--sans);cursor:pointer}
 .ro-banner button:hover{background:rgba(255,255,255,.3)}
-<datalist id="version-datalist"></datalist>
 
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--surface4);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--dim)}
-@media(max-width:900px){.sidebar{display:none}}
+body.is-readonly :is(.app-body,.nav-tabs,.modal-overlay) :is(.btn-primary,.btn-success,.btn-danger-ghost,.ra-btn,.mi-btn){opacity:.45}
+.f-input.invalid,.f-input.invalid:focus{border-color:var(--red);box-shadow:0 0 0 3px var(--red-d)}
+.filters-toggle{display:none}
+.sb-drawer-head{display:none;align-items:center;gap:8px;padding:0 8px 4px;margin-bottom:-12px}
+.sb-drawer-head strong{font:700 12px var(--sans);color:var(--text);flex:1}
+.sb-backdrop{position:fixed;inset:0;background:rgba(22,26,34,.42);z-index:299;opacity:0;pointer-events:none;transition:opacity .2s}
+.sb-backdrop.show{opacity:1;pointer-events:auto}
+@media(max-width:900px){
+  body{overflow-x:hidden}
+  .topbar{padding:0 12px;gap:8px}
+  .topbar-sep,.topbar-subtitle,.storage-text,.user-name,.btn-label,.logo-name,.btn-backup{display:none}
+  .storage-pill{padding:5px 9px}
+  .topbar-right{gap:6px;flex:1;min-width:0}
+  .topbar-btn{padding:6px 9px;flex-shrink:0}
+  .logo,.topbar-user,.storage-pill{flex-shrink:0}
+  .nav-tabs{padding:0 12px;overflow-x:auto;scrollbar-width:none}
+  .nav-tabs::-webkit-scrollbar{display:none}
+  .nav-tab{padding:13px 11px;font-size:12px}
+  .search-wrap{flex:1 1 70px;min-width:0}
+  .search-input,.search-input:focus{width:100%;min-width:0;padding:7px 26px 7px 28px}
+  .filters-toggle{display:inline-flex}
+  .sb-drawer-head{display:flex}
+  .sidebar{position:fixed;top:0;left:0;bottom:0;height:100vh;width:250px;min-width:250px;z-index:300;
+           transform:translateX(-100%);transition:transform .22s cubic-bezier(.2,.8,.2,1);
+           box-shadow:0 0 44px rgba(22,26,34,.22);padding-top:16px}
+  .sidebar.open{transform:none}
+  .main-content{padding:16px}
+}
+
+/* ── Barra de filtros ativos ── */
+.af-bar{display:none;flex-wrap:wrap;align-items:center;gap:7px;margin-bottom:16px}
+.af-bar.show{display:flex}
+.af-lbl{font:700 10px var(--sans);text-transform:uppercase;letter-spacing:.8px;color:var(--dim)}
+.af-chip{display:inline-flex;align-items:center;gap:6px;background:var(--accent-l);border:1px solid rgba(249,115,22,.28);
+         color:var(--accent);border-radius:20px;padding:3px 5px 3px 10px;font:600 11px var(--sans)}
+.af-chip b{font-weight:700}
+.af-chip button{background:rgba(249,115,22,.16);border:none;color:var(--accent);cursor:pointer;width:16px;height:16px;
+                border-radius:50%;font-size:10px;line-height:1;display:flex;align-items:center;justify-content:center}
+.af-chip button:hover{background:var(--accent);color:#fff}
+.af-clear{background:none;border:none;color:var(--muted);cursor:pointer;font:600 11px var(--sans);text-decoration:underline;padding:3px 4px}
+.af-clear:hover{color:var(--accent)}
+.af-count{font:500 11px var(--sans);color:var(--muted);margin-left:2px}
+
+/* ── Cabecalhos de tabela ordenaveis ── */
+.data-table th.th-sort{cursor:pointer;user-select:none}
+.data-table th.th-sort:hover{color:var(--accent)}
+.th-sort .sort-ind{margin-left:4px;opacity:.35;font-size:9px}
+.data-table th.th-sort.sorted{color:var(--accent)}
+.th-sort.sorted .sort-ind{opacity:1}
+
+/* ── Limpar busca ── */
+.search-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:var(--surface4);border:none;
+              color:var(--surface);cursor:pointer;width:16px;height:16px;border-radius:50%;font-size:10px;line-height:1;
+              display:none;align-items:center;justify-content:center}
+.search-wrap.has-q .search-clear{display:flex}
+.search-clear:hover{background:var(--red)}
+
+/* ── Resumo da fila de deploy ── */
+.nd-summary{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.nd-stat{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);
+         border-radius:20px;padding:5px 13px;font:600 11px var(--sans);color:var(--muted)}
+.nd-stat b{font-size:13px;font-weight:700;color:var(--text)}
+.nd-stat.warn{background:var(--red-l);border-color:rgba(220,53,69,.25);color:var(--red)}
+.nd-stat.warn b{color:var(--red)}
+.nd-stat.good{background:var(--green-l,rgba(22,163,74,.09));border-color:rgba(22,163,74,.25);color:var(--green)}
+.nd-stat.good b{color:var(--green)}
+.nd-issue{display:inline-flex;align-items:center;gap:4px;background:var(--red-l);color:var(--red);
+          border:1px solid rgba(220,53,69,.25);border-radius:5px;padding:1px 6px;font:600 10px var(--sans);white-space:nowrap}
+.nd-card.has-issue{border-color:rgba(220,53,69,.35)}
+
+/* ── Toast de erro: nao desaparece sozinho e pode ser fechado ── */
+.toast.sticky{pointer-events:auto;cursor:pointer;padding-right:14px}
+.toast .toast-x{margin-left:6px;opacity:.6;font-weight:700}
+.toast.sticky .toast-x{opacity:1}
+
+/* ── Foco visivel para navegacao por teclado ── */
+.filter-item:focus-visible,.nav-tab:focus-visible,.ver-pill:focus-visible,.topbar-btn:focus-visible,
+.btn:focus-visible,.af-chip button:focus-visible,.th-sort:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media(max-width:900px){.sidebar{display:flex}}
 button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-color:transparent}
 </style>
 </head>
 <body>
+
+<datalist id="version-datalist"></datalist>
 
 <!-- LOGIN -->
 <div class="login-screen" id="login-screen">
@@ -351,7 +430,7 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
 <div class="topbar" id="topbar" style="display:none">
   <div class="logo">
     <div class="logo-box" style="font-size:16px;font-weight:700;color:#fff">S</div>
-    Sésamo
+    <span class="logo-name">Sésamo</span>
   </div>
   <div class="topbar-sep"></div>
   <span class="topbar-subtitle">Deploy Tracker</span>
@@ -361,8 +440,9 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
       <span class="storage-text" id="stor-text">Conectando ao Supabase…</span>
     </div>
     <div class="topbar-sep"></div>
-    <button class="topbar-btn" onclick="openModal('export-modal')">⬇ Exportar CSV</button>
-    <button class="topbar-btn" onclick="exportBackupJSON()" title="Baixar backup completo em JSON">🛟 Backup</button>
+    <button class="topbar-btn filters-toggle" onclick="toggleFilters()" title="Filtros">⚙ Filtros</button>
+    <button class="topbar-btn" onclick="openModal('export-modal')" title="Exportar CSV">⬇ <span class="btn-label">Exportar CSV</span></button>
+    <button class="topbar-btn btn-backup" onclick="exportBackupJSON()" title="Baixar backup completo em JSON">🛟 <span class="btn-label">Backup</span></button>
     <div class="topbar-sep"></div>
     <div class="topbar-user" onclick="toggleUserMenu()" id="topbar-user">
       <span class="user-av" id="user-av">A</span>
@@ -371,13 +451,16 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
       <div class="user-dropdown" id="user-dd">
         <button class="dd-item" onclick="event.stopPropagation();openModal('users-modal');closeUserMenu()">👥 Gerenciar usuários</button>
         <div class="dd-sep"></div>
+        <button class="dd-item" onclick="event.stopPropagation();restoreDefaults()">↺ Limpar cache local</button>
+        <div class="dd-sep"></div>
         <button class="dd-item dd-item-danger" onclick="event.stopPropagation();doLogout()"> Sair</button>
       </div>
     </div>
     <div class="topbar-sep"></div>
-    <div class="search-wrap">
+    <div class="search-wrap" id="search-wrap">
       🔍
-      <input class="search-input" id="search-input" placeholder="Buscar MR, card, dev…" oninput="onSearch(this.value)">
+      <input class="search-input" id="search-input" placeholder="Buscar MR, card, dev…  /" oninput="onSearch(this.value)" aria-label="Buscar">
+      <button class="search-clear" onclick="clearSearch()" title="Limpar busca (Esc)" aria-label="Limpar busca">✕</button>
     </div>
   </div>
 </div>
@@ -416,7 +499,12 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
 <div class="app-body" id="app-body" style="display:none">
 
   <!-- SIDEBAR -->
-  <aside class="sidebar">
+  <div class="sb-backdrop" id="sb-backdrop" onclick="closeFilters()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-drawer-head">
+      <strong>Filtros</strong>
+      <button class="topbar-btn" onclick="closeFilters()" aria-label="Fechar filtros">✕</button>
+    </div>
     <div class="sb-section">
       <h4>Dev Responsável</h4>
       <div class="filter-list" id="f-dev">
@@ -458,6 +546,8 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
   </aside>
 
   <main class="main-content">
+    <div class="af-bar" id="af-bar"></div>
+
     <!-- HISTORY TAB -->
     <div class="tab-pane active" id="tab-history">
       <div class="stats-grid">
@@ -493,7 +583,7 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
           <div class="form-cell"><label class="f-label">DEV Responsável <button class="btn btn-ghost btn-sm" onclick="openModal('dev-modal')" style="padding:1px 5px;font-size:10px" title="Gerenciar">⚙</button></label><select class="f-select" id="nf-dev"></select></div>
           <div class="form-cell"><label class="f-label">Repositório <button class="btn btn-ghost btn-sm" onclick="openModal('repo-modal')" style="padding:1px 5px;font-size:10px" title="Gerenciar">⚙</button></label><select class="f-select" id="nf-repo"></select></div>
           <div class="form-cell"><label class="f-label">🏷️ Versão Alvo</label><input class="f-input" id="nf-version" list="version-datalist" placeholder="ex: 0.11.0…" autocomplete="off"></div>
-          <div class="form-cell"><label class="f-label">📅 Data Deploy</label><input class="f-input" id="nf-deploy-date" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskDate(this)"></div>
+          <div class="form-cell"><label class="f-label">📅 Data Deploy</label><input class="f-input" id="nf-deploy-date" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskDate(this)" onblur="validateDateField(this)"></div>
           <div class="form-cell form-full"><label class="f-label">Comentários</label><input class="f-input" id="nf-comment" placeholder="Observação opcional"></div>
           <div class="form-cell form-full">
             <div style="display:flex;align-items:center;gap:12px;background:var(--accent-l);border:1px solid rgba(249,115,22,.2);border-radius:var(--r);padding:10px 14px">
@@ -528,7 +618,15 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
         <table class="data-table">
           <thead><tr>
             <th style="width:32px"><input type="checkbox" class="cb-row" id="cb-all" onchange="toggleSelectAllPending()" title="Todos"></th>
-            <th>MR</th><th>Card</th><th>Repositório</th><th>Versão</th><th>Aprovado</th><th>Iniciativa</th><th>DEV Responsável</th><th>Pipeline</th><th>Comentários</th><th style="width:130px">Ações</th>
+            <th class="th-sort" data-sort="mr" tabindex="0" title="Ordenar por MR">MR<span class="sort-ind"></span></th>
+            <th class="th-sort" data-sort="card" tabindex="0" title="Ordenar por card">Card<span class="sort-ind"></span></th>
+            <th class="th-sort" data-sort="repo" tabindex="0" title="Ordenar por repositório">Repositório<span class="sort-ind"></span></th>
+            <th class="th-sort" data-sort="version" tabindex="0" title="Ordenar por versão">Versão<span class="sort-ind"></span></th>
+            <th class="th-sort" data-sort="approved" tabindex="0" title="Ordenar por aprovação">Aprovado<span class="sort-ind"></span></th>
+            <th class="th-sort" data-sort="initiative" tabindex="0" title="Ordenar por iniciativa">Iniciativa<span class="sort-ind"></span></th>
+            <th class="th-sort" data-sort="dev" tabindex="0" title="Ordenar por dev">DEV Responsável<span class="sort-ind"></span></th>
+            <th class="th-sort" data-sort="pipeline" tabindex="0" title="Ordenar por pipeline">Pipeline<span class="sort-ind"></span></th>
+            <th>Comentários</th><th style="width:130px">Ações</th>
           </tr></thead>
           <tbody id="pending-tbody"></tbody>
         </table>
@@ -550,11 +648,12 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
       <div class="promote-bar">
         <span style="font-size:13px;font-weight:700;color:var(--accent);white-space:nowrap">✉ Realizar Deploy</span>
         <input class="f-input" id="promote-ver" list="version-datalist" placeholder="🏷️ Versão" autocomplete="off" style="width:160px">
-        <input class="f-input" id="promote-date" placeholder="📅 Data DD/MM/AAAA" maxlength="10" oninput="maskDate(this)" style="width:160px">
+        <input class="f-input" id="promote-date" placeholder="📅 Data DD/MM/AAAA" maxlength="10" oninput="maskDate(this)" onblur="validateDateField(this)" style="width:160px">
         <span style="font-size:12px;color:var(--muted)" id="nd-sel-count">0 selecionados</span>
         <span style="font-size:12px;color:var(--accent);cursor:pointer;text-decoration:underline" onclick="toggleSelectAllNd()">Selecionar todos</span>
         <button class="btn btn-primary" id="promote-btn" onclick="promoteToHistory()" disabled>🚀 Realizar Deploy</button>
       </div>
+      <div class="nd-summary" id="nd-summary"></div>
       <div id="nd-list"></div>
     </div>
 
@@ -591,7 +690,7 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
         <div class="form-cell"><label class="f-label">Iniciativa</label><select class="f-select" id="ep-ini"></select></div>
         <div class="form-cell"><label class="f-label">DEV Responsável</label><select class="f-select" id="ep-dev"></select></div>
         <div class="form-cell"><label class="f-label">🏷️ Versão Alvo</label><input class="f-input" id="ep-version" list="version-datalist" autocomplete="off"></div>
-        <div class="form-cell"><label class="f-label">📅 Data Deploy</label><input class="f-input" id="ep-deploy-date" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskDate(this)"></div>
+        <div class="form-cell"><label class="f-label">📅 Data Deploy</label><input class="f-input" id="ep-deploy-date" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskDate(this)" onblur="validateDateField(this)"></div>
         <div class="form-cell form-full"><label class="f-label">Comentários</label><input class="f-input" id="ep-comment"></div>
       </div>
       <div style="display:flex;align-items:center;gap:12px;background:var(--accent-l);border:1px solid rgba(249,115,22,.2);border-radius:var(--r);padding:10px 14px">
@@ -613,7 +712,7 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
     <div class="modal-header">🏷<h3 id="vm-title">Nova Versão</h3><button class="modal-close" onclick="closeModal('version-modal')">✕</button></div>
     <div class="modal-body">
       <div class="form-cell"><label class="f-label">Versão *</label><input class="f-input" id="vm-ver" placeholder="ex: 0.11.0 ou v1.2.3"></div>
-      <div class="form-cell"><label class="f-label">Data de Deploy</label><input class="f-input" id="vm-date" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskDate(this)"></div>
+      <div class="form-cell"><label class="f-label">Data de Deploy</label><input class="f-input" id="vm-date" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskDate(this)" onblur="validateDateField(this)"></div>
       <div class="form-cell"><label class="f-label">Observação</label><input class="f-input" id="vm-note" placeholder="Observação opcional"></div>
     </div>
     <div class="modal-footer">
@@ -685,7 +784,7 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
 </div>
 
 <!-- Toast -->
-<div class="toast" id="toast">✓<span id="toast-msg"></span></div>
+<div class="toast" id="toast" onclick="hideToast()"><span id="toast-msg"></span><span class="toast-x" id="toast-x"></span></div>
 
 <script>
 // ═══════════════════════════════════════════════════════════
@@ -737,6 +836,8 @@ let activeVersion = null, searchQ = '', editingPendingId = null, editingVersionI
 let editingManageType = null, editingManageId = null;
 const AF = {dev:'all',ap:'all',pip:'all',repo:'all'};
 let pendingSel = new Set(), ndSel = new Set();
+let PENDING_SORT = {key:'mr', dir:1};    // ordenacao clicavel de MRs em Aberto
+let searchTimer = null;                   // debounce da busca
 
 // ═══════════════════════════════════════════════════════════
 // SUPABASE API LAYER
@@ -781,7 +882,6 @@ async function sbSelect(table, order='') { return sbFetch(table,'GET',null,'?sel
 async function sbInsert(table, row) { return sbFetch(table,'POST',row); }
 async function sbUpdate(table, id, row) { return sbFetch(table,'PATCH',row,`?id=eq.${id}`); }
 async function sbDelete(table, id) { return sbFetch(table,'DELETE',null,`?id=eq.${id}`); }
-async function sbUpsert(table, row) { return sbFetch(table,'POST',row,''+('')); }
 
 function mrNumToUrl(mrStr, repo) {
   const num = (mrStr||'').replace('#','').trim();
@@ -810,12 +910,12 @@ async function loadFromSupabase() {
 
     if (deplRows) {
       const groups={};
+      VERSIONS_LIST = [];   // reconstruido a partir do banco, sem residuo do cache
       deplRows.forEach(row=>{
         const key = `${row.versao}|||${row.Label}`;
-        const dateRaw = row['data deploy'];
-        const dateStr = dateRaw ? (dateRaw.includes('T') ? new Date(dateRaw).toLocaleDateString('pt-BR') : dateRaw) : '';
+        const dateStr = fmtDate(row['data deploy']);
         if (!groups[key]) {
-          const verId = 'ver-'+(row.versao||'unknown').replace(/\./g,'_');
+          const verId = verIdFor(row.versao);
           groups[key] = { id:'dSB'+Object.keys(groups).length, ver:verId, date:dateStr, label:row.Label||row.versao||'', repo:(row.Repositorio||'sesamo').toLowerCase(), rows:[] };
           if (!VERSIONS_LIST.find(v=>v.id===verId)) VERSIONS_LIST.push({id:verId,label:row.versao||'',date:dateStr,color:'#64748B'});
         }
@@ -835,6 +935,8 @@ async function loadFromSupabase() {
         pipeline:row.pipeline||'', comment:row.Comentario||'',
         nextDeploy: row.proximo_deploy==='Sim'||row.proximo_deploy===true
       }));
+      const maxId = PENDING.reduce((m,r)=>Math.max(m, Number(r.id)||0), 0);
+      pendingIdCtr = Math.max(pendingIdCtr, maxId + 1);
     }
 
     showSbLoading(false);
@@ -867,7 +969,7 @@ async function sbDeletePending(sbId) {
 
 async function sbSaveVersion(row) {
   if (!sbConnected) return;
-  const payload = { versao:row.version, data_deploy:row.date||null, orquestrador:row.orchestrator||null, observacao:row.note||null };
+  const payload = { versao:row.version, data_deploy:toIsoDate(row.date), orquestrador:row.orchestrator||null, observacao:row.note||null };
   try {
     if (row.sbId) { await sbUpdate('versao_deploy',row.sbId,payload); }
     else { const res=await sbInsert('versao_deploy',payload); if(res&&res[0]) row.sbId=res[0].id; }
@@ -884,14 +986,28 @@ async function sbDeleteDeployRow(sbId) {
   try { await sbDelete('historico deploy',sbId); } catch(e){ console.warn('sbDeleteDeployRow fail:',e); }
 }
 
-async function sbSaveDeployRow(row, versionStr) {
+// dateStr/labelStr sao opcionais: quando omitidos, as colunas correspondentes
+// NAO entram no payload, preservando o que ja existe no banco.
+async function sbSaveDeployRow(row, versionStr, dateStr, labelStr) {
   if (!sbConnected) return;
   const mrNum = '#'+getMrNum(row.mr).replace('#','');
-  const payload = { versao:versionStr, Label:'', MR:mrNum, Repositorio:(row.repo||getRepo(row.mr)||'sesamo'), Card:row.card||null, Aprovado:row.approved||null, 'DEV Responsavel':row.dev||null, Pipeline:row.pipeline||null, Comentario:row.comment||null, iniciativa:row.initiative||null, 'data deploy':null };
+  const payload = { versao:versionStr, MR:mrNum, Repositorio:(row.repo||getRepo(row.mr)||'sesamo'), Card:row.card||null, Aprovado:row.approved||null, 'DEV Responsavel':row.dev||null, Pipeline:row.pipeline||null, Comentario:row.comment||null, iniciativa:row.initiative||null };
+  if (dateStr !== undefined)  payload['data deploy'] = toIsoDate(dateStr);
+  if (labelStr !== undefined) payload.Label = labelStr || '';
+  else if (!row.sbId)         payload.Label = '';   // insert precisa da coluna
   try {
     if (row.sbId) { await sbUpdate('historico deploy',row.sbId,payload); }
     else { const res=await sbInsert('historico deploy',payload); if(res&&res[0]) row.sbId=res[0].id; }
   } catch(e){ console.warn('sbSaveDeployRow fail:',e); }
+}
+
+// A data do deploy vive em cada linha de 'historico deploy'; editar o cabecalho
+// precisa reescrever todas as linhas do grupo, senao o valor volta no proximo F5.
+async function sbSaveDeployGroupDate(group, versionStr) {
+  if (!sbConnected) return;
+  for (const r of group.rows) {
+    if (r.sbId) await sbSaveDeployRow(r, versionStr, group.date);
+  }
 }
 
 async function sbSaveIni(item) {
@@ -922,8 +1038,6 @@ async function sbDeleteRepo(sbId) { if(!sbConnected||!sbId)return; try{await sbD
 // ═══════════════════════════════════════════════════════════
 // LOCAL STORAGE
 // ═══════════════════════════════════════════════════════════
-const DEFAULT_DATA = {};
-
 // Snapshot do que já existe no localStorage, feito ANTES de qualquer escrita.
 // Nunca é sobrescrito por um estado vazio/default.
 function snapshotBackup() {
@@ -966,14 +1080,11 @@ function exportBackupJSON() {
 }
 
 function saveToLocal() {
-  if (READ_ONLY) {
-    showToast('🔒 Somente leitura — alteração não gravada. Reconecte ao Supabase.','error');
-    return false;
-  }
+  // Os chamadores ja avisam com requireWrite(); aqui e so a gravacao do cache.
+  if (READ_ONLY) return false;
   try {
     snapshotBackup();
     localStorage.setItem(LS_KEY, JSON.stringify(currentState()));
-    showToast('✓ Dados salvos','ok');
     return true;
   } catch(e){ console.warn(e); showToast('Falha ao salvar localmente','error'); return false; }
 }
@@ -1011,12 +1122,6 @@ function restoreDefaults() {
 // ═══════════════════════════════════════════════════════════
 // SUPABASE CONFIG UI
 // ═══════════════════════════════════════════════════════════
-function updateSbBadge(connected) {
-  const dot=document.getElementById('sb-dot'), txt=document.getElementById('sb-badge-text');
-  if(dot){ dot.className='sb-dot '+(connected?'connected':'disconnected'); }
-  if(txt){ txt.textContent = connected?'Supabase ✓':'Supabase'; }
-}
-
 function showSbLoading(show) {
   const el=document.getElementById('sb-loading');
   if(el) el.style.display=show?'flex':'none';
@@ -1164,12 +1269,12 @@ function renderUsersList() {
   const u = CURRENT_USER;
   list.innerHTML = `
     <div class="manage-item">
-      <div class="dev-av" style="background:var(--accent)">${((u?.name||u?.email||'?')[0]).toUpperCase()}</div>
+      <div class="dev-av" style="background:var(--accent)">${esc(((u?.name||u?.email||'?')[0]).toUpperCase())}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:600">${u?.name||'–'}</div>
-        <div style="font-size:11px;color:var(--muted)">${u?.email||'–'}</div>
+        <div style="font-size:13px;font-weight:600">${esc(u?.name||'–')}</div>
+        <div style="font-size:11px;color:var(--muted)">${esc(u?.email||'–')}</div>
       </div>
-      <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${isAdmin()?'var(--accent-d)':'var(--surface3)'};color:${isAdmin()?'var(--accent)':'var(--muted)'};font-weight:600">${u?.role||'user'}</span>
+      <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${isAdmin()?'var(--accent-d)':'var(--surface3)'};color:${isAdmin()?'var(--accent)':'var(--muted)'};font-weight:600">${esc(u?.role||'user')}</span>
       <span style="font-size:11px;color:var(--dim);padding:0 6px">você</span>
     </div>
     <div style="margin-top:12px;padding:12px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);font-size:12px;color:var(--muted);line-height:1.6">
@@ -1198,6 +1303,84 @@ async function changeOwnPassword() {
 // ═══════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════
+// Escapa qualquer texto vindo do banco antes de interpola-lo em HTML.
+// Sem isto, um comentario contendo " ou < quebra o markup e executa script.
+function esc(v) {
+  return String(v==null?'':v)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+// href: so aceita http(s), bloqueando javascript: e data:
+function escUrl(v) {
+  const t = String(v==null?'':v).trim();
+  return /^https?:\/\//i.test(t) ? esc(t) : '';
+}
+// IDs de versao entram em atributos onclick="...('${id}')", entao so
+// podem conter caracteres seguros — o nome da versao vem do usuario.
+function verIdFor(version) { return 'ver-'+String(version||'unknown').replace(/[^A-Za-z0-9]+/g,'_'); }
+
+// ── Datas ────────────────────────────────────────────────
+// O usuario digita DD/MM/AAAA; no banco gravamos sempre ISO (AAAA-MM-DD),
+// que e o formato que uma coluna `date` do Postgres aceita.
+function toIsoDate(v) {
+  const d = cleanDateTime(v);
+  if (!d) return null;
+  let y, mo, da;
+  let m = d.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (m) { [, da, mo, y] = m; }
+  else if ((m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/))) { [, y, mo, da] = m; }
+  else return null;                  // formato desconhecido: nao grava lixo
+  const dt = new Date(+y, +mo - 1, +da);
+  if (dt.getFullYear()!==+y || dt.getMonth()!==+mo-1 || dt.getDate()!==+da) return null;
+  return `${y}-${mo}-${da}`;        // 31/02 e 99/99 caem fora daqui
+}
+// Exibicao: aceita ISO ou DD/MM/AAAA e sempre devolve DD/MM/AAAA
+function fmtDate(v) {
+  const d = cleanDateTime(v);
+  if (!d) return '';
+  const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : d;
+}
+function isValidDate(v) { return toIsoDate(v) !== null; }
+// Marca o campo em vermelho em vez de aceitar 99/99/9999 silenciosamente
+function validateDateField(el) {
+  const bad = !!el.value.trim() && !isValidDate(el.value);
+  el.classList.toggle('invalid', bad);
+  el.title = bad ? 'Data invalida — use DD/MM/AAAA' : '';
+  return !bad;
+}
+function checkDateInput(id, label) {
+  const el = document.getElementById(id);
+  if (!el || !el.value.trim()) return true;
+  if (isValidDate(el.value)) return true;
+  alert(`${label} invalida. Use DD/MM/AAAA.`);
+  el.classList.add('invalid'); el.focus();
+  return false;
+}
+
+// Em modo somente leitura nada e persistido; bloqueia antes de o usuario
+// gastar tempo editando algo que seria descartado no proximo F5.
+function requireWrite() {
+  if (READ_ONLY) { showToast('🔒 Somente leitura — reconecte ao Supabase para editar.','error'); return false; }
+  return true;
+}
+
+// Avisa (sem bloquear) quando o mesmo MR ja esta cadastrado
+function duplicateMrWarning(mr, exceptPendingId) {
+  const num = getMrNum(mr);
+  if (!num || !num.startsWith('#')) return null;
+  if (PENDING.some(r=>r.id!==exceptPendingId && getMrNum(r.mr)===num)) return 'ja esta em MRs em Aberto';
+  for (const g of DEPLOYS) {
+    if (g.rows.some(r=>getMrNum(r.mr)===num)) return `ja esta no historico (versao ${g.label})`;
+  }
+  return null;
+}
+function confirmDuplicate(mr, exceptPendingId) {
+  const w = duplicateMrWarning(mr, exceptPendingId);
+  return !w || confirm(`O MR ${getMrNum(mr)} ${w}.
+Cadastrar de novo?`);
+}
+
 function getMrNum(url) { const m=(url||'').match(/merge_requests\/(\d+)/); return m?'#'+m[1]:(url||''); }
 function getRepo(url)  {
   if(!url)return'sesamo';
@@ -1205,7 +1388,7 @@ function getRepo(url)  {
   if(url.includes('billy'))return'billy'; if(url.includes('jaiminho'))return'jaiminho';
   if(url.includes('/cicd/')||url.includes('ci/cd'))return'ci/cd'; return'sesamo';
 }
-function maskDate(el){ let v=el.value.replace(/\D/g,''); if(v.length>=3)v=v.slice(0,2)+'/'+v.slice(2); if(v.length>=6)v=v.slice(0,5)+'/'+v.slice(5,9); el.value=v; }
+function maskDate(el){ el.classList.remove('invalid'); let v=el.value.replace(/\D/g,''); if(v.length>=3)v=v.slice(0,2)+'/'+v.slice(2); if(v.length>=6)v=v.slice(0,5)+'/'+v.slice(5,9); el.value=v; }
 function csvEsc(v){ const s=(v==null?'':String(v)).replace(/"/g,'""'); return(s.includes(',')||s.includes('"')||s.includes('\n'))?`"${s}"`:s; }
 function verToNum(label){ const nums=(label||'').match(/\d+/g); if(!nums)return-1; return nums.reduce((a,n,i)=>a+parseInt(n)*Math.pow(1000,Math.max(0,4-i)),0); }
 
@@ -1214,42 +1397,36 @@ function cleanDateTime(v) {
   if (!v) return '';
   return String(v).trim().split(/[ T]/)[0];
 }
-// Remove o ano de uma data já limpa (aceita DD/MM/AAAA ou AAAA-MM-DD)
-function dateNoYear(v) {
-  const d = cleanDateTime(v);
-  if (!d) return '';
-  const parts = d.split(/[-\/]/).filter(p=>!/^\d{4}$/.test(p));
-  return parts.join('/');
-}
-
 function buildSelect(list, sel='') {
   const sorted=[...list].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
-  return '<option value="">— Selecionar —</option>'+sorted.map(x=>`<option value="${x.name}"${x.name===sel?' selected':''}>${x.name}</option>`).join('');
+  return '<option value="">— Selecionar —</option>'+sorted.map(x=>`<option value="${esc(x.name)}"${x.name===sel?' selected':''}>${esc(x.name)}</option>`).join('');
 }
 function buildVersionOptions(sel='') {
   const sorted=[...VERSIONS_DATA].sort((a,b)=>a.version.localeCompare(b.version,'pt-BR',{numeric:true}));
   const dl=document.getElementById('version-datalist');
-  if(dl) dl.innerHTML=sorted.map(v=>`<option value="${v.version}">${v.version}${v.date?' — '+cleanDateTime(v.date):''}</option>`).join('');
-  return '<option value="">— Sem versão —</option>'+sorted.map(x=>`<option value="${x.version}"${x.version===sel?' selected':''}>${x.version}${x.date?' ('+cleanDateTime(x.date)+')':''}</option>`).join('');
+  if(dl) dl.innerHTML=sorted.map(v=>`<option value="${esc(v.version)}">${esc(v.version)}${v.date?' — '+esc(fmtDate(v.date)):''}</option>`).join('');
+  return '<option value="">— Sem versão —</option>'+sorted.map(x=>`<option value="${esc(x.version)}"${x.version===sel?' selected':''}>${esc(x.version)}${x.date?' ('+esc(fmtDate(x.date))+')':''}</option>`).join('');
 }
 
 // Badges
 function mrLink(url, repoOverride) {
   if(!url||!url.trim()) return '<span style="color:var(--dim)">—</span>';
   const num=getMrNum(url), repo=(repoOverride&&repoOverride.trim())?repoOverride.trim():getRepo(url);
-  return `<a href="${url}" target="_blank" class="mr-link"><span class="mr-chip">${num}</span><span class="repo-tag">${repo}</span></a>`;
+  const href=escUrl(url);
+  const chip=`<span class="mr-chip">${esc(num)}</span><span class="repo-tag">${esc(repo)}</span>`;
+  return href?`<a href="${href}" target="_blank" rel="noopener noreferrer" class="mr-link">${chip}</a>`:`<span class="mr-link">${chip}</span>`;
 }
 function cardBadge(c) {
   if(!c||!c.trim()) return '<span style="color:var(--dim)">—</span>';
   const t=c.trim().toUpperCase();
   const cls=t.startsWith('STK')?'c-stk':t.startsWith('BUG')?'c-bug':t.startsWith('IMP')?'c-imp':t.startsWith('OPS')?'c-ops':'c-oth';
-  return `<span class="card-chip ${cls}">${c.trim()}</span>`;
+  return `<span class="card-chip ${cls}">${esc(c.trim())}</span>`;
 }
 function iniBadge(ini) {
   if(!ini||!ini.trim()) return '<span style="color:var(--dim)">—</span>';
   const found=INITIATIVES.find(x=>x.name===ini.trim());
   const col=found?found.color:(INI_COLORS[ini.trim()]||'#64748B');
-  return `<span class="ini-chip" style="background:${col}18;color:${col};border:1px solid ${col}28">${ini.trim()}</span>`;
+  return `<span class="ini-chip" style="background:${esc(col)}18;color:${esc(col)};border:1px solid ${esc(col)}28">${esc(ini.trim())}</span>`;
 }
 function apBadge(v) {
   if(!v||!v.trim()) return '<span style="color:var(--dim)">—</span>';
@@ -1257,7 +1434,7 @@ function apBadge(v) {
   if(lo==='sim'||lo==='true') return `<span class="status-chip s-yes">✓ Sim</span>`;
   if(lo==='não'||lo==='nao'||lo==='false') return `<span class="status-chip s-no">✗ Não</span>`;
   if(lo==='em andamento') return `<span class="status-chip s-pending">↻ Em andamento</span>`;
-  return `<span class="status-chip">${s}</span>`;
+  return `<span class="status-chip">${esc(s)}</span>`;
 }
 function pipBadge(v) {
   if(!v||!v.trim()) return '<span style="color:var(--dim)">—</span>';
@@ -1267,22 +1444,22 @@ function devBadge(n) {
   if(!n||!n.trim()) return '<span style="color:var(--dim)">—</span>';
   const found=DEVS.find(x=>x.name===n.trim());
   const col=found?found.color:(DEV_COLORS[n.trim()]||'#64748B');
-  return `<span class="dev-chip"><span class="dev-av" style="background:${col}">${n.trim()[0].toUpperCase()}</span>${n.trim()}</span>`;
+  return `<span class="dev-chip"><span class="dev-av" style="background:${esc(col)}">${esc(n.trim()[0].toUpperCase())}</span>${esc(n.trim())}</span>`;
 }
 function repoBadge(r) {
   if(!r||!r.trim()) return '<span style="color:var(--dim)">—</span>';
   const found=REPOS.find(x=>x.name===r.trim());
   const col=found?found.color:'#64748B';
-  return `<span class="ini-chip" style="background:${col}18;color:${col};border:1px solid ${col}28">${r.trim()}</span>`;
+  return `<span class="ini-chip" style="background:${esc(col)}18;color:${esc(col)};border:1px solid ${esc(col)}28">${esc(r.trim())}</span>`;
 }
 function verBadge(v) {
   if(!v||!v.trim()) return '<span style="color:var(--dim)">—</span>';
-  return `<span style="font-family:var(--mono);font-size:10px;background:var(--accent-d);color:var(--accent);padding:2px 7px;border-radius:6px">${v}</span>`;
+  return `<span style="font-family:var(--mono);font-size:10px;background:var(--accent-d);color:var(--accent);padding:2px 7px;border-radius:6px">${esc(v)}</span>`;
 }
 function ccell(c) {
   if(!c||!c.trim()) return '<span style="color:var(--dim)">—</span>';
   const warn=/rollback|revert|fechar|engano|disc/i.test(c);
-  return `<span class="comment-cell${warn?' warn':''}" title="${c}">${c}</span>`;
+  return `<span class="comment-cell${warn?' warn':''}" title="${esc(c)}">${esc(c)}</span>`;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1292,9 +1469,91 @@ function applyFilter(type, val, el) {
   AF[type]=val;
   document.querySelectorAll(`[data-f="${type}"]`).forEach(e=>e.classList.remove('active'));
   if(el) el.classList.add('active');
-  renderDeployHistory();
+  renderFiltered();
 }
-function onSearch(q) { searchQ=q; renderDeployHistory(); }
+// Debounce: sem isto cada tecla re-renderizava as tres abas inteiras.
+function onSearch(q) {
+  document.getElementById('search-wrap')?.classList.toggle('has-q', !!q);
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(()=>{ searchQ=q; renderFiltered(); }, 180);
+}
+function clearSearch() {
+  const el=document.getElementById('search-input');
+  if(el) el.value='';
+  document.getElementById('search-wrap')?.classList.remove('has-q');
+  clearTimeout(searchTimer); searchQ=''; renderFiltered();
+  el?.focus();
+}
+function focusSearch() { const el=document.getElementById('search-input'); if(el){ el.focus(); el.select(); } }
+// Os filtros da sidebar e a busca afetam historico, MRs em aberto e proximo deploy
+function renderFiltered() { renderDeployHistory(); renderPending(); renderNextDeploy(); renderActiveFilters(); }
+// MRs em aberto visiveis com os filtros atuais aplicados
+function visiblePending() { return PENDING.filter(r=>matchRow(r)); }
+
+// Torna os filtros alcancaveis por teclado (sao <div>, nao <button>)
+function makeFiltersFocusable() {
+  document.querySelectorAll('.filter-item').forEach(el=>{
+    el.tabIndex = 0; el.setAttribute('role','button');
+  });
+}
+
+function filterLabel(type, val) {
+  if (type==='dev')  return ['Dev', val];
+  if (type==='ap')   return ['Aprovação', val==='sim'?'Aprovado':'Não aprovado'];
+  if (type==='pip')  return ['Pipeline', val==='ok'?'OK':'Quebrada'];
+  if (type==='repo') return ['Repositório', val==='cicd'?'ci/cd':val];
+  return [type, val];
+}
+
+// Mostra o que esta filtrado. Antes a lista encurtava sem explicacao:
+// o filtro ficava marcado numa sidebar que nem aparece em tela pequena.
+function renderActiveFilters() {
+  const bar=document.getElementById('af-bar'); if(!bar) return;
+  const chips=[];
+  Object.keys(AF).forEach(type=>{
+    if (AF[type]==='all') return;
+    const [t,v]=filterLabel(type,AF[type]);
+    chips.push(`<span class="af-chip"><span>${esc(t)}: <b>${esc(v)}</b></span><button onclick="clearFilter('${esc(type)}')" title="Remover filtro" aria-label="Remover filtro ${esc(t)}">✕</button></span>`);
+  });
+  if (searchQ) chips.push(`<span class="af-chip"><span>Busca: <b>${esc(searchQ)}</b></span><button onclick="clearSearch()" title="Limpar busca" aria-label="Limpar busca">✕</button></span>`);
+  if (!chips.length) { bar.className='af-bar'; bar.innerHTML=''; return; }
+  const hist=DEPLOYS.reduce((s,g)=>s+g.rows.filter(r=>matchRow(r,g.repo)).length,0);
+  bar.className='af-bar show';
+  bar.innerHTML=`<span class="af-lbl">Filtrando</span>${chips.join('')}`
+    + `<button class="af-clear" onclick="clearAllFilters()">Limpar tudo</button>`
+    + `<span class="af-count">${hist} no histórico · ${visiblePending().length} em aberto</span>`;
+}
+
+function clearFilter(type) {
+  AF[type]='all';
+  document.querySelectorAll(`[data-f="${type}"]`).forEach(e=>e.classList.remove('active'));
+  document.querySelector(`[data-f="${type}"][data-v="all"]`)?.classList.add('active');
+  renderFiltered();
+}
+function clearAllFilters() {
+  Object.keys(AF).forEach(type=>{
+    AF[type]='all';
+    document.querySelectorAll(`[data-f="${type}"]`).forEach(e=>e.classList.remove('active'));
+    document.querySelector(`[data-f="${type}"][data-v="all"]`)?.classList.add('active');
+  });
+  const si=document.getElementById('search-input'); if(si) si.value='';
+  document.getElementById('search-wrap')?.classList.remove('has-q');
+  clearTimeout(searchTimer); searchQ='';
+  renderFiltered();
+}
+
+// ── Gaveta de filtros (telas pequenas) ──
+function toggleFilters() {
+  document.getElementById('sidebar')?.classList.contains('open') ? closeFilters() : openFilters();
+}
+function openFilters() {
+  document.getElementById('sidebar')?.classList.add('open');
+  document.getElementById('sb-backdrop')?.classList.add('show');
+}
+function closeFilters() {
+  document.getElementById('sidebar')?.classList.remove('open');
+  document.getElementById('sb-backdrop')?.classList.remove('show');
+}
 function matchRow(r, repoHint) {
   const url=r.mr||'', repo=((r.repo||repoHint||getRepo(url))||'').toLowerCase();
   if(AF.dev!=='all'&&(r.dev||'').toLowerCase()!==AF.dev.toLowerCase()) return false;
@@ -1338,7 +1597,7 @@ function renderDeployHistory() {
     const pill=document.createElement('button');
     pill.className='ver-pill'+(isAct?' active':'');
     pill.dataset.ver=v.id;
-    pill.innerHTML=`<span style="font-weight:700">${v.label}</span><span class="vp-cnt">${cnt}</span>`;
+    pill.innerHTML=`<span style="font-weight:700">${esc(v.label)}</span><span class="vp-cnt">${cnt}</span>`;
     pill.onclick=()=>switchVersion(v.id);
     pillsEl.appendChild(pill);
 
@@ -1356,9 +1615,9 @@ function renderDeployHistory() {
 
       const div=document.createElement('div'); div.className='deploy-group'; div.id='dg-'+group.id;
 
-      const cleanGroupDate = cleanDateTime(group.date);
+      const cleanGroupDate = fmtDate(group.date);
       const dateDisplay = cleanGroupDate
-        ? `<span class="dg-date" onclick="event.stopPropagation();openDateEdit('${group.id}')" title="Editar data">📅 ${cleanGroupDate}</span>`
+        ? `<span class="dg-date" onclick="event.stopPropagation();openDateEdit('${group.id}')" title="Editar data">📅 ${esc(cleanGroupDate)}</span>`
         : `<span class="dg-date empty-date" onclick="event.stopPropagation();openDateEdit('${group.id}')" title="Definir data">📅 Definir data</span>`;
 
       let rowsHtml='';
@@ -1366,13 +1625,13 @@ function renderDeployHistory() {
         const isEdit=editingDeployRowId===group.id+'__'+r.id;
         if(isEdit){
           rowsHtml+=`<tr class="editing">
-            <td><div style="display:flex;gap:4px;align-items:center"><input class="f-input" id="er-mr-${r.id}" value="${r.mr}" style="min-width:220px"><select class="f-select" id="er-repo-${r.id}" style="width:110px">${buildSelect(REPOS, r.repo||group.repo||getRepo(r.mr))}</select></div></td>
-            <td><input class="f-input" id="er-card-${r.id}" value="${r.card}" style="width:100px"></td>
+            <td><div style="display:flex;gap:4px;align-items:center"><input class="f-input" id="er-mr-${r.id}" value="${esc(r.mr)}" style="min-width:220px"><select class="f-select" id="er-repo-${r.id}" style="width:110px">${buildSelect(REPOS, r.repo||group.repo||getRepo(r.mr))}</select></div></td>
+            <td><input class="f-input" id="er-card-${r.id}" value="${esc(r.card)}" style="width:100px"></td>
             <td>${apBadge(r.approved)}</td>
             <td><select class="f-select" id="er-ini-${r.id}" style="width:140px">${buildSelect(INITIATIVES,r.initiative)}</select></td>
             <td><select class="f-select" id="er-dev-${r.id}" style="width:110px">${buildSelect(DEVS,r.dev)}</select></td>
             <td><select class="f-select" id="er-pip-${r.id}" style="width:95px"><option value="">—</option><option value="Não"${r.pipeline==='Não'?' selected':''}>OK</option><option value="Sim"${r.pipeline==='Sim'?' selected':''}>Quebrada</option></select></td>
-            <td><input class="f-input" id="er-cmt-${r.id}" value="${r.comment}" style="width:140px"></td>
+            <td><input class="f-input" id="er-cmt-${r.id}" value="${esc(r.comment)}" style="width:140px"></td>
             <td><div style="display:flex;gap:4px"><button class="btn btn-success btn-sm" onclick="saveDeployRow('${group.id}','${r.id}')">✓</button><button class="btn btn-ghost btn-sm" onclick="cancelDeployEdit()">✕</button></div></td>
           </tr>`;
         } else {
@@ -1387,9 +1646,9 @@ function renderDeployHistory() {
       rowsHtml+=`<tr><td colspan="8"><button style="background:none;border:none;cursor:pointer;padding:8px 14px;color:var(--accent);font:500 12px var(--sans);display:flex;align-items:center;gap:5px" onclick="addDeployRow('${group.id}')">+ Adicionar MR neste deploy</button></td></tr>`;
 
       div.innerHTML=`<div class="dg-head" onclick="toggleDg('dg-${group.id}')">
-        <span class="dg-ver" style="background:var(--muted)">${v.label}</span>
+        <span class="dg-ver" style="background:var(--muted)">${esc(v.label)}</span>
         ${dateDisplay}
-        <span class="dg-label">${group.label}${group.rollback?'<span style="color:var(--red);font-size:11px;margin-left:6px">⚠ ROLLBACK</span>':''}</span>
+        <span class="dg-label">${esc(group.label)}${group.rollback?'<span style="color:var(--red);font-size:11px;margin-left:6px">⚠ ROLLBACK</span>':''}</span>
         <span class="dg-meta">${visRows.length} MR${visRows.length!==1?'s':''}</span>
         <div class="dg-actions" onclick="event.stopPropagation()">
           <button class="btn btn-danger-ghost btn-sm" onclick="deleteDeployGroup('${group.id}')">🗑 Excluir</button>
@@ -1427,7 +1686,7 @@ function buildDevFilter() {
     const el=document.createElement('div'); el.className='filter-item'+(AF.dev===dev?' active':'');
     el.setAttribute('data-f','dev'); el.setAttribute('data-v',dev); el.setAttribute('data-dynamic','1');
     el.onclick=function(){applyFilter('dev',dev,this);};
-    el.innerHTML=`<span class="fi-dot" style="background:${col}"></span>${dev}<span class="fi-count">${cnt}</span>`;
+    el.innerHTML=`<span class="fi-dot" style="background:${esc(col)}"></span>${esc(dev)}<span class="fi-count">${cnt}</span>`;
     list.appendChild(el);
   });
 }
@@ -1440,7 +1699,7 @@ function buildVersionFilter(sorted, verCnt) {
     const el=document.createElement('div'); el.className='filter-item'+(activeVersion===v.id?' active':'');
     el.setAttribute('data-f','ver'); el.setAttribute('data-v',v.id);
     el.onclick=function(){selectVersion(v.id,this);};
-    el.innerHTML=`<span class="fi-dot" style="background:var(--muted)"></span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px" title="${v.label}">${v.label}</span><span class="fi-count">${cnt}</span>`;
+    el.innerHTML=`<span class="fi-dot" style="background:var(--muted)"></span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px" title="${esc(v.label)}">${esc(v.label)}</span><span class="fi-count">${cnt}</span>`;
     list.appendChild(el);
   });
 }
@@ -1461,6 +1720,7 @@ let editingDeployRowId=null;
 function startDeployEdit(gid,rid){ editingDeployRowId=gid+'__'+rid; renderDeployHistory(); }
 function cancelDeployEdit(){ editingDeployRowId=null; renderDeployHistory(); }
 function saveDeployRow(gid,rid){
+  if(!requireWrite()) return;
   const g=DEPLOYS.find(x=>x.id===gid); if(!g) return;
   const r=g.rows.find(x=>x.id===rid); if(!r) return;
   r.mr=document.getElementById('er-mr-'+rid).value.trim();
@@ -1471,9 +1731,10 @@ function saveDeployRow(gid,rid){
   r.dev=document.getElementById('er-dev-'+rid).value;
   r.pipeline=document.getElementById('er-pip-'+rid).value;
   r.comment=document.getElementById('er-cmt-'+rid).value.trim();
-  editingDeployRowId=null; saveToLocal(); sbSaveDeployRow(r,g.label); renderDeployHistory();
+  editingDeployRowId=null; saveToLocal(); sbSaveDeployRow(r,g.label,g.date); renderDeployHistory();
 }
 function deleteDeployRow(gid,rid){
+  if(!requireWrite()) return;
   if(!confirm('Remover MR?')) return;
   const g=DEPLOYS.find(x=>x.id===gid); if(!g) return;
   const r=g.rows.find(x=>x.id===rid); if(r) sbDeleteDeployRow(r.sbId);
@@ -1482,6 +1743,7 @@ function deleteDeployRow(gid,rid){
   showToast('🗑 MR removido','warn');
 }
 function deleteDeployGroup(gid){
+  if(!requireWrite()) return;
   if(!confirm('Excluir grupo de deploy inteiro?')) return;
   const g=DEPLOYS.find(x=>x.id===gid); if(!g) return;
   g.rows.forEach(r=>sbDeleteDeployRow(r.sbId));
@@ -1489,6 +1751,7 @@ function deleteDeployGroup(gid){
   showToast('🗑 Grupo de deploy excluído','warn');
 }
 function addDeployRow(gid){
+  if(!requireWrite()) return;
   const g=DEPLOYS.find(x=>x.id===gid); if(!g) return;
   const r={id:'r'+rowIdCtr++, mr:'', repo:(g.repo||'sesamo'), card:'', approved:'', initiative:'', dev:'', pipeline:'', comment:''};
   g.rows.push(r); editingDeployRowId=gid+'__'+r.id; renderDeployHistory(); switchVersion(g.ver);
@@ -1500,7 +1763,7 @@ function openDateEdit(gid){
   const wrap=document.getElementById('dg-'+gid)?.querySelector('.dg-date, .dg-date.empty-date'); if(!wrap) return;
   wrap.outerHTML=`<span class="date-inline-editor" id="dei-${gid}" onclick="event.stopPropagation()">
     📅
-    <input value="${cleanDateTime(g.date)||''}" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskDate(this)"
+    <input value="${esc(fmtDate(g.date))}" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskDate(this)"
       onkeydown="if(event.key==='Enter')saveDateEdit('${gid}');if(event.key==='Escape')cancelDateEdit();"
       style="background:none;border:none;outline:none;font:500 11px var(--mono);color:var(--text);width:105px">
     <button class="btn btn-success btn-sm" style="padding:2px 8px" onclick="saveDateEdit('${gid}')">✓</button>
@@ -1509,19 +1772,22 @@ function openDateEdit(gid){
   const inp=document.querySelector(`#dei-${gid} input`); if(inp) { inp.focus(); inp.select(); }
 }
 function saveDateEdit(gid){
+  if(!requireWrite()) return;
   const g=DEPLOYS.find(x=>x.id===gid); if(!g) return;
   const inp=document.querySelector(`#dei-${gid} input`);
   const date=inp?inp.value.trim():'';
+  if(date&&!isValidDate(date)){ alert('Data inválida. Use DD/MM/AAAA.'); inp?.focus(); return; }
   g.date=date;
   const vl=VERSIONS_LIST.find(v=>v.id===g.ver); if(vl) vl.date=date;
   const vd=VERSIONS_DATA.find(v=>v.version===g.label); if(vd) { vd.date=date; sbSaveVersion(vd); }
+  sbSaveDeployGroupDate(g, g.label);   // sem isto a data voltava no proximo F5
   saveToLocal(); renderDeployHistory(); renderVersions();
 }
 function cancelDateEdit(){ renderDeployHistory(); }
 
 // Route to history
-function routeToDeployHistory(entry, version) {
-  const verId='ver-'+version.replace(/\./g,'_');
+function routeToDeployHistory(entry, version, dateStr) {
+  const verId=verIdFor(version);
   if(!VERSIONS_LIST.find(v=>v.id===verId)) {
     const vd=VERSIONS_DATA.find(v=>v.version===version);
     VERSIONS_LIST.push({id:verId,label:version,date:vd?.date||'',color:'#64748B'});
@@ -1532,9 +1798,10 @@ function routeToDeployHistory(entry, version) {
     g={id:'dNew'+(++deployIdCtr),ver:verId,date:vd?.date||'',label:version,repo:entry.repo||getRepo(entry.mr)||'sesamo',rows:[]};
     DEPLOYS.push(g);
   }
+  if(dateStr) g.date=dateStr;
   const newRow={id:'rNew'+(++rowIdCtr),mr:entry.mr,repo:(entry.repo||getRepo(entry.mr)||'sesamo').toLowerCase(),card:entry.card,approved:entry.approved,initiative:entry.initiative,dev:entry.dev,pipeline:entry.pipeline,comment:entry.comment};
   g.rows.push(newRow);
-  sbSaveDeployRow(newRow,version);
+  sbSaveDeployRow(newRow,version,g.date,'');
   activeVersion=verId; saveToLocal(); renderDeployHistory();
   ['tab-history','tab-pending','tab-next','tab-versions'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
   document.getElementById('tab-history')?.classList.add('active');
@@ -1549,13 +1816,15 @@ function routeToDeployHistory(entry, version) {
 // ═══════════════════════════════════════════════════════════
 function renderPending(){
   const tbody=document.getElementById('pending-tbody'); if(!tbody) return;
-  const sorted=[...PENDING].sort((a,b)=>{ const n=u=>{const m=(u||'').match(/merge_requests\/(\d+)/);return m?parseInt(m[1]):0;}; return n(a.mr)-n(b.mr); });
-  tbody.innerHTML='';
+  const sorted=sortPending(visiblePending());
+  // Monta tudo numa string e atribui uma vez: `innerHTML +=` no loop
+  // reparseia a tabela inteira a cada linha (O(n^2)).
+  const html=[];
   sorted.forEach(r=>{
     const isSel=pendingSel.has(r.id);
     const ndBadge=r.nextDeploy?`<span class="nd-badge">🚀 Próx.</span>`:'';
     const vBadge=r.version?verBadge(r.version):`<span style="color:var(--dim)">—</span>`;
-    tbody.innerHTML+=`<tr class="${isSel?'tr-selected':''}">
+    html.push(`<tr class="${isSel?'tr-selected':''}">
       <td><input type="checkbox" class="cb-row" ${isSel?'checked':''} onchange="togglePendingSel(${r.id})"></td>
       <td>${mrLink(r.mr)}</td><td>${cardBadge(r.card)}</td><td>${repoBadge(r.repo)}</td>
       <td>${vBadge}</td><td>${apBadge(r.approved)}</td><td>${iniBadge(r.initiative)}</td>
@@ -1569,16 +1838,45 @@ function renderPending(){
         <button class="ra-btn" onclick="openEditPending(${r.id})" title="Editar">✏️ Editar</button>
         <button class="ra-btn danger" onclick="deletePending(${r.id})" title="Excluir">🗑</button>
       </div></td>
-    </tr>`;
+    </tr>`);
   });
+  tbody.innerHTML=html.join('')||`<tr><td colspan="11" style="text-align:center;padding:32px;color:var(--muted)">🔍 Nenhum MR para os filtros atuais.</td></tr>`;
   document.getElementById('badge-pending').textContent=PENDING.length;
-  document.getElementById('pending-count-lbl').textContent=`${PENDING.length} MR${PENDING.length!==1?'s':''} em aberto`;
+  document.getElementById('pending-count-lbl').textContent = sorted.length===PENDING.length
+    ? `${PENDING.length} MR${PENDING.length!==1?'s':''} em aberto`
+    : `${sorted.length} de ${PENDING.length} MR${PENDING.length!==1?'s':''} (filtrado)`;
   ['nf-ini','nf-dev','nf-repo'].forEach(id=>{
     const el=document.getElementById(id); if(!el) return;
     const list=id==='nf-ini'?INITIATIVES:id==='nf-dev'?DEVS:REPOS;
-    el.innerHTML=buildSelect(list);
+    el.innerHTML=buildSelect(list, el.value || (id==='nf-repo'?defaultRepoName():''));
   });
-  buildVersionOptions(); syncBulkBar();
+  buildVersionOptions(); syncBulkBar(); updateSortIndicators();
+}
+
+function mrNumOf(u){ const m=(u||'').match(/merge_requests\/(\d+)/); return m?parseInt(m[1]):0; }
+function setPendingSort(key){
+  if (PENDING_SORT.key===key) PENDING_SORT.dir*=-1;
+  else PENDING_SORT={key, dir:1};
+  renderPending();
+}
+function sortPending(list){
+  const {key,dir}=PENDING_SORT;
+  return [...list].sort((a,b)=>{
+    if (key==='mr') return (mrNumOf(a.mr)-mrNumOf(b.mr))*dir;
+    const av=String(a[key]||'').trim(), bv=String(b[key]||'').trim();
+    if (!av!==!bv) return av?-1:1;              // vazios sempre no fim
+    const r=av.localeCompare(bv,'pt-BR',{numeric:true});
+    return (r||(mrNumOf(a.mr)-mrNumOf(b.mr)))*dir;
+  });
+}
+function updateSortIndicators(){
+  document.querySelectorAll('#tab-pending th[data-sort]').forEach(th=>{
+    const on=th.dataset.sort===PENDING_SORT.key;
+    th.classList.toggle('sorted',on);
+    th.setAttribute('aria-sort', on?(PENDING_SORT.dir>0?'ascending':'descending'):'none');
+    const ind=th.querySelector('.sort-ind');
+    if(ind) ind.textContent = on ? (PENDING_SORT.dir>0?'▲':'▼') : '';
+  });
 }
 
 function toggleNewForm(){
@@ -1586,21 +1884,40 @@ function toggleNewForm(){
   if(f.classList.contains('open')){ renderPending(); document.getElementById('nf-mr').focus(); }
 }
 
+function defaultRepoName(){
+  return (REPOS.find(r=>r.name==='sesamo')||REPOS[0])?.name || '';
+}
+// Campo obrigatorio destacado no lugar em vez de um alert() generico
+function flagInvalid(id, msg){
+  const el=document.getElementById(id);
+  if(el){ el.classList.add('invalid'); el.focus(); }
+  showToast('⚠ '+msg,'error');
+}
+
 function saveNewPending(){
+  if(!requireWrite()) return;
   const mr=document.getElementById('nf-mr').value.trim();
-  if(!mr){ alert('Link do MR obrigatório.'); return; }
+  if(!mr){ flagInvalid('nf-mr','Informe o link ou o número do MR.'); return; }
+  if(!checkDateInput('nf-deploy-date','Data de deploy')) return;
+  if(!confirmDuplicate(mr)) return;
   const version=document.getElementById('nf-version').value.trim();
   const deployDate=document.getElementById('nf-deploy-date').value.trim();
   const nd=document.getElementById('nf-nd').checked;
   const entry={id:++pendingIdCtr, mr, card:document.getElementById('nf-card').value.trim(), repo:document.getElementById('nf-repo').value, approved:document.getElementById('nf-ap').value, initiative:document.getElementById('nf-ini').value, dev:document.getElementById('nf-dev').value, pipeline:document.getElementById('nf-pip').value, comment:document.getElementById('nf-comment').value.trim(), version, nextDeploy:nd};
-  ['nf-mr','nf-card','nf-comment','nf-version','nf-deploy-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['nf-mr','nf-card','nf-comment','nf-version','nf-deploy-date'].forEach(id=>{const el=document.getElementById(id);if(el){el.value='';el.classList.remove('invalid');}});
   ['nf-ap','nf-pip','nf-ini','nf-dev','nf-repo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('nf-nd').checked=false;
   document.getElementById('new-form').classList.remove('open');
-  if(version){ routeToDeployHistory(entry,version); } else { PENDING.unshift(entry); }
-  if(deployDate&&version){ const vd=VERSIONS_DATA.find(v=>v.version===version); if(vd)vd.date=deployDate; else VERSIONS_DATA.push({id:'v'+(++versionIdCtr),version,date:deployDate,orchestrator:'',note:''}); renderVersions(); }
+  PENDING.unshift(entry);
+  if(deployDate&&version){
+    const vd=VERSIONS_DATA.find(v=>v.version===version);
+    if(vd){ vd.date=deployDate; sbSaveVersion(vd); }
+    else { const nv={id:'v'+(++versionIdCtr),version,date:deployDate,orchestrator:'',note:''}; VERSIONS_DATA.push(nv); sbSaveVersion(nv); }
+    renderVersions();
+  }
   sbSavePending(entry); saveToLocal(); renderPending(); renderNextDeploy();
-  if(nd&&!version){ switchTab('next',document.querySelectorAll('.nav-tab')[2]); }
+  showToast('✓ MR adicionado','ok');
+  if(nd){ switchTab('next',document.querySelectorAll('.nav-tab')[2]); }
 }
 
 function openEditPending(id){
@@ -1618,12 +1935,15 @@ function openEditPending(id){
   document.getElementById('ep-ini').innerHTML=buildSelect(INITIATIVES,r.initiative);
   document.getElementById('ep-dev').innerHTML=buildSelect(DEVS,r.dev);
   buildVersionOptions(r.version);
-  const vd=VERSIONS_DATA.find(v=>v.version===r.version); if(vd) document.getElementById('ep-deploy-date').value=cleanDateTime(vd.date)||'';
+  const vd=VERSIONS_DATA.find(v=>v.version===r.version); if(vd) document.getElementById('ep-deploy-date').value=fmtDate(vd.date);
   openModal('edit-pending-modal'); document.getElementById('ep-mr').focus();
 }
 function saveEditPending(){
+  if(!requireWrite()) return;
   const r=PENDING.find(x=>x.id===editingPendingId); if(!r) return;
-  const mr=document.getElementById('ep-mr').value.trim(); if(!mr){alert('Link do MR obrigatório.');return;}
+  const mr=document.getElementById('ep-mr').value.trim(); if(!mr){ flagInvalid('ep-mr','Informe o link ou o número do MR.'); return; }
+  if(!checkDateInput('ep-deploy-date','Data de deploy')) return;
+  if(getMrNum(mr)!==getMrNum(r.mr)&&!confirmDuplicate(mr,r.id)) return;
   r.mr=mr; r.card=document.getElementById('ep-card').value.trim(); r.repo=document.getElementById('ep-repo').value;
   r.approved=document.getElementById('ep-ap').value; r.pipeline=document.getElementById('ep-pip').value;
   r.initiative=document.getElementById('ep-ini').value; r.dev=document.getElementById('ep-dev').value;
@@ -1634,6 +1954,7 @@ function saveEditPending(){
   closeModal('edit-pending-modal'); sbSavePending(r); saveToLocal(); renderPending(); renderNextDeploy();
 }
 function deleteFromEditModal(){
+  if(!requireWrite()) return;
   if(!confirm('Excluir este MR?')) return;
   const r=PENDING.find(x=>x.id===editingPendingId);
   if(r) sbDeletePending(r.sbId);
@@ -1641,11 +1962,13 @@ function deleteFromEditModal(){
   closeModal('edit-pending-modal'); saveToLocal(); renderPending(); renderNextDeploy();
 }
 function deletePending(id){
+  if(!requireWrite()) return;
   if(!confirm('Remover MR?')) return;
   const r=PENDING.find(x=>x.id===id); if(r) sbDeletePending(r.sbId);
   PENDING=PENDING.filter(x=>x.id!==id); saveToLocal(); renderPending(); renderNextDeploy();
 }
 function toggleNextDeploy(id){
+  if(!requireWrite()){ renderPending(); return; }
   const r=PENDING.find(x=>x.id===id); if(!r) return;
   r.nextDeploy=!r.nextDeploy; sbSavePending(r); saveToLocal(); renderPending(); renderNextDeploy();
 }
@@ -1655,14 +1978,27 @@ function syncBulkBar(){
   const cnt=pendingSel.size, bar=document.getElementById('bulk-bar'), ct=document.getElementById('bulk-count-text'), cbAll=document.getElementById('cb-all');
   if(bar) bar.classList.toggle('visible',cnt>0);
   if(ct) ct.textContent=`${cnt} MR${cnt!==1?'s':''} selecionado${cnt!==1?'s':''}`;
-  if(cbAll){ cbAll.checked=PENDING.length>0&&cnt===PENDING.length; cbAll.indeterminate=cnt>0&&cnt<PENDING.length; }
-  const bk=['bk-ini','bk-dev']; bk.forEach(id=>{ const el=document.getElementById(id); if(el&&el.options.length<=1){ const list=id==='bk-ini'?INITIATIVES:DEVS; [...list].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')).forEach(x=>el.add(new Option(x.name,x.name))); }});
-  const bv=document.getElementById('bk-ver'); if(bv&&bv.options.length<=1){ [...VERSIONS_DATA].sort((a,b)=>a.version.localeCompare(b.version,'pt-BR',{numeric:true})).forEach(x=>bv.add(new Option(x.version,x.version))); }
+  const vis=visiblePending().length;
+  if(cbAll){ cbAll.checked=vis>0&&cnt>=vis; cbAll.indeterminate=cnt>0&&cnt<vis; }
+  // Antes havia uma guarda `options.length<=1` que populava so uma vez, entao
+  // iniciativas/devs/versoes criados depois nunca apareciam aqui sem dar F5.
+  const byName=l=>[...l].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')).map(x=>x.name);
+  fillBulkSelect('bk-ini', byName(INITIATIVES), 'Iniciativa…');
+  fillBulkSelect('bk-dev', byName(DEVS), 'DEV…');
+  fillBulkSelect('bk-ver', [...VERSIONS_DATA].sort((a,b)=>a.version.localeCompare(b.version,'pt-BR',{numeric:true})).map(x=>x.version), '🏷️ Versão…');
+}
+// Repopula um select preservando a escolha atual do usuario
+function fillBulkSelect(id, values, placeholder){
+  const el=document.getElementById(id); if(!el) return;
+  const cur=el.value;
+  el.innerHTML=`<option value="">${esc(placeholder)}</option>`+values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+  if(values.includes(cur)) el.value=cur;
 }
 function togglePendingSel(id){ if(pendingSel.has(id))pendingSel.delete(id);else pendingSel.add(id); const tr=document.querySelector(`#pending-tbody tr:has(input[onchange*="togglePendingSel(${id})"])`); if(tr) tr.classList.toggle('tr-selected',pendingSel.has(id)); syncBulkBar(); }
-function toggleSelectAllPending(){ const all=PENDING.map(r=>r.id); const allSel=all.every(id=>pendingSel.has(id)); if(allSel) all.forEach(id=>pendingSel.delete(id)); else all.forEach(id=>pendingSel.add(id)); renderPending(); }
+function toggleSelectAllPending(){ const all=visiblePending().map(r=>r.id); const allSel=all.length>0&&all.every(id=>pendingSel.has(id)); if(allSel) all.forEach(id=>pendingSel.delete(id)); else all.forEach(id=>pendingSel.add(id)); renderPending(); }
 function clearPendingSel(){ pendingSel.clear(); renderPending(); }
 function bulkApply(){
+  if(!requireWrite()) return;
   if(!pendingSel.size) return;
   const ver=document.getElementById('bk-ver')?.value||'', ini=document.getElementById('bk-ini')?.value||'', dev=document.getElementById('bk-dev')?.value||'', ap=document.getElementById('bk-ap')?.value||'';
   if(!ver&&!ini&&!dev&&!ap){ alert('Selecione ao menos um campo.'); return; }
@@ -1670,48 +2006,86 @@ function bulkApply(){
   ['bk-ver','bk-ini','bk-dev','bk-ap'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   pendingSel.clear(); saveToLocal(); renderPending(); showToast('✓ MRs atualizados','ok');
 }
-function bulkMarkNext(){ PENDING.forEach(r=>{ if(!pendingSel.has(r.id)) return; r.nextDeploy=true; sbSavePending(r); }); const n=pendingSel.size; pendingSel.clear(); saveToLocal(); renderPending(); renderNextDeploy(); showToast(`🚀 ${n} MR${n!==1?'s':''} marcados`,'ok'); }
-function bulkDelete(){ const n=pendingSel.size; if(!n||!confirm(`Excluir ${n} MR${n!==1?'s':''}?`)) return; PENDING.filter(r=>pendingSel.has(r.id)).forEach(r=>sbDeletePending(r.sbId)); PENDING=PENDING.filter(r=>!pendingSel.has(r.id)); pendingSel.clear(); saveToLocal(); renderPending(); renderNextDeploy(); showToast(`🗑 ${n} excluído${n!==1?'s':''}`, 'warn'); }
+function bulkMarkNext(){ if(!requireWrite()) return; PENDING.forEach(r=>{ if(!pendingSel.has(r.id)) return; r.nextDeploy=true; sbSavePending(r); }); const n=pendingSel.size; pendingSel.clear(); saveToLocal(); renderPending(); renderNextDeploy(); showToast(`🚀 ${n} MR${n!==1?'s':''} marcados`,'ok'); }
+function bulkDelete(){ if(!requireWrite()) return; const n=pendingSel.size; if(!n||!confirm(`Excluir ${n} MR${n!==1?'s':''}?`)) return; PENDING.filter(r=>pendingSel.has(r.id)).forEach(r=>sbDeletePending(r.sbId)); PENDING=PENDING.filter(r=>!pendingSel.has(r.id)); pendingSel.clear(); saveToLocal(); renderPending(); renderNextDeploy(); showToast(`🗑 ${n} excluído${n!==1?'s':''}`, 'warn'); }
 
 // ═══════════════════════════════════════════════════════════
 // NEXT DEPLOY
 // ═══════════════════════════════════════════════════════════
+// Problemas que importam na hora de subir um deploy
+function mrBlockers(r){
+  const out=[]; const ap=(r.approved||'').toLowerCase();
+  if(!(ap==='sim'||ap==='true')) out.push(ap==='em andamento'?'aprovação em andamento':(ap?'não aprovado':'sem aprovação'));
+  if((r.pipeline||'').trim()==='Sim') out.push('pipeline quebrada');
+  return out;
+}
+// Resumo da fila: evita descobrir na hora do deploy que metade nao foi aprovada
+function renderNdSummary(list){
+  const el=document.getElementById('nd-summary'); if(!el) return;
+  if(!list.length){ el.innerHTML=''; return; }
+  const pronto=list.filter(r=>!mrBlockers(r).length).length;
+  const semAp=list.filter(r=>{const a=(r.approved||'').toLowerCase();return !(a==='sim'||a==='true');}).length;
+  const quebrada=list.filter(r=>(r.pipeline||'').trim()==='Sim').length;
+  const semDev=list.filter(r=>!(r.dev||'').trim()).length;
+  const c=[`<span class="nd-stat"><b>${list.length}</b> na fila</span>`,
+           `<span class="nd-stat${pronto?' good':''}"><b>${pronto}</b> pronto${pronto!==1?'s':''} p/ deploy</span>`];
+  if(semAp)    c.push(`<span class="nd-stat warn">⚠ <b>${semAp}</b> sem aprovação</span>`);
+  if(quebrada) c.push(`<span class="nd-stat warn">⚠ <b>${quebrada}</b> com pipeline quebrada</span>`);
+  if(semDev)   c.push(`<span class="nd-stat"><b>${semDev}</b> sem dev</span>`);
+  el.innerHTML=c.join('');
+}
+
 function renderNextDeploy(){
   const list=PENDING.filter(r=>r.nextDeploy), cnt=list.length;
+  renderNdSummary(list);
   document.getElementById('badge-next').textContent=cnt;
   ndSel.forEach(id=>{ if(!list.find(r=>r.id===id)) ndSel.delete(id); });
   const promBtn=document.getElementById('promote-btn'); if(promBtn) promBtn.disabled=ndSel.size===0;
   const ndList=document.getElementById('nd-list'); if(!ndList) return;
   document.getElementById('nd-sel-count').textContent=`${ndSel.size} selecionado${ndSel.size!==1?'s':''}`;
   if(!cnt){ ndList.innerHTML=`<div class="nd-empty"><div class="nd-empty-icon">🚀</div><div class="nd-empty-title">Nenhum MR na fila</div><div class="nd-empty-sub">Ative o toggle <strong>Próx. Deploy</strong> em MRs em Aberto.</div></div>`; return; }
-  ndList.innerHTML=list.map((r,i)=>{
+  // `list` continua sendo a fila inteira (contagem e selecao); so a exibicao e filtrada
+  const vis=list.filter(r=>matchRow(r));
+  if(!vis.length){ ndList.innerHTML=`<div class="nd-empty"><div class="nd-empty-icon">🔍</div><div class="nd-empty-title">Nenhum MR da fila bate com os filtros</div><div class="nd-empty-sub">A fila tem ${cnt} MR${cnt!==1?'s':''}. Limpe os filtros da barra lateral para ver.</div></div>`; return; }
+  ndList.innerHTML=vis.map((r,i)=>{
     const num=getMrNum(r.mr), repo=r.repo||getRepo(r.mr);
     const found=REPOS.find(x=>x.name===repo); const repoc=found?found.color:'#64748B';
     const ck=ndSel.has(r.id);
-    return `<div class="nd-card${ck?' checked':''}">
+    const blockers=mrBlockers(r);
+    const issueTags=blockers.map(b=>`<span class="nd-issue">⚠ ${esc(b)}</span>`).join('');
+    return `<div class="nd-card${ck?' checked':''}${blockers.length?' has-issue':''}">
       <input type="checkbox" class="cb-row" ${ck?'checked':''} onchange="toggleNdSel(${r.id})" title="Selecionar">
       <span style="color:var(--dim);font-size:11px;font-weight:700;width:18px;text-align:center;flex-shrink:0">${i+1}</span>
-      <a href="${r.mr}" target="_blank" class="nd-num">${num}</a>
-      <span class="nd-repo" style="color:${repoc};background:${repoc}18;border:1px solid ${repoc}28;border-radius:4px;padding:1px 6px;font-size:10px;font-family:var(--mono)">${repo}</span>
+      ${escUrl(r.mr)?`<a href="${escUrl(r.mr)}" target="_blank" rel="noopener noreferrer" class="nd-num">${esc(num)}</a>`:`<span class="nd-num">${esc(num)}</span>`}
+      <span class="nd-repo" style="color:${esc(repoc)};background:${esc(repoc)}18;border:1px solid ${esc(repoc)}28;border-radius:4px;padding:1px 6px;font-size:10px;font-family:var(--mono)">${esc(repo)}</span>
       <div class="nd-sep"></div>
       <div class="nd-info">
-        <div style="font-size:13px;font-weight:600">${r.card||'(sem card)'}</div>
-        <div class="nd-meta">${r.initiative?iniBadge(r.initiative):''}${r.dev?devBadge(r.dev):''}${r.approved?apBadge(r.approved):''}</div>
+        <div style="font-size:13px;font-weight:600">${esc(r.card||'(sem card)')}</div>
+        <div class="nd-meta">${r.initiative?iniBadge(r.initiative):''}${r.dev?devBadge(r.dev):''}${r.approved?apBadge(r.approved):''}${issueTags}</div>
       </div>
       <button class="nd-remove" onclick="toggleNextDeploy(${r.id})">✕ Remover</button>
     </div>`;
   }).join('');
 }
-function toggleNdSel(id){ if(ndSel.has(id))ndSel.delete(id);else ndSel.add(id); const card=document.getElementById('nd-card-'+id); renderNextDeploy(); }
-function toggleSelectAllNd(){ const list=PENDING.filter(r=>r.nextDeploy); const all=list.every(r=>ndSel.has(r.id)); if(all) list.forEach(r=>ndSel.delete(r.id)); else list.forEach(r=>ndSel.add(r.id)); renderNextDeploy(); }
-function clearNextDeploy(){ const n=PENDING.filter(r=>r.nextDeploy).length; if(!n||!confirm(`Remover ${n} MR${n!==1?'s':''} da fila?`)) return; PENDING.forEach(r=>r.nextDeploy=false); ndSel.clear(); saveToLocal(); renderPending(); renderNextDeploy(); }
+function toggleNdSel(id){ if(ndSel.has(id))ndSel.delete(id);else ndSel.add(id); renderNextDeploy(); }
+function toggleSelectAllNd(){ const list=PENDING.filter(r=>r.nextDeploy&&matchRow(r)); const all=list.length>0&&list.every(r=>ndSel.has(r.id)); if(all) list.forEach(r=>ndSel.delete(r.id)); else list.forEach(r=>ndSel.add(r.id)); renderNextDeploy(); }
+function clearNextDeploy(){ if(!requireWrite()) return; const n=PENDING.filter(r=>r.nextDeploy).length; if(!n||!confirm(`Remover ${n} MR${n!==1?'s':''} da fila?`)) return; PENDING.forEach(r=>r.nextDeploy=false); ndSel.clear(); saveToLocal(); renderPending(); renderNextDeploy(); }
 function promoteToHistory(){
+  if(!requireWrite()) return;
   const version=(document.getElementById('promote-ver')?.value||'').trim();
   const date=(document.getElementById('promote-date')?.value||'').trim();
-  if(!version){ alert('Informe a versão.'); document.getElementById('promote-ver')?.focus(); return; }
-  if(!ndSel.size){ alert('Selecione MRs.'); return; }
+  if(!version){ flagInvalid('promote-ver','Informe a versão do deploy.'); return; }
+  if(!checkDateInput('promote-date','Data de deploy')) return;
+  if(!ndSel.size){ showToast('⚠ Selecione ao menos um MR na fila.','error'); return; }
   const toPromote=PENDING.filter(r=>ndSel.has(r.id));
-  toPromote.forEach(e=>{ routeToDeployHistory({...e},version); });
+  const avisos=toPromote.flatMap(r=>mrBlockers(r).map(b=>`  • ${getMrNum(r.mr)} — ${b}`));
+  let msg=`Realizar o deploy da versão ${version}${date?' em '+date:''} com ${toPromote.length} MR${toPromote.length!==1?'s':''}?`;
+  if(avisos.length) msg+=`\n\n⚠ ${avisos.length} pendência${avisos.length!==1?'s':''}:\n`+avisos.join('\n');
+  msg+='\n\nOs MRs saem de "MRs em Aberto" e vão para o histórico.';
+  if(!confirm(msg)) return;
+  toPromote.forEach(e=>{ routeToDeployHistory({...e},version,date); });
+  // Sem este delete o MR continuava em mr_aberto e reaparecia na fila no F5
+  toPromote.forEach(e=>sbDeletePending(e.sbId));
   PENDING=PENDING.filter(r=>!ndSel.has(r.id));
   if(date){ const vd=VERSIONS_DATA.find(v=>v.version===version); if(vd){vd.date=date;sbSaveVersion(vd);}else{const nv={id:'v'+(++versionIdCtr),version,date,orchestrator:'',note:''};VERSIONS_DATA.push(nv);sbSaveVersion(nv);} renderVersions(); }
   const n=toPromote.length; ndSel.clear();
@@ -1728,10 +2102,10 @@ function renderVersions(){
   const tbody=document.getElementById('versions-tbody'); if(!tbody) return;
   const sorted=[...VERSIONS_DATA].sort((a,b)=>verToNum(b.version)-verToNum(a.version));
   tbody.innerHTML=sorted.map(v=>`<tr>
-    <td><span class="ver-num-tag">🏷 ${v.version}</span>${v.note?`<div style="font-size:11px;color:var(--muted);margin-top:3px">✏️ ${v.note}</div>`:''}</td>
-    <td style="font-family:var(--mono);font-size:12px">${v.date?`📅 ${cleanDateTime(v.date)}`:'<span style="color:var(--dim)">Sem data</span>'}</td>
+    <td><span class="ver-num-tag">🏷 ${esc(v.version)}</span>${v.note?`<div style="font-size:11px;color:var(--muted);margin-top:3px">✏️ ${esc(v.note)}</div>`:''}</td>
+    <td style="font-family:var(--mono);font-size:12px">${v.date?`📅 ${esc(fmtDate(v.date))}`:'<span style="color:var(--dim)">Sem data</span>'}</td>
     <td>${v.orchestrator?devBadge(v.orchestrator):'<span style="color:var(--dim)">—</span>'}</td>
-    <td style="font-size:12px;color:var(--muted)">${v.note||'—'}</td>
+    <td style="font-size:12px;color:var(--muted)">${esc(v.note||'—')}</td>
     <td>${v.date?`<span class="ver-status vs-done">✓ Realizado</span>`:`<span class="ver-status vs-pending">· Pendente</span>`}</td>
     <td><div class="row-actions"><button class="ra-btn" onclick="openVersionModal('${v.id}')" title="Editar">✏️</button></div></td>
   </tr>`).join('')||`<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted)">🏷Nenhuma versão.</td></tr>`;
@@ -1743,17 +2117,22 @@ function openVersionModal(id){
   document.getElementById('vm-title').textContent=isEdit?'Editar Versão':'Nova Versão';
   document.getElementById('vm-del-btn').style.display=isEdit?'inline-flex':'none';
   document.getElementById('vm-ver').value=v?.version||'';
-  document.getElementById('vm-date').value=cleanDateTime(v?.date)||'';
+  document.getElementById('vm-date').value=fmtDate(v?.date);
   document.getElementById('vm-note').value=v?.note||'';
   openModal('version-modal'); document.getElementById('vm-ver').focus();
 }
 function saveVersionModal(){
-  const version=document.getElementById('vm-ver').value.trim(); if(!version){alert('Versão obrigatória.');return;}
+  if(!requireWrite()) return;
+  const version=document.getElementById('vm-ver').value.trim(); if(!version){ flagInvalid('vm-ver','Informe o número da versão.'); return; }
+  if(!checkDateInput('vm-date','Data de deploy')) return;
+  const dup=VERSIONS_DATA.find(v=>v.version===version&&v.id!==editingVersionId);
+  if(dup){ alert('Já existe uma versão com esse número.'); return; }
   const entry={id:editingVersionId||('v'+(++versionIdCtr)),version,date:document.getElementById('vm-date').value.trim(),orchestrator:'',note:document.getElementById('vm-note').value.trim()};
   if(editingVersionId){ const idx=VERSIONS_DATA.findIndex(x=>x.id===editingVersionId); if(idx>=0){entry.sbId=VERSIONS_DATA[idx].sbId;VERSIONS_DATA[idx]=entry;} } else VERSIONS_DATA.push(entry);
   sbSaveVersion(entry); saveToLocal(); renderVersions(); closeModal('version-modal');
 }
 function deleteVersionModal(){
+  if(!requireWrite()) return;
   if(!confirm('Excluir versão?')) return;
   const v=VERSIONS_DATA.find(x=>x.id===editingVersionId); if(v) sbDeleteVersion(v.sbId);
   VERSIONS_DATA=VERSIONS_DATA.filter(x=>x.id!==editingVersionId);
@@ -1764,25 +2143,27 @@ function deleteVersionModal(){
 // MANAGE LISTS (Iniciativas, Devs, Repos)
 // ═══════════════════════════════════════════════════════════
 function renderManageList(type){
+  if(type!=='ini'&&type!=='dev'&&type!=='repo') return;
   const listEl=document.getElementById(type+'-list'); if(!listEl) return;
   const list=type==='ini'?INITIATIVES:type==='dev'?DEVS:REPOS;
   const sorted=[...list].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
   listEl.innerHTML=sorted.map(item=>{
     if(editingManageType===type&&editingManageId===item.id) return `<div class="manage-item editing">
-      <input type="color" class="mi-color" id="mi-col-${item.id}" value="${item.color}">
-      <input class="mi-input" id="mi-nm-${item.id}" value="${item.name}">
+      <input type="color" class="mi-color" id="mi-col-${item.id}" value="${esc(item.color)}">
+      <input class="mi-input" id="mi-nm-${item.id}" value="${esc(item.name)}">
       <button class="mi-btn" style="color:var(--green)" onclick="saveManageItem('${type}','${item.id}')">✓</button>
       <button class="mi-btn" onclick="cancelManageEdit()">✕</button>
     </div>`;
     return `<div class="manage-item">
-      <span style="width:10px;height:10px;border-radius:50%;background:${item.color};flex-shrink:0"></span>
-      <span class="mi-label">${item.name}</span>
+      <span style="width:10px;height:10px;border-radius:50%;background:${esc(item.color)};flex-shrink:0"></span>
+      <span class="mi-label">${esc(item.name)}</span>
       <button class="mi-btn" onclick="startManageEdit('${type}','${item.id}')">✏️</button>
       <button class="mi-btn red" onclick="deleteManageItem('${type}','${item.id}')">🗑</button>
     </div>`;
   }).join('')||`<div style="text-align:center;padding:20px;color:var(--dim)">Nenhum item. Adicione acima.</div>`;
 }
 function addManageItem(type){
+  if(!requireWrite()) return;
   const nameEl=document.getElementById(`new-${type}-name`), colEl=document.getElementById(`new-${type}-color`);
   const name=nameEl?.value.trim(), color=colEl?.value||'#F97316';
   if(!name){ nameEl?.focus(); return; }
@@ -1795,8 +2176,13 @@ function addManageItem(type){
   if(nameEl) nameEl.value=''; saveToLocal(); renderManageList(type);
 }
 function startManageEdit(type,id){ editingManageType=type; editingManageId=id; renderManageList(type); }
-function cancelManageEdit(){ editingManageType=null; editingManageId=null; if(editingManageType) renderManageList(editingManageType); document.querySelectorAll('.manage-list').forEach(el=>{ const type=el.id?.replace('-list',''); if(type) renderManageList(type); }); }
+function cancelManageEdit(){
+  const type=editingManageType;
+  editingManageType=null; editingManageId=null;
+  if(type) renderManageList(type);
+}
 function saveManageItem(type,id){
+  if(!requireWrite()) return;
   const list=type==='ini'?INITIATIVES:type==='dev'?DEVS:REPOS;
   const item=list.find(x=>x.id===id); if(!item) return;
   const nameEl=document.getElementById('mi-nm-'+id), colEl=document.getElementById('mi-col-'+id);
@@ -1806,6 +2192,7 @@ function saveManageItem(type,id){
   editingManageType=null; editingManageId=null; saveToLocal(); renderManageList(type);
 }
 function deleteManageItem(type,id){
+  if(!requireWrite()) return;
   if(!confirm('Excluir item?')) return;
   const list=type==='ini'?INITIATIVES:type==='dev'?DEVS:REPOS;
   const item=list.find(x=>x.id===id);
@@ -1823,9 +2210,9 @@ function exportCSV(type){
   const today=new Date().toISOString().slice(0,10);
   function dl(name,rows){ const c='\uFEFF'+rows.map(r=>r.map(csvEsc).join(',')).join('\n'); const b=new Blob([c],{type:'text/csv;charset=utf-8;'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=name; a.click(); URL.revokeObjectURL(u); }
   if(type==='all'){ exportCSV('history'); setTimeout(()=>exportCSV('pending'),400); setTimeout(()=>exportCSV('versions'),800); showToast('↓ 3 CSVs exportados','ok'); return; }
-  if(type==='history'){ const rows=[['Versão','Data','Label','MR','Repositório','Card','Aprovado','Iniciativa','DEV','Pipeline','Comentários']]; DEPLOYS.forEach(g=>{ const vl=VERSIONS_LIST.find(v=>v.id===g.ver); g.rows.forEach(r=>rows.push([vl?.label||g.ver,cleanDateTime(g.date)||'',g.label,getMrNum(r.mr),getRepo(r.mr),r.card||'',r.approved||'',r.initiative||'',r.dev||'',r.pipeline||'',r.comment||''])); }); dl(`historico-deploys-${today}.csv`,rows); showToast('↓ Histórico exportado','ok'); }
+  if(type==='history'){ const rows=[['Versão','Data','Label','MR','Repositório','Card','Aprovado','Iniciativa','DEV','Pipeline','Comentários']]; DEPLOYS.forEach(g=>{ const vl=VERSIONS_LIST.find(v=>v.id===g.ver); g.rows.forEach(r=>rows.push([vl?.label||g.ver,fmtDate(g.date),g.label,getMrNum(r.mr),getRepo(r.mr),r.card||'',r.approved||'',r.initiative||'',r.dev||'',r.pipeline||'',r.comment||''])); }); dl(`historico-deploys-${today}.csv`,rows); showToast('↓ Histórico exportado','ok'); }
   if(type==='pending'){ const rows=[['MR','Repositório','Card','Versão','Aprovado','Iniciativa','DEV','Pipeline','Comentários','Próx. Deploy']]; PENDING.forEach(r=>rows.push([getMrNum(r.mr),r.repo||'',r.card||'',r.version||'',r.approved||'',r.initiative||'',r.dev||'',r.pipeline||'',r.comment||'',r.nextDeploy?'Sim':'Não'])); dl(`mrs-em-aberto-${today}.csv`,rows); showToast('↓ MRs exportados','ok'); }
-  if(type==='versions'){ const rows=[['Versão','Data Deploy','Observação']]; VERSIONS_DATA.forEach(v=>rows.push([v.version,cleanDateTime(v.date)||'',v.note||''])); dl(`versoes-${today}.csv`,rows); showToast('↓ Versões exportadas','ok'); }
+  if(type==='versions'){ const rows=[['Versão','Data Deploy','Observação']]; VERSIONS_DATA.forEach(v=>rows.push([v.version,fmtDate(v.date),v.note||''])); dl(`versoes-${today}.csv`,rows); showToast('↓ Versões exportadas','ok'); }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1849,16 +2236,73 @@ function switchTab(id, btn){
 
 let toastTimer;
 function showToast(msg, type='ok'){
-  const t=document.getElementById('toast'), m=document.getElementById('toast-msg');
+  const t=document.getElementById('toast'), m=document.getElementById('toast-msg'), x=document.getElementById('toast-x');
   if(!t||!m) return;
-  m.innerHTML=msg; t.style.background=type==='warn'?'#7C3AED':type==='error'?'#DC2626':'var(--text)';
-  t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2400);
+  m.textContent=msg;
+  t.style.background=type==='warn'?'#7C3AED':type==='error'?'#DC2626':'var(--text)';
+  // Erros somem em 2,4s antes de serem lidos; agora esperam um clique.
+  const sticky = type==='error';
+  t.classList.toggle('sticky', sticky);
+  if(x) x.textContent = sticky ? '✕' : '';
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  if(!sticky) toastTimer=setTimeout(()=>t.classList.remove('show'),2400);
 }
+function hideToast(){ clearTimeout(toastTimer); document.getElementById('toast')?.classList.remove('show'); }
 
 function renderAll(){
   renderDeployHistory(); renderPending(); renderNextDeploy(); renderVersions();
-  
+  renderActiveFilters(); makeFiltersFocusable();
 }
+
+// ═══════════════════════════════════════════════════════════
+// TECLADO
+// ═══════════════════════════════════════════════════════════
+// Enter salva nestes modais; os de lista tem o proprio Enter no campo de adicionar.
+const MODAL_SUBMIT = { 'edit-pending-modal':()=>saveEditPending(), 'version-modal':()=>saveVersionModal() };
+function topModal(){ const o=document.querySelectorAll('.modal-overlay.open'); return o[o.length-1]||null; }
+
+document.addEventListener('keydown', e=>{
+  const tag=(e.target.tagName||'').toLowerCase();
+  const typing = tag==='input'||tag==='textarea'||tag==='select';
+
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){ e.preventDefault(); focusSearch(); return; }
+
+  if(e.key==='Escape'){
+    const m=topModal();
+    if(m){ closeModal(m.id); return; }                                   // antes nao havia Esc
+    if(document.getElementById('sidebar')?.classList.contains('open')){ closeFilters(); return; }
+    if(document.getElementById('search-input')?.value){ clearSearch(); return; }
+    if(document.getElementById('new-form')?.classList.contains('open')){ toggleNewForm(); return; }
+    hideToast(); return;
+  }
+
+  // Enter/Espaco acionam o filtro ou cabecalho de ordenacao que esta focado
+  if(e.key===' '||e.key==='Enter'){
+    const el=e.target;
+    if(el.classList?.contains('filter-item')||el.matches?.('th[data-sort]')){ e.preventDefault(); el.click(); return; }
+  }
+
+  if(e.key==='Enter'){
+    const m=topModal();
+    if(m && typing && MODAL_SUBMIT[m.id]){ e.preventDefault(); MODAL_SUBMIT[m.id](); }
+    return;
+  }
+
+  if(typing) return;
+  if(e.key==='/'){ e.preventDefault(); focusSearch(); }
+});
+
+// Digitar num campo marcado como invalido remove o destaque
+document.addEventListener('input', e=>{
+  if(e.target.classList?.contains('invalid')) e.target.classList.remove('invalid');
+});
+
+// Ordenacao por clique no cabecalho (delegado: o thead e estatico, as linhas nao)
+document.addEventListener('click', e=>{
+  const th=e.target.closest?.('#tab-pending th[data-sort]');
+  if(th) setPendingSort(th.dataset.sort);
+});
 
 // ═══════════════════════════════════════════════════════════
 // BOOT
