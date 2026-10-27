@@ -200,6 +200,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .bulk-field{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font:12px var(--sans);padding:5px 8px;outline:none;cursor:pointer;transition:border .15s;max-width:150px}
 .bulk-field:focus,.bulk-field:hover{border-color:var(--accent)}
 .bulk-field option{background:var(--surface)}
+input.bulk-field{cursor:text}
+input.bulk-field::placeholder{color:var(--muted)}
 .cb-row{width:16px;height:16px;cursor:pointer;accent-color:var(--accent);flex-shrink:0}
 .tr-selected td{background:rgba(249,115,22,.04)!important}
 
@@ -398,6 +400,9 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
 <body>
 
 <datalist id="version-datalist"></datalist>
+<datalist id="ini-datalist"></datalist>
+<datalist id="dev-datalist"></datalist>
+<datalist id="repo-datalist"></datalist>
 
 <!-- LOGIN -->
 <div class="login-screen" id="login-screen">
@@ -579,9 +584,9 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
           <div class="form-cell"><label class="f-label">Card Vinculado</label><input class="f-input" id="nf-card" placeholder="STK-XXXX"></div>
           <div class="form-cell"><label class="f-label">Aprovado</label><select class="f-select" id="nf-ap"><option value="">—</option><option value="Sim">Sim</option><option value="Não">Não</option><option value="Em andamento">Em andamento</option></select></div>
           <div class="form-cell"><label class="f-label">Pipeline</label><select class="f-select" id="nf-pip"><option value="">—</option><option value="Não">OK</option><option value="Sim">Quebrada</option></select></div>
-          <div class="form-cell"><label class="f-label">Iniciativa <button class="btn btn-ghost btn-sm" onclick="openModal('ini-modal')" style="padding:1px 5px;font-size:10px" title="Gerenciar">⚙</button></label><select class="f-select" id="nf-ini"></select></div>
-          <div class="form-cell"><label class="f-label">DEV Responsável <button class="btn btn-ghost btn-sm" onclick="openModal('dev-modal')" style="padding:1px 5px;font-size:10px" title="Gerenciar">⚙</button></label><select class="f-select" id="nf-dev"></select></div>
-          <div class="form-cell"><label class="f-label">Repositório <button class="btn btn-ghost btn-sm" onclick="openModal('repo-modal')" style="padding:1px 5px;font-size:10px" title="Gerenciar">⚙</button></label><select class="f-select" id="nf-repo"></select></div>
+          <div class="form-cell"><label class="f-label">Iniciativa <button class="btn btn-ghost btn-sm" onclick="openModal('ini-modal')" style="padding:1px 5px;font-size:10px" title="Gerenciar">⚙</button></label><input class="f-input" id="nf-ini" list="ini-datalist" placeholder="Selecione ou digite uma nova…" autocomplete="off"></div>
+          <div class="form-cell"><label class="f-label">DEV Responsável <button class="btn btn-ghost btn-sm" onclick="openModal('dev-modal')" style="padding:1px 5px;font-size:10px" title="Gerenciar">⚙</button></label><input class="f-input" id="nf-dev" list="dev-datalist" placeholder="Selecione ou digite um novo…" autocomplete="off"></div>
+          <div class="form-cell"><label class="f-label">Repositório <button class="btn btn-ghost btn-sm" onclick="openModal('repo-modal')" style="padding:1px 5px;font-size:10px" title="Gerenciar">⚙</button></label><input class="f-input" id="nf-repo" list="repo-datalist" placeholder="Selecione ou digite um novo…" autocomplete="off"></div>
           <div class="form-cell"><label class="f-label">🏷️ Versão Alvo</label><input class="f-input" id="nf-version" list="version-datalist" placeholder="ex: 0.11.0…" autocomplete="off"></div>
           <div class="form-cell"><label class="f-label">📅 Data Deploy</label><input class="f-input" id="nf-deploy-date" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskDate(this)" onblur="validateDateField(this)"></div>
           <div class="form-cell form-full"><label class="f-label">Comentários</label><input class="f-input" id="nf-comment" placeholder="Observação opcional"></div>
@@ -604,8 +609,8 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
         <div class="bulk-sep"></div>
         <div class="bulk-actions">
           <select class="bulk-field" id="bk-ver" title="Versão"><option value="">🏷️ Versão…</option></select>
-          <select class="bulk-field" id="bk-ini" title="Iniciativa"><option value="">Iniciativa…</option></select>
-          <select class="bulk-field" id="bk-dev" title="DEV"><option value="">DEV…</option></select>
+          <input class="bulk-field" id="bk-ini" title="Iniciativa" list="ini-datalist" placeholder="Iniciativa…" autocomplete="off">
+          <input class="bulk-field" id="bk-dev" title="DEV" list="dev-datalist" placeholder="DEV…" autocomplete="off">
           <select class="bulk-field" id="bk-ap" title="Aprovado"><option value="">Aprovação…</option><option value="Sim">✓ Sim</option><option value="Não">✗ Não</option><option value="Em andamento">⟳ Em andamento</option></select>
           <button class="btn btn-primary btn-sm" onclick="bulkApply()">✓ Aplicar</button>
           <button class="btn btn-secondary btn-sm" onclick="bulkMarkNext()">🚀 Próx. Deploy</button>
@@ -684,11 +689,11 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
       <div class="form-cell"><label class="f-label">Link do MR *</label><input class="f-input" id="ep-mr" placeholder="https://gitlab…"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div class="form-cell"><label class="f-label">Card Vinculado</label><input class="f-input" id="ep-card"></div>
-        <div class="form-cell"><label class="f-label">Repositório</label><select class="f-select" id="ep-repo"></select></div>
+        <div class="form-cell"><label class="f-label">Repositório</label><input class="f-input" id="ep-repo" list="repo-datalist" placeholder="Selecione ou digite um novo…" autocomplete="off"></div>
         <div class="form-cell"><label class="f-label">Aprovado</label><select class="f-select" id="ep-ap"><option value="">—</option><option value="Sim">Sim</option><option value="Não">Não</option><option value="Em andamento">Em andamento</option></select></div>
         <div class="form-cell"><label class="f-label">Pipeline</label><select class="f-select" id="ep-pip"><option value="">—</option><option value="Não">OK</option><option value="Sim">Quebrada</option></select></div>
-        <div class="form-cell"><label class="f-label">Iniciativa</label><select class="f-select" id="ep-ini"></select></div>
-        <div class="form-cell"><label class="f-label">DEV Responsável</label><select class="f-select" id="ep-dev"></select></div>
+        <div class="form-cell"><label class="f-label">Iniciativa</label><input class="f-input" id="ep-ini" list="ini-datalist" placeholder="Selecione ou digite uma nova…" autocomplete="off"></div>
+        <div class="form-cell"><label class="f-label">DEV Responsável</label><input class="f-input" id="ep-dev" list="dev-datalist" placeholder="Selecione ou digite um novo…" autocomplete="off"></div>
         <div class="form-cell"><label class="f-label">🏷️ Versão Alvo</label><input class="f-input" id="ep-version" list="version-datalist" autocomplete="off"></div>
         <div class="form-cell"><label class="f-label">📅 Data Deploy</label><input class="f-input" id="ep-deploy-date" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskDate(this)" onblur="validateDateField(this)"></div>
         <div class="form-cell form-full"><label class="f-label">Comentários</label><input class="f-input" id="ep-comment"></div>
@@ -1401,6 +1406,30 @@ function buildSelect(list, sel='') {
   const sorted=[...list].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
   return '<option value="">— Selecionar —</option>'+sorted.map(x=>`<option value="${esc(x.name)}"${x.name===sel?' selected':''}>${esc(x.name)}</option>`).join('');
 }
+// Preenche os datalists de Iniciativa / DEV / Repositorio (campos abertos: aceitam valores novos)
+function buildEntityDatalists() {
+  [['ini-datalist',INITIATIVES],['dev-datalist',DEVS],['repo-datalist',REPOS]].forEach(([dlId,list])=>{
+    const dl=document.getElementById(dlId); if(!dl) return;
+    const sorted=[...list].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+    dl.innerHTML=sorted.map(x=>`<option value="${esc(x.name)}"></option>`).join('');
+  });
+}
+// Garante que o valor digitado exista na lista; cria (e persiste) se for novo. Devolve o nome canonico.
+function ensureEntity(type, raw) {
+  const name=(raw||'').trim();
+  if(!name) return '';
+  const list=type==='ini'?INITIATIVES:type==='dev'?DEVS:REPOS;
+  const found=list.find(x=>x.name.toLowerCase()===name.toLowerCase());
+  if(found) return found.name;
+  const prefix=type==='ini'?'i':type==='dev'?'d':'r';
+  const item={id:prefix+(++manageIdCtr),name,color:'#64748B'};
+  list.push(item);
+  if(type==='ini') sbSaveIni(item); else if(type==='dev') sbSaveDev(item); else sbSaveRepo(item);
+  renderManageList(type);
+  buildEntityDatalists();
+  showToast('+ '+name+' adicionado à lista');
+  return name;
+}
 function buildVersionOptions(sel='') {
   const sorted=[...VERSIONS_DATA].sort((a,b)=>a.version.localeCompare(b.version,'pt-BR',{numeric:true}));
   const dl=document.getElementById('version-datalist');
@@ -1845,11 +1874,9 @@ function renderPending(){
   document.getElementById('pending-count-lbl').textContent = sorted.length===PENDING.length
     ? `${PENDING.length} MR${PENDING.length!==1?'s':''} em aberto`
     : `${sorted.length} de ${PENDING.length} MR${PENDING.length!==1?'s':''} (filtrado)`;
-  ['nf-ini','nf-dev','nf-repo'].forEach(id=>{
-    const el=document.getElementById(id); if(!el) return;
-    const list=id==='nf-ini'?INITIATIVES:id==='nf-dev'?DEVS:REPOS;
-    el.innerHTML=buildSelect(list, el.value || (id==='nf-repo'?defaultRepoName():''));
-  });
+  buildEntityDatalists();
+  const nfRepo=document.getElementById('nf-repo');
+  if(nfRepo && !nfRepo.value) nfRepo.value=defaultRepoName();
   buildVersionOptions(); syncBulkBar(); updateSortIndicators();
 }
 
@@ -1903,7 +1930,7 @@ function saveNewPending(){
   const version=document.getElementById('nf-version').value.trim();
   const deployDate=document.getElementById('nf-deploy-date').value.trim();
   const nd=document.getElementById('nf-nd').checked;
-  const entry={id:++pendingIdCtr, mr, card:document.getElementById('nf-card').value.trim(), repo:document.getElementById('nf-repo').value, approved:document.getElementById('nf-ap').value, initiative:document.getElementById('nf-ini').value, dev:document.getElementById('nf-dev').value, pipeline:document.getElementById('nf-pip').value, comment:document.getElementById('nf-comment').value.trim(), version, nextDeploy:nd};
+  const entry={id:++pendingIdCtr, mr, card:document.getElementById('nf-card').value.trim(), repo:ensureEntity('repo',document.getElementById('nf-repo').value), approved:document.getElementById('nf-ap').value, initiative:ensureEntity('ini',document.getElementById('nf-ini').value), dev:ensureEntity('dev',document.getElementById('nf-dev').value), pipeline:document.getElementById('nf-pip').value, comment:document.getElementById('nf-comment').value.trim(), version, nextDeploy:nd};
   ['nf-mr','nf-card','nf-comment','nf-version','nf-deploy-date'].forEach(id=>{const el=document.getElementById(id);if(el){el.value='';el.classList.remove('invalid');}});
   ['nf-ap','nf-pip','nf-ini','nf-dev','nf-repo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('nf-nd').checked=false;
@@ -1931,9 +1958,10 @@ function openEditPending(id){
   document.getElementById('ep-nd').checked=r.nextDeploy||false;
   document.getElementById('ep-version').value=r.version||'';
   document.getElementById('ep-deploy-date').value='';
-  document.getElementById('ep-repo').innerHTML=buildSelect(REPOS,r.repo);
-  document.getElementById('ep-ini').innerHTML=buildSelect(INITIATIVES,r.initiative);
-  document.getElementById('ep-dev').innerHTML=buildSelect(DEVS,r.dev);
+  buildEntityDatalists();
+  document.getElementById('ep-repo').value=r.repo||'';
+  document.getElementById('ep-ini').value=r.initiative||'';
+  document.getElementById('ep-dev').value=r.dev||'';
   buildVersionOptions(r.version);
   const vd=VERSIONS_DATA.find(v=>v.version===r.version); if(vd) document.getElementById('ep-deploy-date').value=fmtDate(vd.date);
   openModal('edit-pending-modal'); document.getElementById('ep-mr').focus();
@@ -1944,9 +1972,9 @@ function saveEditPending(){
   const mr=document.getElementById('ep-mr').value.trim(); if(!mr){ flagInvalid('ep-mr','Informe o link ou o número do MR.'); return; }
   if(!checkDateInput('ep-deploy-date','Data de deploy')) return;
   if(getMrNum(mr)!==getMrNum(r.mr)&&!confirmDuplicate(mr,r.id)) return;
-  r.mr=mr; r.card=document.getElementById('ep-card').value.trim(); r.repo=document.getElementById('ep-repo').value;
+  r.mr=mr; r.card=document.getElementById('ep-card').value.trim(); r.repo=ensureEntity('repo',document.getElementById('ep-repo').value);
   r.approved=document.getElementById('ep-ap').value; r.pipeline=document.getElementById('ep-pip').value;
-  r.initiative=document.getElementById('ep-ini').value; r.dev=document.getElementById('ep-dev').value;
+  r.initiative=ensureEntity('ini',document.getElementById('ep-ini').value); r.dev=ensureEntity('dev',document.getElementById('ep-dev').value);
   r.comment=document.getElementById('ep-comment').value.trim(); r.nextDeploy=document.getElementById('ep-nd').checked;
   r.version=document.getElementById('ep-version').value.trim();
   const deployDate=document.getElementById('ep-deploy-date').value.trim();
@@ -1982,9 +2010,7 @@ function syncBulkBar(){
   if(cbAll){ cbAll.checked=vis>0&&cnt>=vis; cbAll.indeterminate=cnt>0&&cnt<vis; }
   // Antes havia uma guarda `options.length<=1` que populava so uma vez, entao
   // iniciativas/devs/versoes criados depois nunca apareciam aqui sem dar F5.
-  const byName=l=>[...l].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')).map(x=>x.name);
-  fillBulkSelect('bk-ini', byName(INITIATIVES), 'Iniciativa…');
-  fillBulkSelect('bk-dev', byName(DEVS), 'DEV…');
+  buildEntityDatalists();
   fillBulkSelect('bk-ver', [...VERSIONS_DATA].sort((a,b)=>a.version.localeCompare(b.version,'pt-BR',{numeric:true})).map(x=>x.version), '🏷️ Versão…');
 }
 // Repopula um select preservando a escolha atual do usuario
@@ -2000,9 +2026,10 @@ function clearPendingSel(){ pendingSel.clear(); renderPending(); }
 function bulkApply(){
   if(!requireWrite()) return;
   if(!pendingSel.size) return;
-  const ver=document.getElementById('bk-ver')?.value||'', ini=document.getElementById('bk-ini')?.value||'', dev=document.getElementById('bk-dev')?.value||'', ap=document.getElementById('bk-ap')?.value||'';
+  const ver=document.getElementById('bk-ver')?.value||'', ini=(document.getElementById('bk-ini')?.value||'').trim(), dev=(document.getElementById('bk-dev')?.value||'').trim(), ap=document.getElementById('bk-ap')?.value||'';
   if(!ver&&!ini&&!dev&&!ap){ alert('Selecione ao menos um campo.'); return; }
-  PENDING.forEach(r=>{ if(!pendingSel.has(r.id)) return; if(ver) r.version=ver; if(ini) r.initiative=ini; if(dev) r.dev=dev; if(ap) r.approved=ap; sbSavePending(r); });
+  const iniName=ensureEntity('ini',ini), devName=ensureEntity('dev',dev);
+  PENDING.forEach(r=>{ if(!pendingSel.has(r.id)) return; if(ver) r.version=ver; if(iniName) r.initiative=iniName; if(devName) r.dev=devName; if(ap) r.approved=ap; sbSavePending(r); });
   ['bk-ver','bk-ini','bk-dev','bk-ap'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   pendingSel.clear(); saveToLocal(); renderPending(); showToast('✓ MRs atualizados','ok');
 }
