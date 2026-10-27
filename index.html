@@ -106,6 +106,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .ver-pill.active .vp-cnt{background:rgba(255,255,255,.25)}
 .ver-pane{display:none}.ver-pane.active{display:block}
 
+/* ── REPO SECTION (Historico de Deploy) ── */
+.repo-section{margin-bottom:22px}
+.repo-sec-head{display:flex;align-items:center;gap:10px;padding:0 2px 8px;margin-bottom:10px;border-bottom:1px solid var(--border)}
+.repo-sec-meta{font-size:11px;color:var(--muted);white-space:nowrap}
+
 /* ── DEPLOY GROUP ── */
 .deploy-group{margin-bottom:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;box-shadow:var(--sh);transition:box-shadow .18s}
 .deploy-group:hover{box-shadow:var(--sh-md)}
@@ -1639,15 +1644,35 @@ function renderDeployHistory() {
     pane.className='ver-pane'+(isAct?' active':'');
     pane.id='vp-'+v.id;
 
+    // Dentro da versao, os deploys ficam separados por repositorio
+    const repoBuckets=new Map();
     DEPLOYS.filter(g=>g.ver===v.id).forEach(group=>{
-      const visRows=group.rows.filter(r=>matchRow(r,group.repo)).sort((a,b)=>{
+      group.rows.filter(r=>matchRow(r,group.repo)).forEach(r=>{
+        const repo=((r.repo||group.repo||getRepo(r.mr)||'').trim())||'—';
+        if(!repoBuckets.has(repo)) repoBuckets.set(repo,new Map());
+        const groups=repoBuckets.get(repo);
+        if(!groups.has(group.id)) groups.set(group.id,{group,rows:[]});
+        groups.get(group.id).rows.push(r);
+      });
+    });
+
+    [...repoBuckets.keys()].sort((a,b)=>a.localeCompare(b)).forEach(repo=>{
+      const groups=repoBuckets.get(repo);
+      const repoMR=[...groups.values()].reduce((s,b)=>s+b.rows.length,0);
+      const sec=document.createElement('div'); sec.className='repo-section';
+      const secHead=document.createElement('div'); secHead.className='repo-sec-head';
+      secHead.innerHTML=`${repoBadge(repo)}<span class="repo-sec-meta">${groups.size} deploy${groups.size!==1?'s':''} · ${repoMR} MR${repoMR!==1?'s':''}</span>`;
+      sec.appendChild(secHead);
+
+      [...groups.values()].forEach(({group,rows})=>{
+      const visRows=rows.slice().sort((a,b)=>{
         const n=u=>{const m=(u||'').match(/merge_requests\/(\d+)/);return m?parseInt(m[1]):0;};
         return n(a.mr)-n(b.mr);
       });
       if(!visRows.length) return;
       visRows.forEach(r=>{ totMR++; const ap=(r.approved||'').toLowerCase(); if(ap==='sim'||ap==='true') totAp++; if(ap==='não'||ap==='nao'||ap==='false') totRej++; });
 
-      const div=document.createElement('div'); div.className='deploy-group'; div.id='dg-'+group.id;
+      const div=document.createElement('div'); div.className='deploy-group'; div.id='dg-'+group.id+'--'+repo.replace(/[^a-zA-Z0-9]/g,'_'); div.dataset.gid=group.id;
 
       const cleanGroupDate = fmtDate(group.date);
       const dateDisplay = cleanGroupDate
@@ -1679,7 +1704,7 @@ function renderDeployHistory() {
       });
       rowsHtml+=`<tr><td colspan="8"><button style="background:none;border:none;cursor:pointer;padding:8px 14px;color:var(--accent);font:500 12px var(--sans);display:flex;align-items:center;gap:5px" onclick="addDeployRow('${group.id}')">+ Adicionar MR neste deploy</button></td></tr>`;
 
-      div.innerHTML=`<div class="dg-head" onclick="toggleDg('dg-${group.id}')">
+      div.innerHTML=`<div class="dg-head" onclick="toggleDg('${div.id}')">
         <span class="dg-ver" style="background:var(--muted);cursor:pointer" onclick="event.stopPropagation();openVerEdit('${group.id}')" title="Editar versão">${esc(v.label)}</span>
         ${dateDisplay}
         <span class="dg-label">${esc(group.label)}${group.rollback?'<span style="color:var(--red);font-size:11px;margin-left:6px">⚠ ROLLBACK</span>':''}</span>
@@ -1691,7 +1716,10 @@ function renderDeployHistory() {
       </div>
       <div class="dg-body table-scroll"><table class="data-table"><thead><tr><th>MR</th><th>Card</th><th>Aprovado</th><th>Iniciativa</th><th>DEV Responsável</th><th>Pipeline</th><th>Comentários</th><th style="width:70px"></th></tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
 
-      pane.appendChild(div);
+      sec.appendChild(div);
+      });
+
+      if(sec.children.length>1) pane.appendChild(sec);
     });
 
     if(!pane.children.length) pane.innerHTML=emptyState('🔍','Nenhum MR nesta versão','Nenhum MR desta versão corresponde aos filtros e à busca atuais.');
@@ -1792,10 +1820,13 @@ function addDeployRow(gid){
   g.rows.push(r); editingDeployRowId=gid+'__'+r.id; renderDeployHistory(); switchVersion(g.ver);
 }
 
+// O mesmo grupo pode aparecer em mais de uma secao de repositorio
+function dgEl(gid){ return document.querySelector(`.ver-pane.active .deploy-group[data-gid="${gid}"]`)||document.querySelector(`.deploy-group[data-gid="${gid}"]`); }
+
 // Date edit
 function openDateEdit(gid){
   const g=DEPLOYS.find(x=>x.id===gid); if(!g) return;
-  const wrap=document.getElementById('dg-'+gid)?.querySelector('.dg-date, .dg-date.empty-date'); if(!wrap) return;
+  const wrap=dgEl(gid)?.querySelector('.dg-date, .dg-date.empty-date'); if(!wrap) return;
   wrap.outerHTML=`<span class="date-inline-editor" id="dei-${gid}" onclick="event.stopPropagation()">
     📅
     <input value="${esc(fmtDate(g.date))}" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskDate(this)"
@@ -1823,7 +1854,7 @@ function cancelDateEdit(){ renderDeployHistory(); }
 // Version edit (cabecalho do grupo no Historico de Deploy)
 function openVerEdit(gid){
   const g=DEPLOYS.find(x=>x.id===gid); if(!g) return;
-  const badge=document.getElementById('dg-'+gid)?.querySelector('.dg-ver'); if(!badge) return;
+  const badge=dgEl(gid)?.querySelector('.dg-ver'); if(!badge) return;
   buildVersionOptions();
   const cur=(VERSIONS_LIST.find(v=>v.id===g.ver)?.label)||g.label||'';
   badge.outerHTML=`<span class="date-inline-editor" id="vei-${gid}" onclick="event.stopPropagation()">
