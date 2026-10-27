@@ -128,6 +128,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .date-inline-editor input{background:none;border:none;outline:none;font:500 11px var(--mono);color:var(--text);width:100px}
 
 /* ── TABLE ── */
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .data-table{width:100%;border-collapse:collapse;font-size:12px}
 .data-table th{padding:9px 12px;background:var(--surface2);color:var(--dim);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
 .data-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
@@ -165,6 +166,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .f-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-d)}
 .f-select{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:6px 10px;color:var(--text);font:12px var(--sans);outline:none;cursor:pointer}
 .f-select:focus{border-color:var(--accent)}
+.f-label .req{color:var(--red);margin-left:2px}
 .f-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:4px}
 
 /* ── BUTTONS ── */
@@ -175,6 +177,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .btn-secondary:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-d)}
 .btn-ghost{background:none;color:var(--muted);border:1px solid var(--border)}
 .btn-ghost:hover{background:var(--surface2);color:var(--text)}
+.btn-danger{background:var(--red);color:#fff;box-shadow:0 2px 8px rgba(220,38,38,.26)}
+.btn-danger:hover{transform:translateY(-1px);opacity:.94}
 .btn-danger-ghost{background:none;color:var(--red);border:1px solid var(--border)}
 .btn-danger-ghost:hover{background:var(--red-l);border-color:var(--red)}
 .btn-sm{padding:4px 10px;font-size:11px}
@@ -218,12 +222,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .nd-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;align-items:center}
 .nd-sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
 .nd-repo{font-size:10px;font-family:var(--mono);padding:1px 6px;border-radius:4px}
-.nd-remove{border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:var(--r);padding:4px 10px;font:500 11px var(--sans);cursor:pointer;transition:all .15s;white-space:nowrap}
 .nd-remove:hover{border-color:var(--red);color:var(--red);background:var(--red-l)}
-.nd-empty{text-align:center;padding:56px 24px}
-.nd-empty-icon{font-size:40px;margin-bottom:12px}
-.nd-empty-title{font-size:15px;font-weight:600;margin-bottom:6px}
-.nd-empty-sub{font-size:13px;color:var(--muted)}
 .nd-badge{display:inline-flex;align-items:center;gap:3px;background:var(--accent-d);color:var(--accent);border:1px solid rgba(249,115,22,.25);border-radius:20px;font-size:9px;font-weight:700;padding:1px 6px}
 .toggle-sw{position:relative;width:38px;height:21px;flex-shrink:0;cursor:pointer}
 .toggle-sw input{opacity:0;width:0;height:0}
@@ -260,6 +259,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .modal-close:hover{background:var(--surface2);color:var(--text)}
 .modal-body{padding:20px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:14px}
 .modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px}
+.manage-item .ra-btn{opacity:1}
 .manage-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);transition:border-color .1s}
 .manage-item:hover{border-color:var(--border2)}
 .manage-item.editing{border-color:var(--accent)}
@@ -267,9 +267,18 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .mi-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font:13px var(--sans);color:var(--text);outline:none}
 .mi-input:focus{border-color:var(--accent)}
 .mi-color{width:28px;height:28px;border:1px solid var(--border);border-radius:6px;cursor:pointer;padding:2px}
-.mi-btn{background:none;border:none;cursor:pointer;padding:3px 6px;border-radius:6px;color:var(--muted);font-size:13px;transition:all .12s}
-.mi-btn:hover{background:var(--surface3);color:var(--text)}
-.mi-btn.red:hover{background:var(--red-l);color:var(--red)}
+.btn-xs{padding:2px 8px;font-size:11px;border-radius:7px}
+.dialog-msg{font-size:13px;line-height:1.55;color:var(--text);white-space:pre-line}
+.dialog-msg b{font-weight:700}
+.data-table td .empty-state{position:sticky;left:0}
+.empty-state{display:flex;flex-direction:column;align-items:center;gap:6px;padding:40px 24px;text-align:center}
+.empty-state.lg{padding:56px 24px;gap:8px}
+.empty-state.lg .es-icon{font-size:40px}
+.empty-state.lg .es-title{font-size:15px}
+.empty-state.lg .es-sub{font-size:13px;max-width:420px}
+.empty-state .es-icon{font-size:26px;line-height:1;opacity:.75}
+.empty-state .es-title{font:600 13px var(--sans);color:var(--text)}
+.empty-state .es-sub{font-size:12px;color:var(--muted);max-width:320px}
 .add-row{display:flex;gap:8px;padding-bottom:14px;border-bottom:1px solid var(--border);margin-bottom:6px}
 .manage-list{display:flex;flex-direction:column;gap:4px}
 
@@ -313,7 +322,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--surface4);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--dim)}
-body.is-readonly :is(.app-body,.nav-tabs,.modal-overlay) :is(.btn-primary,.btn-success,.btn-danger-ghost,.ra-btn,.mi-btn){opacity:.45}
+body.is-readonly :is(.app-body,.nav-tabs,.modal-overlay) :is(.btn-primary,.btn-success,.btn-danger,.btn-danger-ghost,.ra-btn){opacity:.45}
 .f-input.invalid,.f-input.invalid:focus{border-color:var(--red);box-shadow:0 0 0 3px var(--red-d)}
 .filters-toggle{display:none}
 .sb-drawer-head{display:none;align-items:center;gap:8px;padding:0 8px 4px;margin-bottom:-12px}
@@ -576,13 +585,13 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
       <div class="new-form" id="new-form">
         <div class="form-title">+ Adicionar novo MR</div>
         <div class="form-grid">
-          <div class="form-cell form-full"><label class="f-label">Link do MR *</label><input class="f-input" id="nf-mr" placeholder="https://gitlab.luizalabs.com/…/merge_requests/0000"></div>
+          <div class="form-cell form-full"><label class="f-label">Link do MR<span class="req">*</span></label><input class="f-input" id="nf-mr" placeholder="https://gitlab.luizalabs.com/…/merge_requests/0000"></div>
           <div class="form-cell"><label class="f-label">Card Vinculado</label><input class="f-input" id="nf-card" placeholder="STK-XXXX"></div>
           <div class="form-cell"><label class="f-label">Aprovado</label><select class="f-select" id="nf-ap"><option value="">—</option><option value="Sim">Sim</option><option value="Não">Não</option><option value="Em andamento">Em andamento</option></select></div>
           <div class="form-cell"><label class="f-label">Pipeline</label><select class="f-select" id="nf-pip"><option value="">—</option><option value="Não">OK</option><option value="Sim">Quebrada</option></select></div>
-          <div class="form-cell"><label class="f-label">Iniciativa <button class="btn btn-ghost btn-sm" onclick="openModal('ini-modal')" style="padding:1px 5px;font-size:10px" title="Gerenciar">⚙</button></label><select class="f-select" id="nf-ini"></select></div>
-          <div class="form-cell"><label class="f-label">DEV Responsável <button class="btn btn-ghost btn-sm" onclick="openModal('dev-modal')" style="padding:1px 5px;font-size:10px" title="Gerenciar">⚙</button></label><select class="f-select" id="nf-dev"></select></div>
-          <div class="form-cell"><label class="f-label">Repositório <button class="btn btn-ghost btn-sm" onclick="openModal('repo-modal')" style="padding:1px 5px;font-size:10px" title="Gerenciar">⚙</button></label><select class="f-select" id="nf-repo"></select></div>
+          <div class="form-cell"><label class="f-label">Iniciativa <button class="btn btn-ghost btn-xs" onclick="openModal('ini-modal')" title="Gerenciar iniciativas">⚙</button></label><select class="f-select" id="nf-ini"></select></div>
+          <div class="form-cell"><label class="f-label">DEV Responsável <button class="btn btn-ghost btn-xs" onclick="openModal('dev-modal')" title="Gerenciar devs">⚙</button></label><select class="f-select" id="nf-dev"></select></div>
+          <div class="form-cell"><label class="f-label">Repositório <button class="btn btn-ghost btn-xs" onclick="openModal('repo-modal')" title="Gerenciar repositórios">⚙</button></label><select class="f-select" id="nf-repo"></select></div>
           <div class="form-cell"><label class="f-label">🏷️ Versão Alvo</label><input class="f-input" id="nf-version" list="version-datalist" placeholder="ex: 0.11.0…" autocomplete="off"></div>
           <div class="form-cell"><label class="f-label">📅 Data Deploy</label><input class="f-input" id="nf-deploy-date" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskDate(this)" onblur="validateDateField(this)"></div>
           <div class="form-cell form-full"><label class="f-label">Comentários</label><input class="f-input" id="nf-comment" placeholder="Observação opcional"></div>
@@ -616,7 +625,7 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
       </div>
       <div class="section-card">
         <div class="section-head">☑<span class="section-title">MRs sem Data de Deploy</span></div>
-        <table class="data-table">
+        <div class="table-scroll"><table class="data-table">
           <thead><tr>
             <th style="width:32px"><input type="checkbox" class="cb-row" id="cb-all" onchange="toggleSelectAllPending()" title="Todos"></th>
             <th class="th-sort" data-sort="mr" tabindex="0" title="Ordenar por MR">MR<span class="sort-ind"></span></th>
@@ -630,7 +639,7 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
             <th>Comentários</th><th style="width:130px">Ações</th>
           </tr></thead>
           <tbody id="pending-tbody"></tbody>
-        </table>
+        </table></div>
       </div>
     </div>
 
@@ -666,10 +675,10 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
           <span class="section-title">Histórico de Versões</span>
           <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="openVersionModal()">+ Nova Versão</button>
         </div>
-        <table class="data-table">
+        <div class="table-scroll"><table class="data-table">
           <thead><tr><th>🏷️ Versão</th><th>📅 Data Deploy</th><th>👤 Orquestrador</th><th>📝 Observação</th><th>Status</th><th style="width:80px">Ações</th></tr></thead>
           <tbody id="versions-tbody"></tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   </main>
@@ -677,12 +686,21 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
 
 <!-- ══ MODALS ══ -->
 
+<!-- Confirm Dialog (padrao para toda acao destrutiva ou irreversivel) -->
+<div class="modal-overlay" id="confirm-modal" onclick="if(event.target===this)resolveConfirm(false)">
+  <div class="modal" style="width:400px">
+    <div class="modal-header"><span id="cf-icon">⚠️</span><h3 id="cf-title">Confirmar</h3><button class="modal-close" onclick="resolveConfirm(false)" aria-label="Fechar">✕</button></div>
+    <div class="modal-body"><p class="dialog-msg" id="cf-msg"></p></div>
+    <div class="modal-footer"><button class="btn" id="cf-ok" onclick="resolveConfirm(true)">Confirmar</button><button class="btn btn-ghost" onclick="resolveConfirm(false)">Cancelar</button></div>
+  </div>
+</div>
+
 <!-- Edit Pending Modal -->
 <div class="modal-overlay" id="edit-pending-modal" onclick="if(event.target===this)closeModal('edit-pending-modal')">
   <div class="modal" style="width:560px">
     <div class="modal-header">✏️<h3>Editar MR</h3><button class="modal-close" onclick="closeModal('edit-pending-modal')">✕</button></div>
     <div class="modal-body">
-      <div class="form-cell"><label class="f-label">Link do MR *</label><input class="f-input" id="ep-mr" placeholder="https://gitlab…"></div>
+      <div class="form-cell"><label class="f-label">Link do MR<span class="req">*</span></label><input class="f-input" id="ep-mr" placeholder="https://gitlab…"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div class="form-cell"><label class="f-label">Card Vinculado</label><input class="f-input" id="ep-card"></div>
         <div class="form-cell"><label class="f-label">Repositório</label><select class="f-select" id="ep-repo"></select></div>
@@ -712,7 +730,7 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
   <div class="modal" style="width:420px">
     <div class="modal-header">🏷<h3 id="vm-title">Nova Versão</h3><button class="modal-close" onclick="closeModal('version-modal')">✕</button></div>
     <div class="modal-body">
-      <div class="form-cell"><label class="f-label">Versão *</label><input class="f-input" id="vm-ver" placeholder="ex: 0.11.0 ou v1.2.3"></div>
+      <div class="form-cell"><label class="f-label">Versão<span class="req">*</span></label><input class="f-input" id="vm-ver" placeholder="ex: 0.11.0 ou v1.2.3"></div>
       <div class="form-cell"><label class="f-label">Data de Deploy</label><input class="f-input" id="vm-date" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskDate(this)" onblur="validateDateField(this)"></div>
       <div class="form-cell"><label class="f-label">Orquestrador</label><input class="f-input" id="vm-orq" list="orq-datalist" placeholder="Quem orquestrou o deploy…" autocomplete="off"></div>
       <div class="form-cell"><label class="f-label">Observação</label><input class="f-input" id="vm-note" placeholder="Observação opcional"></div>
@@ -1122,8 +1140,8 @@ function loadFromLocal() {
   } catch(e){ return false; }
 }
 
-function restoreDefaults() {
-  if (!confirm('Restaurar dados originais?\nIsso apaga o cache local. Um backup será baixado antes.')) return;
+async function restoreDefaults() {
+  if (!await askConfirm({title:'Restaurar dados originais?', message:'Isso apaga o cache local deste navegador. Um backup é baixado antes.', confirmLabel:'Restaurar'})) return;
   exportBackupJSON();                       // nunca apaga sem baixar antes
   snapshotBackup();
   localStorage.removeItem(LS_KEY); localStorage.removeItem(SB_CFG_KEY);
@@ -1251,7 +1269,7 @@ function applyRoleUI() {
 }
 
 async function doLogout() {
-  if (!confirm('Sair do Deploy Tracker?')) return;
+  if (!await askConfirm({title:'Sair do Deploy Tracker?', message:'O cache local deste navegador é apagado ao sair.', confirmLabel:'Sair', danger:false, icon:'🚪'})) return;
   try { await sb.auth.signOut(); } catch(e) { console.warn(e); }
   CURRENT_USER = null;
   // Limpa cache local para não deixar dados do time na máquina após logout
@@ -1304,9 +1322,9 @@ where lower(email) = lower('pessoa@email.com');</code>
 // Trocar a própria senha (permitido com o próprio JWT, sem service_role)
 async function changeOwnPassword() {
   const pwd = document.getElementById('nu-pwd')?.value || '';
-  if (pwd.length < 8) { alert('A nova senha precisa ter no mínimo 8 caracteres.'); return; }
+  if (pwd.length < 8) { flagInvalid('nu-pwd','A nova senha precisa ter no mínimo 8 caracteres.'); return; }
   const { error } = await sb.auth.updateUser({ password: pwd });
-  if (error) { alert('Não foi possível alterar: ' + error.message); return; }
+  if (error) { showToast('⚠ Não foi possível alterar a senha: ' + error.message,'error'); return; }
   document.getElementById('nu-pwd').value = '';
   showToast('✓ Senha alterada','ok');
 }
@@ -1364,7 +1382,7 @@ function checkDateInput(id, label) {
   const el = document.getElementById(id);
   if (!el || !el.value.trim()) return true;
   if (isValidDate(el.value)) return true;
-  alert(`${label} invalida. Use DD/MM/AAAA.`);
+  showToast(`⚠ ${label} inválida. Use DD/MM/AAAA.`,'error');
   el.classList.add('invalid'); el.focus();
   return false;
 }
@@ -1386,10 +1404,10 @@ function duplicateMrWarning(mr, exceptPendingId) {
   }
   return null;
 }
-function confirmDuplicate(mr, exceptPendingId) {
+async function confirmDuplicate(mr, exceptPendingId) {
   const w = duplicateMrWarning(mr, exceptPendingId);
-  return !w || confirm(`O MR ${getMrNum(mr)} ${w}.
-Cadastrar de novo?`);
+  if (!w) return true;
+  return askConfirm({title:'MR já cadastrado', message:`O MR ${getMrNum(mr)} ${w}.\nCadastrar de novo?`, confirmLabel:'Cadastrar de novo', danger:false});
 }
 
 function getMrNum(url) { const m=(url||'').match(/merge_requests\/(\d+)/); return m?'#'+m[1]:(url||''); }
@@ -1417,6 +1435,11 @@ function buildVersionOptions(sel='') {
   const dl=document.getElementById('version-datalist');
   if(dl) dl.innerHTML=sorted.map(v=>`<option value="${esc(v.version)}">${esc(v.version)}${v.date?' — '+esc(fmtDate(v.date)):''}</option>`).join('');
   return '<option value="">— Sem versão —</option>'+sorted.map(x=>`<option value="${esc(x.version)}"${x.version===sel?' selected':''}>${esc(x.version)}${x.date?' ('+esc(fmtDate(x.date))+')':''}</option>`).join('');
+}
+
+// Estado vazio padrao: mesmo icone, titulo e orientacao em toda a tela
+function emptyState(icon, title, sub, lg) {
+  return `<div class="empty-state${lg?' lg':''}"><div class="es-icon">${esc(icon)}</div><div class="es-title">${esc(title)}</div>${sub?`<div class="es-sub">${esc(sub)}</div>`:''}</div>`;
 }
 
 // Badges
@@ -1666,12 +1689,12 @@ function renderDeployHistory() {
         </div>
         
       </div>
-      <div class="dg-body"><table class="data-table"><thead><tr><th>MR</th><th>Card</th><th>Aprovado</th><th>Iniciativa</th><th>DEV Responsável</th><th>Pipeline</th><th>Comentários</th><th style="width:70px"></th></tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
+      <div class="dg-body table-scroll"><table class="data-table"><thead><tr><th>MR</th><th>Card</th><th>Aprovado</th><th>Iniciativa</th><th>DEV Responsável</th><th>Pipeline</th><th>Comentários</th><th style="width:70px"></th></tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
 
       pane.appendChild(div);
     });
 
-    if(!pane.children.length) pane.innerHTML=`<div style="text-align:center;padding:40px;color:var(--muted)">🔍Nenhum resultado.</div>`;
+    if(!pane.children.length) pane.innerHTML=emptyState('🔍','Nenhum MR nesta versão','Nenhum MR desta versão corresponde aos filtros e à busca atuais.');
     panesEl.appendChild(pane);
   });
 
@@ -1744,18 +1767,19 @@ function saveDeployRow(gid,rid){
   r.comment=document.getElementById('er-cmt-'+rid).value.trim();
   editingDeployRowId=null; saveToLocal(); sbSaveDeployRow(r,g.label,g.date); renderDeployHistory();
 }
-function deleteDeployRow(gid,rid){
+async function deleteDeployRow(gid,rid){
   if(!requireWrite()) return;
-  if(!confirm('Remover MR?')) return;
+  if(!await askConfirm({title:'Remover MR do deploy?', message:'O MR sai deste grupo do histórico. A ação não pode ser desfeita.', confirmLabel:'Remover'})) return;
   const g=DEPLOYS.find(x=>x.id===gid); if(!g) return;
   const r=g.rows.find(x=>x.id===rid); if(r) sbDeleteDeployRow(r.sbId);
   g.rows=g.rows.filter(x=>x.id!==rid);
   saveToLocal(); renderDeployHistory();
   showToast('🗑 MR removido','warn');
 }
-function deleteDeployGroup(gid){
+async function deleteDeployGroup(gid){
   if(!requireWrite()) return;
-  if(!confirm('Excluir grupo de deploy inteiro?')) return;
+  const gg=DEPLOYS.find(x=>x.id===gid);
+  if(!await askConfirm({title:'Excluir o grupo de deploy?', message:`Os ${gg?gg.rows.length:0} MR${(gg?gg.rows.length:0)!==1?'s':''} deste grupo saem do histórico. A ação não pode ser desfeita.`, confirmLabel:'Excluir grupo'})) return;
   const g=DEPLOYS.find(x=>x.id===gid); if(!g) return;
   g.rows.forEach(r=>sbDeleteDeployRow(r.sbId));
   DEPLOYS=DEPLOYS.filter(x=>x.id!==gid); saveToLocal(); renderDeployHistory();
@@ -1777,8 +1801,8 @@ function openDateEdit(gid){
     <input value="${esc(fmtDate(g.date))}" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskDate(this)"
       onkeydown="if(event.key==='Enter')saveDateEdit('${gid}');if(event.key==='Escape')cancelDateEdit();"
       style="background:none;border:none;outline:none;font:500 11px var(--mono);color:var(--text);width:105px">
-    <button class="btn btn-success btn-sm" style="padding:2px 8px" onclick="saveDateEdit('${gid}')">✓</button>
-    <button class="btn btn-ghost btn-sm" style="padding:2px 8px" onclick="cancelDateEdit()">✕</button>
+    <button class="btn btn-success btn-xs" onclick="saveDateEdit('${gid}')">✓</button>
+    <button class="btn btn-ghost btn-xs" onclick="cancelDateEdit()">✕</button>
   </span>`;
   const inp=document.querySelector(`#dei-${gid} input`); if(inp) { inp.focus(); inp.select(); }
 }
@@ -1787,7 +1811,7 @@ function saveDateEdit(gid){
   const g=DEPLOYS.find(x=>x.id===gid); if(!g) return;
   const inp=document.querySelector(`#dei-${gid} input`);
   const date=inp?inp.value.trim():'';
-  if(date&&!isValidDate(date)){ alert('Data inválida. Use DD/MM/AAAA.'); inp?.focus(); return; }
+  if(date&&!isValidDate(date)){ showToast('⚠ Data inválida. Use DD/MM/AAAA.','error'); inp?.focus(); return; }
   g.date=date;
   const vl=VERSIONS_LIST.find(v=>v.id===g.ver); if(vl) vl.date=date;
   const vd=VERSIONS_DATA.find(v=>v.version===g.label); if(vd) { vd.date=date; sbSaveVersion(vd); }
@@ -1807,23 +1831,23 @@ function openVerEdit(gid){
     <input value="${esc(cur)}" list="version-datalist" placeholder="ex: 0.11.0…" autocomplete="off"
       onkeydown="if(event.key==='Enter')saveVerEdit('${gid}');if(event.key==='Escape')cancelVerEdit();"
       style="background:none;border:none;outline:none;font:600 11px var(--mono);color:var(--text);width:110px">
-    <button class="btn btn-success btn-sm" style="padding:2px 8px" onclick="saveVerEdit('${gid}')">✓</button>
-    <button class="btn btn-ghost btn-sm" style="padding:2px 8px" onclick="cancelVerEdit()">✕</button>
+    <button class="btn btn-success btn-xs" onclick="saveVerEdit('${gid}')">✓</button>
+    <button class="btn btn-ghost btn-xs" onclick="cancelVerEdit()">✕</button>
   </span>`;
   const inp=document.querySelector(`#vei-${gid} input`); if(inp){ inp.focus(); inp.select(); }
 }
-function saveVerEdit(gid){
+async function saveVerEdit(gid){
   if(!requireWrite()) return;
   const g=DEPLOYS.find(x=>x.id===gid); if(!g) return;
   const inp=document.querySelector(`#vei-${gid} input`);
   const ver=inp?inp.value.trim():'';
-  if(!ver){ alert('Informe a versão.'); inp?.focus(); return; }
+  if(!ver){ showToast('⚠ Informe a versão.','error'); inp?.focus(); return; }
   const cur=(VERSIONS_LIST.find(v=>v.id===g.ver)?.label)||g.label||'';
   if(ver===cur){ cancelVerEdit(); return; }
   const verId=verIdFor(ver);
   // Ja existe outro grupo nessa versao: os MRs sao movidos para la (confirmado).
   const target=DEPLOYS.find(x=>x.id!==g.id&&x.ver===verId);
-  if(target&&!confirm(`A versão ${ver} já tem um grupo. Mover ${g.rows.length} MR${g.rows.length!==1?'s':''} para lá?`)) return;
+  if(target&&!await askConfirm({title:`A versão ${ver} já tem um grupo`, message:`Mover ${g.rows.length} MR${g.rows.length!==1?'s':''} para o grupo existente?`, confirmLabel:'Mover MRs', danger:false, icon:'🏷️'})) return;
 
   if(!VERSIONS_LIST.find(v=>v.id===verId)) VERSIONS_LIST.push({id:verId,label:ver,date:g.date||'',color:'#64748B'});
   let vd=VERSIONS_DATA.find(v=>v.version===ver);
@@ -1897,7 +1921,7 @@ function renderPending(){
       </div></td>
     </tr>`);
   });
-  tbody.innerHTML=html.join('')||`<tr><td colspan="11" style="text-align:center;padding:32px;color:var(--muted)">🔍 Nenhum MR para os filtros atuais.</td></tr>`;
+  tbody.innerHTML=html.join('')||`<tr><td colspan="11">${emptyState('🔍','Nenhum MR em aberto',PENDING.length?'Nenhum MR corresponde aos filtros e à busca atuais.':'Use “+ Novo MR” para cadastrar o primeiro.')}</td></tr>`;
   document.getElementById('badge-pending').textContent=PENDING.length;
   document.getElementById('pending-count-lbl').textContent = sorted.length===PENDING.length
     ? `${PENDING.length} MR${PENDING.length!==1?'s':''} em aberto`
@@ -1951,12 +1975,12 @@ function flagInvalid(id, msg){
   showToast('⚠ '+msg,'error');
 }
 
-function saveNewPending(){
+async function saveNewPending(){
   if(!requireWrite()) return;
   const mr=document.getElementById('nf-mr').value.trim();
   if(!mr){ flagInvalid('nf-mr','Informe o link ou o número do MR.'); return; }
   if(!checkDateInput('nf-deploy-date','Data de deploy')) return;
-  if(!confirmDuplicate(mr)) return;
+  if(!await confirmDuplicate(mr)) return;
   const version=document.getElementById('nf-version').value.trim();
   const deployDate=document.getElementById('nf-deploy-date').value.trim();
   const nd=document.getElementById('nf-nd').checked;
@@ -1995,12 +2019,12 @@ function openEditPending(id){
   const vd=VERSIONS_DATA.find(v=>v.version===r.version); if(vd) document.getElementById('ep-deploy-date').value=fmtDate(vd.date);
   openModal('edit-pending-modal'); document.getElementById('ep-mr').focus();
 }
-function saveEditPending(){
+async function saveEditPending(){
   if(!requireWrite()) return;
   const r=PENDING.find(x=>x.id===editingPendingId); if(!r) return;
   const mr=document.getElementById('ep-mr').value.trim(); if(!mr){ flagInvalid('ep-mr','Informe o link ou o número do MR.'); return; }
   if(!checkDateInput('ep-deploy-date','Data de deploy')) return;
-  if(getMrNum(mr)!==getMrNum(r.mr)&&!confirmDuplicate(mr,r.id)) return;
+  if(getMrNum(mr)!==getMrNum(r.mr)&&!await confirmDuplicate(mr,r.id)) return;
   r.mr=mr; r.card=document.getElementById('ep-card').value.trim(); r.repo=document.getElementById('ep-repo').value;
   r.approved=document.getElementById('ep-ap').value; r.pipeline=document.getElementById('ep-pip').value;
   r.initiative=document.getElementById('ep-ini').value; r.dev=document.getElementById('ep-dev').value;
@@ -2010,17 +2034,17 @@ function saveEditPending(){
   if(r.version&&deployDate){ const vd=VERSIONS_DATA.find(v=>v.version===r.version); if(vd){vd.date=deployDate;sbSaveVersion(vd);}else{const nv={id:'v'+(++versionIdCtr),version:r.version,date:deployDate,orchestrator:'',note:''};VERSIONS_DATA.push(nv);sbSaveVersion(nv);} renderVersions(); }
   closeModal('edit-pending-modal'); sbSavePending(r); saveToLocal(); renderPending(); renderNextDeploy();
 }
-function deleteFromEditModal(){
+async function deleteFromEditModal(){
   if(!requireWrite()) return;
-  if(!confirm('Excluir este MR?')) return;
+  if(!await askConfirm({title:'Excluir este MR?', message:'O MR sai de "MRs em Aberto". A ação não pode ser desfeita.', confirmLabel:'Excluir'})) return;
   const r=PENDING.find(x=>x.id===editingPendingId);
   if(r) sbDeletePending(r.sbId);
   PENDING=PENDING.filter(x=>x.id!==editingPendingId);
   closeModal('edit-pending-modal'); saveToLocal(); renderPending(); renderNextDeploy();
 }
-function deletePending(id){
+async function deletePending(id){
   if(!requireWrite()) return;
-  if(!confirm('Remover MR?')) return;
+  if(!await askConfirm({title:'Excluir este MR?', message:'O MR sai de "MRs em Aberto". A ação não pode ser desfeita.', confirmLabel:'Excluir'})) return;
   const r=PENDING.find(x=>x.id===id); if(r) sbDeletePending(r.sbId);
   PENDING=PENDING.filter(x=>x.id!==id); saveToLocal(); renderPending(); renderNextDeploy();
 }
@@ -2058,13 +2082,14 @@ function bulkApply(){
   if(!requireWrite()) return;
   if(!pendingSel.size) return;
   const ver=document.getElementById('bk-ver')?.value||'', ini=document.getElementById('bk-ini')?.value||'', dev=document.getElementById('bk-dev')?.value||'', ap=document.getElementById('bk-ap')?.value||'';
-  if(!ver&&!ini&&!dev&&!ap){ alert('Selecione ao menos um campo.'); return; }
+  if(!ver&&!ini&&!dev&&!ap){ showToast('⚠ Escolha ao menos um campo para aplicar.','error'); return; }
   PENDING.forEach(r=>{ if(!pendingSel.has(r.id)) return; if(ver) r.version=ver; if(ini) r.initiative=ini; if(dev) r.dev=dev; if(ap) r.approved=ap; sbSavePending(r); });
   ['bk-ver','bk-ini','bk-dev','bk-ap'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   pendingSel.clear(); saveToLocal(); renderPending(); showToast('✓ MRs atualizados','ok');
 }
 function bulkMarkNext(){ if(!requireWrite()) return; PENDING.forEach(r=>{ if(!pendingSel.has(r.id)) return; r.nextDeploy=true; sbSavePending(r); }); const n=pendingSel.size; pendingSel.clear(); saveToLocal(); renderPending(); renderNextDeploy(); showToast(`🚀 ${n} MR${n!==1?'s':''} marcados`,'ok'); }
-function bulkDelete(){ if(!requireWrite()) return; const n=pendingSel.size; if(!n||!confirm(`Excluir ${n} MR${n!==1?'s':''}?`)) return; PENDING.filter(r=>pendingSel.has(r.id)).forEach(r=>sbDeletePending(r.sbId)); PENDING=PENDING.filter(r=>!pendingSel.has(r.id)); pendingSel.clear(); saveToLocal(); renderPending(); renderNextDeploy(); showToast(`🗑 ${n} excluído${n!==1?'s':''}`, 'warn'); }
+async function bulkDelete(){ if(!requireWrite()) return; const n=pendingSel.size; if(!n) return;
+  if(!await askConfirm({title:`Excluir ${n} MR${n!==1?'s':''}?`, message:'Os MRs selecionados saem de "MRs em Aberto". A ação não pode ser desfeita.', confirmLabel:'Excluir'})) return; PENDING.filter(r=>pendingSel.has(r.id)).forEach(r=>sbDeletePending(r.sbId)); PENDING=PENDING.filter(r=>!pendingSel.has(r.id)); pendingSel.clear(); saveToLocal(); renderPending(); renderNextDeploy(); showToast(`🗑 ${n} excluído${n!==1?'s':''}`, 'warn'); }
 
 // ═══════════════════════════════════════════════════════════
 // NEXT DEPLOY
@@ -2100,10 +2125,10 @@ function renderNextDeploy(){
   const promBtn=document.getElementById('promote-btn'); if(promBtn) promBtn.disabled=ndSel.size===0;
   const ndList=document.getElementById('nd-list'); if(!ndList) return;
   document.getElementById('nd-sel-count').textContent=`${ndSel.size} selecionado${ndSel.size!==1?'s':''}`;
-  if(!cnt){ ndList.innerHTML=`<div class="nd-empty"><div class="nd-empty-icon">🚀</div><div class="nd-empty-title">Nenhum MR na fila</div><div class="nd-empty-sub">Ative o toggle <strong>Próx. Deploy</strong> em MRs em Aberto.</div></div>`; return; }
+  if(!cnt){ ndList.innerHTML=emptyState('🚀','Nenhum MR na fila','Ative o toggle “Próx. Deploy” em MRs em Aberto para montar a fila.',true); return; }
   // `list` continua sendo a fila inteira (contagem e selecao); so a exibicao e filtrada
   const vis=list.filter(r=>matchRow(r));
-  if(!vis.length){ ndList.innerHTML=`<div class="nd-empty"><div class="nd-empty-icon">🔍</div><div class="nd-empty-title">Nenhum MR da fila bate com os filtros</div><div class="nd-empty-sub">A fila tem ${cnt} MR${cnt!==1?'s':''}. Limpe os filtros da barra lateral para ver.</div></div>`; return; }
+  if(!vis.length){ ndList.innerHTML=emptyState('🔍','Nenhum MR da fila bate com os filtros',`A fila tem ${cnt} MR${cnt!==1?'s':''}. Limpe os filtros da barra lateral para ver.`,true); return; }
   ndList.innerHTML=vis.map((r,i)=>{
     const num=getMrNum(r.mr), repo=r.repo||getRepo(r.mr);
     const found=REPOS.find(x=>x.name===repo); const repoc=found?found.color:'#64748B';
@@ -2120,14 +2145,15 @@ function renderNextDeploy(){
         <div style="font-size:13px;font-weight:600">${esc(r.card||'(sem card)')}</div>
         <div class="nd-meta">${r.initiative?iniBadge(r.initiative):''}${r.dev?devBadge(r.dev):''}${r.approved?apBadge(r.approved):''}${issueTags}</div>
       </div>
-      <button class="nd-remove" onclick="toggleNextDeploy(${r.id})">✕ Remover</button>
+      <button class="btn btn-ghost btn-sm nd-remove" onclick="toggleNextDeploy(${r.id})">✕ Remover</button>
     </div>`;
   }).join('');
 }
 function toggleNdSel(id){ if(ndSel.has(id))ndSel.delete(id);else ndSel.add(id); renderNextDeploy(); }
 function toggleSelectAllNd(){ const list=PENDING.filter(r=>r.nextDeploy&&matchRow(r)); const all=list.length>0&&list.every(r=>ndSel.has(r.id)); if(all) list.forEach(r=>ndSel.delete(r.id)); else list.forEach(r=>ndSel.add(r.id)); renderNextDeploy(); }
-function clearNextDeploy(){ if(!requireWrite()) return; const n=PENDING.filter(r=>r.nextDeploy).length; if(!n||!confirm(`Remover ${n} MR${n!==1?'s':''} da fila?`)) return; PENDING.forEach(r=>r.nextDeploy=false); ndSel.clear(); saveToLocal(); renderPending(); renderNextDeploy(); }
-function promoteToHistory(){
+async function clearNextDeploy(){ if(!requireWrite()) return; const n=PENDING.filter(r=>r.nextDeploy).length; if(!n) return;
+  if(!await askConfirm({title:'Limpar a fila do próximo deploy?', message:`${n} MR${n!==1?'s':''} saem da fila e continuam em "MRs em Aberto".`, confirmLabel:'Limpar fila', danger:false, icon:'🚀'})) return; PENDING.forEach(r=>r.nextDeploy=false); ndSel.clear(); saveToLocal(); renderPending(); renderNextDeploy(); }
+async function promoteToHistory(){
   if(!requireWrite()) return;
   const version=(document.getElementById('promote-ver')?.value||'').trim();
   const date=(document.getElementById('promote-date')?.value||'').trim();
@@ -2139,7 +2165,7 @@ function promoteToHistory(){
   let msg=`Realizar o deploy da versão ${version}${date?' em '+date:''} com ${toPromote.length} MR${toPromote.length!==1?'s':''}?`;
   if(avisos.length) msg+=`\n\n⚠ ${avisos.length} pendência${avisos.length!==1?'s':''}:\n`+avisos.join('\n');
   msg+='\n\nOs MRs saem de "MRs em Aberto" e vão para o histórico.';
-  if(!confirm(msg)) return;
+  if(!await askConfirm({title:'Realizar deploy?', message:msg, confirmLabel:'Realizar deploy', danger:false, icon:'🚀'})) return;
   toPromote.forEach(e=>{ routeToDeployHistory({...e},version,date); });
   // Sem este delete o MR continuava em mr_aberto e reaparecia na fila no F5
   toPromote.forEach(e=>sbDeletePending(e.sbId));
@@ -2182,7 +2208,7 @@ function renderVersions(){
     <td style="font-size:12px;color:var(--muted)">${esc(v.note||'—')}</td>
     <td>${v.date?`<span class="ver-status vs-done">✓ Realizado</span>`:`<span class="ver-status vs-pending">· Pendente</span>`}</td>
     <td><div class="row-actions"><button class="ra-btn" onclick="openVersionModal('${v.id}')" title="Editar">✏️</button></div></td>
-  </tr>`).join('')||`<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted)">🏷Nenhuma versão.</td></tr>`;
+  </tr>`).join('')||`<tr><td colspan="6">${emptyState('🏷️','Nenhuma versão registrada','Use “+ Nova Versão” para registrar versão, data de deploy, orquestrador e observação.')}</td></tr>`;
 }
 
 function openVersionModal(id){
@@ -2202,14 +2228,15 @@ function saveVersionModal(){
   const version=document.getElementById('vm-ver').value.trim(); if(!version){ flagInvalid('vm-ver','Informe o número da versão.'); return; }
   if(!checkDateInput('vm-date','Data de deploy')) return;
   const dup=VERSIONS_DATA.find(v=>v.version===version&&v.id!==editingVersionId);
-  if(dup){ alert('Já existe uma versão com esse número.'); return; }
+  if(dup){ flagInvalid('vm-ver','Já existe uma versão com esse número.'); return; }
   const entry={id:editingVersionId||('v'+(++versionIdCtr)),version,date:document.getElementById('vm-date').value.trim(),orchestrator:document.getElementById('vm-orq').value.trim(),note:document.getElementById('vm-note').value.trim()};
   if(editingVersionId){ const idx=VERSIONS_DATA.findIndex(x=>x.id===editingVersionId); if(idx>=0){entry.sbId=VERSIONS_DATA[idx].sbId;VERSIONS_DATA[idx]=entry;} } else VERSIONS_DATA.push(entry);
   sbSaveVersion(entry); saveToLocal(); renderVersions(); closeModal('version-modal');
 }
-function deleteVersionModal(){
+async function deleteVersionModal(){
   if(!requireWrite()) return;
-  if(!confirm('Excluir versão?')) return;
+  const vv=VERSIONS_DATA.find(x=>x.id===editingVersionId);
+  if(!await askConfirm({title:'Excluir versão?', message:`A versão ${vv?vv.version:''} sai do histórico de versões. Os MRs já registrados nela não são apagados.`, confirmLabel:'Excluir versão'})) return;
   const v=VERSIONS_DATA.find(x=>x.id===editingVersionId); if(v) sbDeleteVersion(v.sbId);
   VERSIONS_DATA=VERSIONS_DATA.filter(x=>x.id!==editingVersionId);
   saveToLocal(); renderVersions(); closeModal('version-modal');
@@ -2227,16 +2254,16 @@ function renderManageList(type){
     if(editingManageType===type&&editingManageId===item.id) return `<div class="manage-item editing">
       <input type="color" class="mi-color" id="mi-col-${item.id}" value="${esc(item.color)}">
       <input class="mi-input" id="mi-nm-${item.id}" value="${esc(item.name)}">
-      <button class="mi-btn" style="color:var(--green)" onclick="saveManageItem('${type}','${item.id}')">✓</button>
-      <button class="mi-btn" onclick="cancelManageEdit()">✕</button>
+      <button class="ra-btn" style="color:var(--green)" onclick="saveManageItem('${type}','${item.id}')">✓</button>
+      <button class="ra-btn" onclick="cancelManageEdit()">✕</button>
     </div>`;
     return `<div class="manage-item">
       <span style="width:10px;height:10px;border-radius:50%;background:${esc(item.color)};flex-shrink:0"></span>
       <span class="mi-label">${esc(item.name)}</span>
-      <button class="mi-btn" onclick="startManageEdit('${type}','${item.id}')">✏️</button>
-      <button class="mi-btn red" onclick="deleteManageItem('${type}','${item.id}')">🗑</button>
+      <button class="ra-btn" onclick="startManageEdit('${type}','${item.id}')">✏️</button>
+      <button class="ra-btn danger" onclick="deleteManageItem('${type}','${item.id}')">🗑</button>
     </div>`;
-  }).join('')||`<div style="text-align:center;padding:20px;color:var(--dim)">Nenhum item. Adicione acima.</div>`;
+  }).join('')||emptyState('📋','Nenhum item na lista','Use o campo acima para adicionar o primeiro.');
 }
 function addManageItem(type){
   if(!requireWrite()) return;
@@ -2244,7 +2271,7 @@ function addManageItem(type){
   const name=nameEl?.value.trim(), color=colEl?.value||'#F97316';
   if(!name){ nameEl?.focus(); return; }
   const list=type==='ini'?INITIATIVES:type==='dev'?DEVS:REPOS;
-  if(list.find(x=>x.name.toLowerCase()===name.toLowerCase())){ alert('Já existe.'); return; }
+  if(list.find(x=>x.name.toLowerCase()===name.toLowerCase())){ flagInvalid(`new-${type}-name`,'Esse item já existe na lista.'); return; }
   const prefix=type==='ini'?'i':type==='dev'?'d':'r';
   const item={id:prefix+(++manageIdCtr),name,color};
   list.push(item);
@@ -2267,11 +2294,11 @@ function saveManageItem(type,id){
   if(type==='ini') sbSaveIni(item); else if(type==='dev') sbSaveDev(item); else sbSaveRepo(item);
   editingManageType=null; editingManageId=null; saveToLocal(); renderManageList(type); renderAll();
 }
-function deleteManageItem(type,id){
+async function deleteManageItem(type,id){
   if(!requireWrite()) return;
-  if(!confirm('Excluir item?')) return;
   const list=type==='ini'?INITIATIVES:type==='dev'?DEVS:REPOS;
   const item=list.find(x=>x.id===id);
+  if(!await askConfirm({title:'Excluir item?', message:`"${item?item.name:''}" sai da lista. Os MRs que já usam esse valor não mudam.`, confirmLabel:'Excluir'})) return;
   if(item){ if(type==='ini') sbDeleteIni(item.sbId); else if(type==='dev') sbDeleteDev(item.sbId); else sbDeleteRepo(item.sbId); }
   if(type==='ini') INITIATIVES=INITIATIVES.filter(x=>x.id!==id);
   else if(type==='dev') DEVS=DEVS.filter(x=>x.id!==id);
@@ -2301,7 +2328,30 @@ function openModal(id){
   if(id==='repo-modal') renderManageList('repo');
   if(id==='users-modal') renderUsersList();
 }
-function closeModal(id){ document.getElementById(id)?.classList.remove('open'); }
+function closeModal(id){
+  document.getElementById(id)?.classList.remove('open');
+  if(id==='confirm-modal') resolveConfirm(false);
+}
+
+// Dialogo unico para toda acao destrutiva ou irreversivel, no lugar do
+// confirm() do navegador: mesma moldura, mesmo foco e mesmo Esc dos modais.
+let confirmResolver=null;
+function askConfirm({title='Confirmar', message='', confirmLabel='Confirmar', danger=true, icon}={}){
+  const ok=document.getElementById('cf-ok');
+  document.getElementById('cf-title').textContent=title;
+  document.getElementById('cf-msg').textContent=message;
+  document.getElementById('cf-icon').textContent=icon||(danger?'⚠️':'❓');
+  ok.textContent=confirmLabel;
+  ok.className='btn '+(danger?'btn-danger':'btn-primary');
+  document.getElementById('confirm-modal').classList.add('open');
+  setTimeout(()=>ok.focus(),40);
+  return new Promise(res=>{ confirmResolver=res; });
+}
+function resolveConfirm(v){
+  const res=confirmResolver; confirmResolver=null;
+  document.getElementById('confirm-modal')?.classList.remove('open');
+  if(res) res(!!v);
+}
 
 function switchTab(id, btn){
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
@@ -2346,7 +2396,7 @@ document.addEventListener('keydown', e=>{
 
   if(e.key==='Escape'){
     const m=topModal();
-    if(m){ closeModal(m.id); return; }                                   // antes nao havia Esc
+    if(m){ if(m.id==='confirm-modal') resolveConfirm(false); else closeModal(m.id); return; }
     if(document.getElementById('sidebar')?.classList.contains('open')){ closeFilters(); return; }
     if(document.getElementById('search-input')?.value){ clearSearch(); return; }
     if(document.getElementById('new-form')?.classList.contains('open')){ toggleNewForm(); return; }
@@ -2361,6 +2411,7 @@ document.addEventListener('keydown', e=>{
 
   if(e.key==='Enter'){
     const m=topModal();
+    if(m?.id==='confirm-modal'){ e.preventDefault(); resolveConfirm(true); return; }
     if(m && typing && MODAL_SUBMIT[m.id]){ e.preventDefault(); MODAL_SUBMIT[m.id](); }
     return;
   }
