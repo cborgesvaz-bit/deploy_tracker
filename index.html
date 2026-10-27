@@ -106,10 +106,28 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .ver-pill.active .vp-cnt{background:rgba(255,255,255,.25)}
 .ver-pane{display:none}.ver-pane.active{display:block}
 
-/* ── REPO SECTION (Historico de Deploy) ── */
-.repo-section{margin-bottom:22px}
-.repo-sec-head{display:flex;align-items:center;gap:10px;padding:0 2px 8px;margin-bottom:10px;border-bottom:1px solid var(--border)}
-.repo-sec-meta{font-size:11px;color:var(--muted);white-space:nowrap}
+/* ── ABAS DE REPOSITORIO (Historico de Deploy) ── */
+.repo-tabs-bar{display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.repo-tabs-lbl{font:600 11px var(--sans);letter-spacing:.04em;text-transform:uppercase;color:var(--dim);white-space:nowrap}
+.repo-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.repo-tab{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);font:500 12px var(--sans);color:var(--text);cursor:pointer;transition:all .15s;white-space:nowrap}
+.repo-tab:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px);box-shadow:var(--sh)}
+.repo-tab.active{background:var(--grad);border-color:transparent;color:#fff;box-shadow:0 3px 10px rgba(240,98,15,.3)}
+.repo-tab .rt-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.repo-tab.active .rt-dot{background:rgba(255,255,255,.85)!important}
+.repo-tab .rt-name{font-family:var(--mono);font-size:11.5px;font-weight:600}
+.repo-tab .rt-cnt{font-size:10px;background:rgba(0,0,0,.08);padding:1px 6px;border-radius:8px;font-weight:600}
+.repo-tab.active .rt-cnt{background:rgba(255,255,255,.25)}
+
+/* ── PAINEL DO REPOSITORIO / BLOCO DE VERSAO ── */
+.repo-pane{margin-bottom:26px}
+.repo-pane-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.repo-pane-head .rp-meta{font-size:11px;color:var(--muted);white-space:nowrap}
+.ver-block{margin-bottom:18px;padding-left:14px;border-left:2px solid var(--border)}
+.vb-head{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.vb-ver{font:700 13px var(--mono);color:var(--text)}
+.vb-date{font:500 11px var(--mono);color:var(--muted)}
+.vb-meta{font-size:11px;color:var(--dim);white-space:nowrap}
 
 /* ── DEPLOY GROUP ── */
 .deploy-group{margin-bottom:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;box-shadow:var(--sh);transition:box-shadow .18s}
@@ -571,8 +589,11 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
         <div class="stat-card"><div class="stat-icon bg-red" style="font-size:20px">❌</div><div class="stat-val c-red" id="s-reject">–</div><div class="stat-lbl">Não aprovados</div></div>
         <div class="stat-card"><div class="stat-icon bg-blue" style="font-size:20px">🏷️</div><div class="stat-val c-blue" id="s-vers">–</div><div class="stat-lbl">Versões</div></div>
       </div>
-      <div class="ver-pills" id="ver-pills"></div>
-      <div id="ver-panes"></div>
+      <div class="repo-tabs-bar">
+        <span class="repo-tabs-lbl">📦 Repositório</span>
+        <div class="repo-tabs" id="repo-tabs"></div>
+      </div>
+      <div id="repo-panes"></div>
     </div>
 
     <!-- PENDING TAB -->
@@ -1611,129 +1632,162 @@ function matchRow(r, repoHint) {
 // ═══════════════════════════════════════════════════════════
 // DEPLOY HISTORY
 // ═══════════════════════════════════════════════════════════
+// O eixo principal da tela e o repositorio: abas de repo no topo e, dentro
+// do repo escolhido, as versoes em sequencia com seus deploys.
+let activeRepo = 'all';
+
+function rowRepo(r, group){ return ((((r.repo||group.repo||getRepo(r.mr))||'').trim())||'—').toLowerCase(); }
+
+function switchRepo(key){ activeRepo=key; renderDeployHistory(); }
+
+// Abre a aba do repositorio do grupo e rola ate ele
+function focusDeployGroup(gid){
+  const g=DEPLOYS.find(x=>x.id===gid);
+  if(g){
+    const repos=[...new Set(g.rows.map(r=>rowRepo(r,g)))];
+    if(repos.length===1) activeRepo=repos[0];
+  }
+  renderDeployHistory();
+  setTimeout(()=>dgEl(gid)?.scrollIntoView({block:'center',behavior:'smooth'}),80);
+}
+
 function switchVersion(id) {
-  activeVersion=id;
-  document.querySelectorAll('.ver-pill').forEach(b=>b.classList.toggle('active',b.dataset.ver===id));
-  document.querySelectorAll('.ver-pane').forEach(p=>p.classList.toggle('active',p.id==='vp-'+id));
-  syncSidebarVer(id);
+  activeVersion=(!id||id==='all')?null:id;
+  renderDeployHistory();
+  syncSidebarVer(activeVersion||'all');
+}
+
+function deployGroupEl(group, rows, v, repo) {
+  const visRows=rows.slice().sort((a,b)=>{
+    const n=u=>{const m=(u||'').match(/merge_requests\/(\d+)/);return m?parseInt(m[1]):0;};
+    return n(a.mr)-n(b.mr);
+  });
+  if(!visRows.length) return null;
+
+  const div=document.createElement('div'); div.className='deploy-group';
+  div.id='dg-'+group.id+'--'+repo.replace(/[^a-zA-Z0-9]/g,'_'); div.dataset.gid=group.id;
+
+  const cleanGroupDate = fmtDate(group.date);
+  const dateDisplay = cleanGroupDate
+    ? `<span class="dg-date" onclick="event.stopPropagation();openDateEdit('${group.id}')" title="Editar data">📅 ${esc(cleanGroupDate)}</span>`
+    : `<span class="dg-date empty-date" onclick="event.stopPropagation();openDateEdit('${group.id}')" title="Definir data">📅 Definir data</span>`;
+
+  let rowsHtml='';
+  visRows.forEach(r=>{
+    const isEdit=editingDeployRowId===group.id+'__'+r.id;
+    if(isEdit){
+      rowsHtml+=`<tr class="editing">
+        <td><div style="display:flex;gap:4px;align-items:center"><input class="f-input" id="er-mr-${r.id}" value="${esc(r.mr)}" style="min-width:220px"><select class="f-select" id="er-repo-${r.id}" style="width:110px">${buildSelect(REPOS, r.repo||group.repo||getRepo(r.mr))}</select></div></td>
+        <td><input class="f-input" id="er-card-${r.id}" value="${esc(r.card)}" style="width:100px"></td>
+        <td>${apBadge(r.approved)}</td>
+        <td><select class="f-select" id="er-ini-${r.id}" style="width:140px">${buildSelect(INITIATIVES,r.initiative)}</select></td>
+        <td><select class="f-select" id="er-dev-${r.id}" style="width:110px">${buildSelect(DEVS,r.dev)}</select></td>
+        <td><select class="f-select" id="er-pip-${r.id}" style="width:95px"><option value="">—</option><option value="Não"${r.pipeline==='Não'?' selected':''}>OK</option><option value="Sim"${r.pipeline==='Sim'?' selected':''}>Quebrada</option></select></td>
+        <td><input class="f-input" id="er-cmt-${r.id}" value="${esc(r.comment)}" style="width:140px"></td>
+        <td><div style="display:flex;gap:4px"><button class="btn btn-success btn-sm" onclick="saveDeployRow('${group.id}','${r.id}')">✓</button><button class="btn btn-ghost btn-sm" onclick="cancelDeployEdit()">✕</button></div></td>
+      </tr>`;
+    } else {
+      rowsHtml+=`<tr class="${(r.comment||'').toLowerCase().includes('rollback')?'rollback-row':''}">
+        <td>${mrLink(r.mr, r.repo||group.repo)}</td><td>${cardBadge(r.card)}</td><td>${apBadge(r.approved)}</td>
+        <td>${iniBadge(r.initiative)}</td><td>${devBadge(r.dev)}</td><td>${pipBadge(r.pipeline)}</td>
+        <td>${ccell(r.comment)}</td>
+        <td><div class="row-actions"><button class="ra-btn" onclick="startDeployEdit('${group.id}','${r.id}')" title="Editar">✏️</button><button class="ra-btn danger" onclick="deleteDeployRow('${group.id}','${r.id}')" title="Excluir">🗑</button></div></td>
+      </tr>`;
+    }
+  });
+  rowsHtml+=`<tr><td colspan="8"><button style="background:none;border:none;cursor:pointer;padding:8px 14px;color:var(--accent);font:500 12px var(--sans);display:flex;align-items:center;gap:5px" onclick="addDeployRow('${group.id}')">+ Adicionar MR neste deploy</button></td></tr>`;
+
+  div.innerHTML=`<div class="dg-head" onclick="toggleDg('${div.id}')">
+    <span class="dg-ver" style="background:var(--muted);cursor:pointer" onclick="event.stopPropagation();openVerEdit('${group.id}')" title="Editar versão">${esc(v.label)}</span>
+    ${dateDisplay}
+    <span class="dg-label">${esc(group.label)}${group.rollback?'<span style="color:var(--red);font-size:11px;margin-left:6px">⚠ ROLLBACK</span>':''}</span>
+    <span class="dg-meta">${visRows.length} MR${visRows.length!==1?'s':''}</span>
+    <div class="dg-actions" onclick="event.stopPropagation()">
+      <button class="btn btn-danger-ghost btn-sm" onclick="deleteDeployGroup('${group.id}')">🗑 Excluir</button>
+    </div>
+  </div>
+  <div class="dg-body table-scroll"><table class="data-table"><thead><tr><th>MR</th><th>Card</th><th>Aprovado</th><th>Iniciativa</th><th>DEV Responsável</th><th>Pipeline</th><th>Comentários</th><th style="width:70px"></th></tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
+  return div;
 }
 
 function renderDeployHistory() {
-  const pillsEl=document.getElementById('ver-pills'), panesEl=document.getElementById('ver-panes');
-  if(!pillsEl||!panesEl) return;
-  const verCnt={};
-  DEPLOYS.forEach(g=>{ const n=g.rows.filter(r=>matchRow(r,g.repo)).length; verCnt[g.ver]=(verCnt[g.ver]||0)+n; });
+  const tabsEl=document.getElementById('repo-tabs'), panesEl=document.getElementById('repo-panes');
+  if(!tabsEl||!panesEl) return;
 
-  const sorted=[...VERSIONS_LIST].filter(v=>(verCnt[v.id]||0)>0).sort((a,b)=>verToNum(b.label)-verToNum(a.label));
+  const verFilter=(activeVersion&&activeVersion!=='all')?activeVersion:null;
 
-  pillsEl.innerHTML=''; panesEl.innerHTML='';
-  let totMR=0,totAp=0,totRej=0,firstVer=null;
-
-  sorted.forEach(v=>{
-    const cnt=verCnt[v.id]||0; if(!cnt) return;
-    if(!firstVer) firstVer=v.id;
-    const isAct=v.id===activeVersion;
-    const pill=document.createElement('button');
-    pill.className='ver-pill'+(isAct?' active':'');
-    pill.dataset.ver=v.id;
-    pill.innerHTML=`<span style="font-weight:700">${esc(v.label)}</span><span class="vp-cnt">${cnt}</span>`;
-    pill.onclick=()=>switchVersion(v.id);
-    pillsEl.appendChild(pill);
-
-    const pane=document.createElement('div');
-    pane.className='ver-pane'+(isAct?' active':'');
-    pane.id='vp-'+v.id;
-
-    // Dentro da versao, os deploys ficam separados por repositorio
-    const repoBuckets=new Map();
-    DEPLOYS.filter(g=>g.ver===v.id).forEach(group=>{
-      group.rows.filter(r=>matchRow(r,group.repo)).forEach(r=>{
-        const repo=((r.repo||group.repo||getRepo(r.mr)||'').trim())||'—';
-        if(!repoBuckets.has(repo)) repoBuckets.set(repo,new Map());
-        const groups=repoBuckets.get(repo);
-        if(!groups.has(group.id)) groups.set(group.id,{group,rows:[]});
-        groups.get(group.id).rows.push(r);
-      });
+  // repositorio -> versao -> grupo de deploy -> linhas visiveis
+  const byRepo=new Map(); const verCnt={};
+  let totMR=0,totAp=0,totRej=0;
+  DEPLOYS.forEach(group=>{
+    group.rows.filter(r=>matchRow(r,group.repo)).forEach(r=>{
+      verCnt[group.ver]=(verCnt[group.ver]||0)+1;
+      if(verFilter&&group.ver!==verFilter) return;
+      const repo=rowRepo(r,group);
+      if(!byRepo.has(repo)) byRepo.set(repo,new Map());
+      const vers=byRepo.get(repo);
+      if(!vers.has(group.ver)) vers.set(group.ver,new Map());
+      const groups=vers.get(group.ver);
+      if(!groups.has(group.id)) groups.set(group.id,{group,rows:[]});
+      groups.get(group.id).rows.push(r);
+      totMR++;
+      const ap=(r.approved||'').toLowerCase();
+      if(ap==='sim'||ap==='true') totAp++;
+      if(ap==='não'||ap==='nao'||ap==='false') totRej++;
     });
-
-    [...repoBuckets.keys()].sort((a,b)=>a.localeCompare(b)).forEach(repo=>{
-      const groups=repoBuckets.get(repo);
-      const repoMR=[...groups.values()].reduce((s,b)=>s+b.rows.length,0);
-      const sec=document.createElement('div'); sec.className='repo-section';
-      const secHead=document.createElement('div'); secHead.className='repo-sec-head';
-      secHead.innerHTML=`${repoBadge(repo)}<span class="repo-sec-meta">${groups.size} deploy${groups.size!==1?'s':''} · ${repoMR} MR${repoMR!==1?'s':''}</span>`;
-      sec.appendChild(secHead);
-
-      [...groups.values()].forEach(({group,rows})=>{
-      const visRows=rows.slice().sort((a,b)=>{
-        const n=u=>{const m=(u||'').match(/merge_requests\/(\d+)/);return m?parseInt(m[1]):0;};
-        return n(a.mr)-n(b.mr);
-      });
-      if(!visRows.length) return;
-      visRows.forEach(r=>{ totMR++; const ap=(r.approved||'').toLowerCase(); if(ap==='sim'||ap==='true') totAp++; if(ap==='não'||ap==='nao'||ap==='false') totRej++; });
-
-      const div=document.createElement('div'); div.className='deploy-group'; div.id='dg-'+group.id+'--'+repo.replace(/[^a-zA-Z0-9]/g,'_'); div.dataset.gid=group.id;
-
-      const cleanGroupDate = fmtDate(group.date);
-      const dateDisplay = cleanGroupDate
-        ? `<span class="dg-date" onclick="event.stopPropagation();openDateEdit('${group.id}')" title="Editar data">📅 ${esc(cleanGroupDate)}</span>`
-        : `<span class="dg-date empty-date" onclick="event.stopPropagation();openDateEdit('${group.id}')" title="Definir data">📅 Definir data</span>`;
-
-      let rowsHtml='';
-      visRows.forEach(r=>{
-        const isEdit=editingDeployRowId===group.id+'__'+r.id;
-        if(isEdit){
-          rowsHtml+=`<tr class="editing">
-            <td><div style="display:flex;gap:4px;align-items:center"><input class="f-input" id="er-mr-${r.id}" value="${esc(r.mr)}" style="min-width:220px"><select class="f-select" id="er-repo-${r.id}" style="width:110px">${buildSelect(REPOS, r.repo||group.repo||getRepo(r.mr))}</select></div></td>
-            <td><input class="f-input" id="er-card-${r.id}" value="${esc(r.card)}" style="width:100px"></td>
-            <td>${apBadge(r.approved)}</td>
-            <td><select class="f-select" id="er-ini-${r.id}" style="width:140px">${buildSelect(INITIATIVES,r.initiative)}</select></td>
-            <td><select class="f-select" id="er-dev-${r.id}" style="width:110px">${buildSelect(DEVS,r.dev)}</select></td>
-            <td><select class="f-select" id="er-pip-${r.id}" style="width:95px"><option value="">—</option><option value="Não"${r.pipeline==='Não'?' selected':''}>OK</option><option value="Sim"${r.pipeline==='Sim'?' selected':''}>Quebrada</option></select></td>
-            <td><input class="f-input" id="er-cmt-${r.id}" value="${esc(r.comment)}" style="width:140px"></td>
-            <td><div style="display:flex;gap:4px"><button class="btn btn-success btn-sm" onclick="saveDeployRow('${group.id}','${r.id}')">✓</button><button class="btn btn-ghost btn-sm" onclick="cancelDeployEdit()">✕</button></div></td>
-          </tr>`;
-        } else {
-          rowsHtml+=`<tr class="${(r.comment||'').toLowerCase().includes('rollback')?'rollback-row':''}">
-            <td>${mrLink(r.mr, r.repo||group.repo)}</td><td>${cardBadge(r.card)}</td><td>${apBadge(r.approved)}</td>
-            <td>${iniBadge(r.initiative)}</td><td>${devBadge(r.dev)}</td><td>${pipBadge(r.pipeline)}</td>
-            <td>${ccell(r.comment)}</td>
-            <td><div class="row-actions"><button class="ra-btn" onclick="startDeployEdit('${group.id}','${r.id}')" title="Editar">✏️</button><button class="ra-btn danger" onclick="deleteDeployRow('${group.id}','${r.id}')" title="Excluir">🗑</button></div></td>
-          </tr>`;
-        }
-      });
-      rowsHtml+=`<tr><td colspan="8"><button style="background:none;border:none;cursor:pointer;padding:8px 14px;color:var(--accent);font:500 12px var(--sans);display:flex;align-items:center;gap:5px" onclick="addDeployRow('${group.id}')">+ Adicionar MR neste deploy</button></td></tr>`;
-
-      div.innerHTML=`<div class="dg-head" onclick="toggleDg('${div.id}')">
-        <span class="dg-ver" style="background:var(--muted);cursor:pointer" onclick="event.stopPropagation();openVerEdit('${group.id}')" title="Editar versão">${esc(v.label)}</span>
-        ${dateDisplay}
-        <span class="dg-label">${esc(group.label)}${group.rollback?'<span style="color:var(--red);font-size:11px;margin-left:6px">⚠ ROLLBACK</span>':''}</span>
-        <span class="dg-meta">${visRows.length} MR${visRows.length!==1?'s':''}</span>
-        <div class="dg-actions" onclick="event.stopPropagation()">
-          <button class="btn btn-danger-ghost btn-sm" onclick="deleteDeployGroup('${group.id}')">🗑 Excluir</button>
-        </div>
-        
-      </div>
-      <div class="dg-body table-scroll"><table class="data-table"><thead><tr><th>MR</th><th>Card</th><th>Aprovado</th><th>Iniciativa</th><th>DEV Responsável</th><th>Pipeline</th><th>Comentários</th><th style="width:70px"></th></tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
-
-      sec.appendChild(div);
-      });
-
-      if(sec.children.length>1) pane.appendChild(sec);
-    });
-
-    if(!pane.children.length) pane.innerHTML=emptyState('🔍','Nenhum MR nesta versão','Nenhum MR desta versão corresponde aos filtros e à busca atuais.');
-    panesEl.appendChild(pane);
   });
 
-  if(!activeVersion&&firstVer||!document.querySelector('.ver-pill.active')) { activeVersion=firstVer||activeVersion; if(activeVersion) switchVersion(activeVersion); }
+  const sortedVers=[...VERSIONS_LIST].filter(v=>(verCnt[v.id]||0)>0).sort((a,b)=>verToNum(b.label)-verToNum(a.label));
+  const repoNames=[...byRepo.keys()].sort((a,b)=>a.localeCompare(b));
+  const repoMRs=r=>[...byRepo.get(r).values()].reduce((s,gm)=>s+[...gm.values()].reduce((n,b)=>n+b.rows.length,0),0);
+  if(activeRepo!=='all'&&!byRepo.has(activeRepo)) activeRepo='all';
+
+  // ── Abas de repositorio ──
+  tabsEl.innerHTML='';
+  const addTab=(key,label,count,color)=>{
+    const b=document.createElement('button');
+    b.className='repo-tab'+(activeRepo===key?' active':'');
+    b.dataset.repo=key;
+    b.innerHTML=`<span class="rt-dot" style="background:${esc(color)}"></span><span class="rt-name">${esc(label)}</span><span class="rt-cnt">${count}</span>`;
+    b.onclick=()=>switchRepo(key);
+    tabsEl.appendChild(b);
+  };
+  addTab('all','Todos',totMR,'#94A3B8');
+  repoNames.forEach(r=>addTab(r,r,repoMRs(r),(REPOS.find(x=>x.name===r)||{}).color||'#64748B'));
+
+  // ── Painel do repositorio ativo ──
+  panesEl.innerHTML='';
+  (activeRepo==='all'?repoNames:[activeRepo]).forEach(repo=>{
+    const vers=byRepo.get(repo); if(!vers) return;
+    const mr=repoMRs(repo);
+    const sec=document.createElement('div'); sec.className='repo-pane';
+    const head=document.createElement('div'); head.className='repo-pane-head';
+    head.innerHTML=`${repoBadge(repo)}<span class="rp-meta">${vers.size} ${vers.size!==1?'versões':'versão'} · ${mr} MR${mr!==1?'s':''}</span>`;
+    sec.appendChild(head);
+
+    sortedVers.filter(v=>vers.has(v.id)).forEach(v=>{
+      const groups=vers.get(v.id);
+      const vMR=[...groups.values()].reduce((n,b)=>n+b.rows.length,0);
+      const date=[...groups.values()].map(b=>fmtDate(b.group.date)).find(Boolean);
+      const blk=document.createElement('div'); blk.className='ver-block';
+      blk.innerHTML=`<div class="vb-head"><span class="vb-ver">🏷️ ${esc(v.label)}</span>${date?`<span class="vb-date">📅 ${esc(date)}</span>`:''}<span class="vb-meta">${vMR} MR${vMR!==1?'s':''}</span></div>`;
+      [...groups.values()].forEach(({group,rows})=>{
+        const el=deployGroupEl(group,rows,v,repo);
+        if(el) blk.appendChild(el);
+      });
+      sec.appendChild(blk);
+    });
+    panesEl.appendChild(sec);
+  });
+
+  if(!panesEl.children.length) panesEl.innerHTML=emptyState('🔍','Nenhum MR no histórico','Nenhum deploy corresponde aos filtros e à busca atuais.');
 
   document.getElementById('s-total').textContent=totMR;
   document.getElementById('s-aprov').textContent=totAp;
   document.getElementById('s-reject').textContent=totRej;
-  document.getElementById('s-vers').textContent=sorted.length;
+  document.getElementById('s-vers').textContent=sortedVers.length;
   document.getElementById('badge-history').textContent=totMR;
-  buildDevFilter(); buildVersionFilter(sorted, verCnt);
+  buildDevFilter(); buildVersionFilter(sortedVers, verCnt);
 }
 
 function toggleDg(id) { document.getElementById(id)?.classList.toggle('collapsed'); }
@@ -1755,7 +1809,7 @@ function buildDevFilter() {
 
 function buildVersionFilter(sorted, verCnt) {
   const list=document.getElementById('f-ver'); if(!list) return;
-  list.innerHTML=`<div class="filter-item${!activeVersion||activeVersion==='all'?'':''} active" data-f="ver" data-v="all" onclick="selectVersion('all',this)"><span class="fi-dot" style="background:var(--dim)"></span>Todas<span class="fi-count">${Object.values(verCnt).reduce((a,b)=>a+b,0)}</span></div>`;
+  list.innerHTML=`<div class="filter-item${!activeVersion||activeVersion==='all'?' active':''}" data-f="ver" data-v="all" onclick="selectVersion('all',this)"><span class="fi-dot" style="background:var(--dim)"></span>Todas<span class="fi-count">${Object.values(verCnt).reduce((a,b)=>a+b,0)}</span></div>`;
   sorted.forEach(v=>{
     const cnt=verCnt[v.id]||0; if(!cnt) return;
     const el=document.createElement('div'); el.className='filter-item'+(activeVersion===v.id?' active':'');
@@ -1769,7 +1823,7 @@ function buildVersionFilter(sorted, verCnt) {
 function selectVersion(id, el) {
   document.querySelectorAll('[data-f="ver"]').forEach(e=>e.classList.remove('active'));
   if(el) el.classList.add('active');
-  if(id!=='all') switchVersion(id);
+  switchVersion(id);
 }
 function syncSidebarVer(id) {
   document.querySelectorAll('[data-f="ver"]').forEach(e=>e.classList.remove('active'));
@@ -1817,11 +1871,11 @@ function addDeployRow(gid){
   if(!requireWrite()) return;
   const g=DEPLOYS.find(x=>x.id===gid); if(!g) return;
   const r={id:'r'+rowIdCtr++, mr:'', repo:(g.repo||'sesamo'), card:'', approved:'', initiative:'', dev:'', pipeline:'', comment:''};
-  g.rows.push(r); editingDeployRowId=gid+'__'+r.id; renderDeployHistory(); switchVersion(g.ver);
+  g.rows.push(r); editingDeployRowId=gid+'__'+r.id; focusDeployGroup(gid);
 }
 
 // O mesmo grupo pode aparecer em mais de uma secao de repositorio
-function dgEl(gid){ return document.querySelector(`.ver-pane.active .deploy-group[data-gid="${gid}"]`)||document.querySelector(`.deploy-group[data-gid="${gid}"]`); }
+function dgEl(gid){ return document.querySelector(`.deploy-group[data-gid="${gid}"]`); }
 
 // Date edit
 function openDateEdit(gid){
@@ -1890,8 +1944,7 @@ async function saveVerEdit(gid){
   const date=target?target.date:g.date;
   rows.forEach(r=>sbSaveDeployRow(r, ver, date));
 
-  activeVersion=verId;
-  saveToLocal(); renderDeployHistory(); renderVersions(); switchVersion(verId);
+  saveToLocal(); renderDeployHistory(); renderVersions();
   showToast('🏷️ Versão atualizada para '+ver,'ok');
 }
 function cancelVerEdit(){ renderDeployHistory(); }
@@ -1914,12 +1967,12 @@ function routeToDeployHistory(entry, version, dateStr) {
   const newRow={id:'rNew'+(++rowIdCtr),mr:entry.mr,repo:(entry.repo||getRepo(entry.mr)||'sesamo').toLowerCase(),card:entry.card,approved:entry.approved,initiative:entry.initiative,dev:entry.dev,pipeline:entry.pipeline,comment:entry.comment};
   g.rows.push(newRow);
   sbSaveDeployRow(newRow,version,g.date,'');
-  activeVersion=verId; saveToLocal(); renderDeployHistory();
+  saveToLocal();
   ['tab-history','tab-pending','tab-next','tab-versions'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
   document.getElementById('tab-history')?.classList.add('active');
   document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
   document.querySelector('.nav-tab')?.classList.add('active');
-  setTimeout(()=>switchVersion(verId),100);
+  focusDeployGroup(g.id);
   showToast(`🚀 MR adicionado à versão ${version}`,'ok');
 }
 
