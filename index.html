@@ -1675,7 +1675,7 @@ function renderDeployHistory() {
       rowsHtml+=`<tr><td colspan="8"><button style="background:none;border:none;cursor:pointer;padding:8px 14px;color:var(--accent);font:500 12px var(--sans);display:flex;align-items:center;gap:5px" onclick="addDeployRow('${group.id}')">+ Adicionar MR neste deploy</button></td></tr>`;
 
       div.innerHTML=`<div class="dg-head" onclick="toggleDg('dg-${group.id}')">
-        <span class="dg-ver" style="background:var(--muted)">${esc(v.label)}</span>
+        <span class="dg-ver" style="background:var(--muted);cursor:pointer" onclick="event.stopPropagation();openVerEdit('${group.id}')" title="Editar versão">${esc(v.label)}</span>
         ${dateDisplay}
         <span class="dg-label">${esc(group.label)}${group.rollback?'<span style="color:var(--red);font-size:11px;margin-left:6px">⚠ ROLLBACK</span>':''}</span>
         <span class="dg-meta">${visRows.length} MR${visRows.length!==1?'s':''}</span>
@@ -1813,6 +1813,52 @@ function saveDateEdit(gid){
   saveToLocal(); renderDeployHistory(); renderVersions();
 }
 function cancelDateEdit(){ renderDeployHistory(); }
+
+// Version edit (cabecalho do grupo no Historico de Deploy)
+function openVerEdit(gid){
+  const g=DEPLOYS.find(x=>x.id===gid); if(!g) return;
+  const badge=document.getElementById('dg-'+gid)?.querySelector('.dg-ver'); if(!badge) return;
+  buildVersionOptions();
+  const cur=(VERSIONS_LIST.find(v=>v.id===g.ver)?.label)||g.label||'';
+  badge.outerHTML=`<span class="date-inline-editor" id="vei-${gid}" onclick="event.stopPropagation()">
+    🏷️
+    <input value="${esc(cur)}" list="version-datalist" placeholder="ex: 0.11.0…" autocomplete="off"
+      onkeydown="if(event.key==='Enter')saveVerEdit('${gid}');if(event.key==='Escape')cancelVerEdit();"
+      style="background:none;border:none;outline:none;font:600 11px var(--mono);color:var(--text);width:110px">
+    <button class="btn btn-success btn-sm" style="padding:2px 8px" onclick="saveVerEdit('${gid}')">✓</button>
+    <button class="btn btn-ghost btn-sm" style="padding:2px 8px" onclick="cancelVerEdit()">✕</button>
+  </span>`;
+  const inp=document.querySelector(`#vei-${gid} input`); if(inp){ inp.focus(); inp.select(); }
+}
+function saveVerEdit(gid){
+  if(!requireWrite()) return;
+  const g=DEPLOYS.find(x=>x.id===gid); if(!g) return;
+  const inp=document.querySelector(`#vei-${gid} input`);
+  const ver=inp?inp.value.trim():'';
+  if(!ver){ alert('Informe a versão.'); inp?.focus(); return; }
+  const cur=(VERSIONS_LIST.find(v=>v.id===g.ver)?.label)||g.label||'';
+  if(ver===cur){ cancelVerEdit(); return; }
+  const verId=verIdFor(ver);
+  // Ja existe outro grupo nessa versao: os MRs sao movidos para la (confirmado).
+  const target=DEPLOYS.find(x=>x.id!==g.id&&x.ver===verId);
+  if(target&&!confirm(`A versão ${ver} já tem um grupo. Mover ${g.rows.length} MR${g.rows.length!==1?'s':''} para lá?`)) return;
+
+  if(!VERSIONS_LIST.find(v=>v.id===verId)) VERSIONS_LIST.push({id:verId,label:ver,date:g.date||'',color:'#64748B'});
+  let vd=VERSIONS_DATA.find(v=>v.version===ver);
+  if(!vd){ vd={id:'v'+(++versionIdCtr),version:ver,date:g.date||'',orchestrator:'',note:''}; VERSIONS_DATA.push(vd); sbSaveVersion(vd); }
+
+  const rows=g.rows;
+  if(target){ target.rows.push(...rows); DEPLOYS=DEPLOYS.filter(x=>x.id!==g.id); }
+  else { g.ver=verId; g.label=ver; }
+  const date=target?target.date:g.date;
+  rows.forEach(r=>sbSaveDeployRow(r, ver, date));
+
+  activeVersion=verId;
+  saveToLocal(); renderDeployHistory(); renderVersions(); switchVersion(verId);
+  showToast('🏷️ Versão atualizada para '+ver,'ok');
+}
+function cancelVerEdit(){ renderDeployHistory(); }
+
 
 // Route to history
 function routeToDeployHistory(entry, version, dateStr) {
