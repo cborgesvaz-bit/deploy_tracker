@@ -398,6 +398,7 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
 <body>
 
 <datalist id="version-datalist"></datalist>
+<datalist id="orq-datalist"></datalist>
 
 <!-- LOGIN -->
 <div class="login-screen" id="login-screen">
@@ -713,6 +714,7 @@ button,.btn,.nav-tab,.filter-item,.ver-pill,.topbar-btn{-webkit-tap-highlight-co
     <div class="modal-body">
       <div class="form-cell"><label class="f-label">Versão *</label><input class="f-input" id="vm-ver" placeholder="ex: 0.11.0 ou v1.2.3"></div>
       <div class="form-cell"><label class="f-label">Data de Deploy</label><input class="f-input" id="vm-date" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskDate(this)" onblur="validateDateField(this)"></div>
+      <div class="form-cell"><label class="f-label">Orquestrador</label><input class="f-input" id="vm-orq" list="orq-datalist" placeholder="Quem orquestrou o deploy…" autocomplete="off"></div>
       <div class="form-cell"><label class="f-label">Observação</label><input class="f-input" id="vm-note" placeholder="Observação opcional"></div>
     </div>
     <div class="modal-footer">
@@ -2152,14 +2154,31 @@ function promoteToHistory(){
 // ═══════════════════════════════════════════════════════════
 // VERSIONS
 // ═══════════════════════════════════════════════════════════
+// Orquestrador nao e o DEV responsavel pelo MR: a lista sai dos proprios
+// registros de versao, para o campo sugerir quem ja orquestrou antes.
+function orchestratorNames(){
+  const seen=new Map();
+  VERSIONS_DATA.forEach(v=>{ const n=(v.orchestrator||'').trim(); if(n&&!seen.has(n.toLowerCase())) seen.set(n.toLowerCase(),n); });
+  return [...seen.values()].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+}
+function buildOrchestratorOptions(){
+  const dl=document.getElementById('orq-datalist'); if(!dl) return;
+  dl.innerHTML=orchestratorNames().map(n=>`<option value="${esc(n)}"></option>`).join('');
+}
+// Chip neutro: o orquestrador nao tem cor cadastrada como os DEVs
+function orqBadge(n){
+  const nm=(n||'').trim();
+  if(!nm) return '<span style="color:var(--dim)">—</span>';
+  return `<span class="dev-chip"><span class="dev-av" style="background:#64748B">${esc(nm[0].toUpperCase())}</span>${esc(nm)}</span>`;
+}
 function renderVersions(){
-  buildVersionOptions();
+  buildVersionOptions(); buildOrchestratorOptions();
   const tbody=document.getElementById('versions-tbody'); if(!tbody) return;
   const sorted=[...VERSIONS_DATA].sort((a,b)=>verToNum(b.version)-verToNum(a.version));
   tbody.innerHTML=sorted.map(v=>`<tr>
     <td><span class="ver-num-tag">🏷 ${esc(v.version)}</span>${v.note?`<div style="font-size:11px;color:var(--muted);margin-top:3px">✏️ ${esc(v.note)}</div>`:''}</td>
     <td style="font-family:var(--mono);font-size:12px">${v.date?`📅 ${esc(fmtDate(v.date))}`:'<span style="color:var(--dim)">Sem data</span>'}</td>
-    <td>${v.orchestrator?devBadge(v.orchestrator):'<span style="color:var(--dim)">—</span>'}</td>
+    <td>${orqBadge(v.orchestrator)}</td>
     <td style="font-size:12px;color:var(--muted)">${esc(v.note||'—')}</td>
     <td>${v.date?`<span class="ver-status vs-done">✓ Realizado</span>`:`<span class="ver-status vs-pending">· Pendente</span>`}</td>
     <td><div class="row-actions"><button class="ra-btn" onclick="openVersionModal('${v.id}')" title="Editar">✏️</button></div></td>
@@ -2173,7 +2192,9 @@ function openVersionModal(id){
   document.getElementById('vm-del-btn').style.display=isEdit?'inline-flex':'none';
   document.getElementById('vm-ver').value=v?.version||'';
   document.getElementById('vm-date').value=fmtDate(v?.date);
+  document.getElementById('vm-orq').value=v?.orchestrator||'';
   document.getElementById('vm-note').value=v?.note||'';
+  buildOrchestratorOptions();
   openModal('version-modal'); document.getElementById('vm-ver').focus();
 }
 function saveVersionModal(){
@@ -2182,7 +2203,7 @@ function saveVersionModal(){
   if(!checkDateInput('vm-date','Data de deploy')) return;
   const dup=VERSIONS_DATA.find(v=>v.version===version&&v.id!==editingVersionId);
   if(dup){ alert('Já existe uma versão com esse número.'); return; }
-  const entry={id:editingVersionId||('v'+(++versionIdCtr)),version,date:document.getElementById('vm-date').value.trim(),orchestrator:'',note:document.getElementById('vm-note').value.trim()};
+  const entry={id:editingVersionId||('v'+(++versionIdCtr)),version,date:document.getElementById('vm-date').value.trim(),orchestrator:document.getElementById('vm-orq').value.trim(),note:document.getElementById('vm-note').value.trim()};
   if(editingVersionId){ const idx=VERSIONS_DATA.findIndex(x=>x.id===editingVersionId); if(idx>=0){entry.sbId=VERSIONS_DATA[idx].sbId;VERSIONS_DATA[idx]=entry;} } else VERSIONS_DATA.push(entry);
   sbSaveVersion(entry); saveToLocal(); renderVersions(); closeModal('version-modal');
 }
@@ -2267,7 +2288,7 @@ function exportCSV(type){
   if(type==='all'){ exportCSV('history'); setTimeout(()=>exportCSV('pending'),400); setTimeout(()=>exportCSV('versions'),800); showToast('↓ 3 CSVs exportados','ok'); return; }
   if(type==='history'){ const rows=[['Versão','Data','Label','MR','Repositório','Card','Aprovado','Iniciativa','DEV','Pipeline','Comentários']]; DEPLOYS.forEach(g=>{ const vl=VERSIONS_LIST.find(v=>v.id===g.ver); g.rows.forEach(r=>rows.push([vl?.label||g.ver,fmtDate(g.date),g.label,getMrNum(r.mr),getRepo(r.mr),r.card||'',r.approved||'',r.initiative||'',r.dev||'',r.pipeline||'',r.comment||''])); }); dl(`historico-deploys-${today}.csv`,rows); showToast('↓ Histórico exportado','ok'); }
   if(type==='pending'){ const rows=[['MR','Repositório','Card','Versão','Aprovado','Iniciativa','DEV','Pipeline','Comentários','Próx. Deploy']]; PENDING.forEach(r=>rows.push([getMrNum(r.mr),r.repo||'',r.card||'',r.version||'',r.approved||'',r.initiative||'',r.dev||'',r.pipeline||'',r.comment||'',r.nextDeploy?'Sim':'Não'])); dl(`mrs-em-aberto-${today}.csv`,rows); showToast('↓ MRs exportados','ok'); }
-  if(type==='versions'){ const rows=[['Versão','Data Deploy','Observação']]; VERSIONS_DATA.forEach(v=>rows.push([v.version,fmtDate(v.date),v.note||''])); dl(`versoes-${today}.csv`,rows); showToast('↓ Versões exportadas','ok'); }
+  if(type==='versions'){ const rows=[['Versão','Data Deploy','Orquestrador','Observação']]; VERSIONS_DATA.forEach(v=>rows.push([v.version,fmtDate(v.date),v.orchestrator||'',v.note||''])); dl(`versoes-${today}.csv`,rows); showToast('↓ Versões exportadas','ok'); }
 }
 
 // ═══════════════════════════════════════════════════════════
